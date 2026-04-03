@@ -6,7 +6,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const CATEGORIES = [
-  { href: "/", label: "Revêtements" },
+  { href: "/", label: "Accueil" },
+  { href: "/revetements", label: "Revêtements" },
   { href: "/bois", label: "Bois" },
   { href: "/balles", label: "Balles" },
   { href: "/colles", label: "Colles" },
