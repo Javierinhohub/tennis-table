@@ -24,13 +24,22 @@ export default function AccueilPage() {
   useEffect(() => { fetchStats(); fetchAvis() }, [])
 
   async function fetchStats() {
-    const [{ count: produits }, { count: marques }, { count: membres }, { count: avisCount }] = await Promise.all([
-      supabase.from("revetements").select("*", { count: "exact", head: true }),
-      supabase.from("marques").select("*", { count: "exact", head: true }),
-      supabase.from("utilisateurs").select("*", { count: "exact", head: true }),
-      supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true)
-    ])
-    setStats({ produits: produits || 0, marques: marques || 0, membres: membres || 0, avis: avisCount || 0 })
+    try {
+      const [r1, r2, r3, r4] = await Promise.all([
+        supabase.from("revetements").select("*", { count: "exact", head: true }),
+        supabase.from("marques").select("*", { count: "exact", head: true }),
+        supabase.from("utilisateurs").select("*", { count: "exact", head: true }),
+        supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true)
+      ])
+      setStats({
+        produits: r1.count || 0,
+        marques: r2.count || 0,
+        membres: r3.count || 0,
+        avis: r4.count || 0
+      })
+    } catch (e) {
+      setTimeout(fetchStats, 2000)
+    }
   }
 
   async function fetchAvis() {
