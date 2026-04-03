@@ -187,7 +187,7 @@ export default function AdminPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <div>
           <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Administration</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Gestion du site tennis de table</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Gestion du site TT-Kip</p>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           {avisEnAttente.length > 0 && <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "12px", fontWeight: 600, padding: "4px 10px", borderRadius: "6px" }}>{avisEnAttente.length} avis en attente</span>}

@@ -9,8 +9,8 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'TT Matériel — Tennis de Table',
-  description: 'Liste complète du matériel de tennis de table homologué LARC 2026',
+  title: 'TT-Kip',
+  description: 'Liste complète du matériel de TT-Kip homologué LARC 2026',
 }
 
 export default function RootLayout({
