@@ -9,11 +9,12 @@ const TYPE_LABELS: Record<string, string> = {
   Anti: 'Anti-spin'
 }
 
-export default async function RevetementPage({ params }: { params: { slug: string } }) {
+export default async function RevetementPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const { data: produit } = await supabase
     .from('produits')
     .select('id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse, spin, controle, durete, epaisseur_max)')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (!produit) notFound()
