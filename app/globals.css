@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
   --bg: #F4F5F7;
@@ -19,14 +19,14 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
-  font-family: 'Arvo', serif;
+  font-family: 'Poppins', sans-serif;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
@@ -39,7 +39,7 @@ input, select, textarea {
   color: var(--text);
   border-radius: 8px;
   padding: 10px 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 14px;
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -53,6 +53,6 @@ input:focus, select:focus, textarea:focus {
 }
 
 input::placeholder { color: var(--text-light); }
-button { font-family: 'Inter', sans-serif; cursor: pointer; }
+button { font-family: 'Poppins', sans-serif; cursor: pointer; }
 
 a { color: inherit; }
