@@ -25,7 +25,7 @@ export default function AccueilPage() {
 
   async function fetchStats() {
     const [{ count: produits }, { count: marques }, { count: membres }, { count: avisCount }] = await Promise.all([
-      supabase.from("produits").select("*", { count: "exact", head: true }),
+      supabase.from("revetements").select("*", { count: "exact", head: true }),
       supabase.from("marques").select("*", { count: "exact", head: true }),
       supabase.from("utilisateurs").select("*", { count: "exact", head: true }),
       supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true)
