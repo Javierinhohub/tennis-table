@@ -59,8 +59,8 @@ export default function Navbar() {
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             {CATEGORIES.map(cat => (
               <Link key={cat.href} href={cat.href} style={{ color: "#fff", textDecoration: "none", fontSize: "13px", fontWeight: 500, padding: "6px 10px", borderRadius: "6px", transition: "background 0.15s, color 0.15s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "var(--bg)"; e.currentTarget.style.color = "var(--text)" }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#fff" }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#fff" }}
               >
                 {cat.label}
               </Link>
