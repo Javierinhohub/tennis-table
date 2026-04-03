@@ -4,7 +4,7 @@ import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 
 const TYPE_LABELS: Record<string, string> = {
-  In: "Inversé", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
 }
 
 export default async function RevetementPage({ params }: { params: Promise<{ slug: string }> }) {

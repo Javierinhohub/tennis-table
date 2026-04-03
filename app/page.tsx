@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const TYPE_LABELS: Record<string, string> = {
-  In: "Inversé", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
 }
 
 export default function Home() {
@@ -51,7 +51,7 @@ export default function Home() {
         <div style={{ position: "relative", flex: 1, minWidth: "160px" }}>
           <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ paddingRight: "32px" }}>
             <option value="">Tous les types</option>
-            <option value="In">Inversé</option>
+            <option value="In">Backside</option>
             <option value="Out">Picots courts</option>
             <option value="Long">Picots longs</option>
             <option value="Anti">Anti-spin</option>
