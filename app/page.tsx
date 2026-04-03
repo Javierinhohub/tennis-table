@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 const CATEGORIES = [
-  { href: "/", label: "Revêtements", description: "1 690 revêtements LARC 2026", icon: "R" },
+  { href: "/revetements", label: "Revêtements", description: "1 690 revêtements LARC 2026", icon: "R" },
   { href: "/bois", label: "Bois", description: "Lames et bois de compétition", icon: "B" },
   { href: "/balles", label: "Balles", description: "Balles homologuées ITTF", icon: "Ba" },
   { href: "/colles", label: "Colles", description: "Colles et accessoires", icon: "C" },
