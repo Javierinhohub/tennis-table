@@ -9,9 +9,7 @@ const CATEGORIES = [
   { href: "/", label: "Accueil" },
   { href: "/revetements", label: "Revêtements" },
   { href: "/bois", label: "Bois" },
-  { href: "/balles", label: "Balles" },
-  { href: "/colles", label: "Colles" },
-  { href: "/chaussures", label: "Chaussures" },
+  { href: "/autre-materiel", label: "Autre matériel" },
   { href: "/forum", label: "Forum" },
 ]
 
