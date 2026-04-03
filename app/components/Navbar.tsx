@@ -11,6 +11,7 @@ const CATEGORIES = [
   { href: "/balles", label: "Balles" },
   { href: "/colles", label: "Colles" },
   { href: "/chaussures", label: "Chaussures" },
+  { href: "/forum", label: "Forum" },
 ]
 
 export default function Navbar() {
