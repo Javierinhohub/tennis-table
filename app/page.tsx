@@ -64,12 +64,12 @@ export default function AccueilPage() {
   return (
     <main>
 
-      <section style={{ background: "#D97757", padding: "4rem 2rem", textAlign: "center" }}>
+      <section style={{ background: "#D97757", padding: "2.5rem 2rem", textAlign: "center" }}>
         <div style={{ maxWidth: "700px", margin: "0 auto" }}>
-          <h1 style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 800, color: "#fff", marginBottom: "12px", letterSpacing: "-1px", lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 700, color: "#fff", marginBottom: "12px", letterSpacing: "-1px", lineHeight: 1.1 }}>
             Bienvenue chez TT-Kip
           </h1>
-          <p style={{ fontSize: "18px", color: "rgba(255,255,255,0.85)", marginBottom: "2rem", fontWeight: 400 }}>
+          <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.85)", marginBottom: "1.5rem", fontWeight: 400 }}>
             On évalue les équip'
           </p>
           <div style={{ position: "relative", maxWidth: "560px", margin: "0 auto" }}>
