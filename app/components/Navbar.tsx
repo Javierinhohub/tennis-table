@@ -9,9 +9,8 @@ const CATEGORIES = [
   { href: "/", label: "Revêtements" },
   { href: "/bois", label: "Bois" },
   { href: "/balles", label: "Balles" },
-  { href: "/chaussures", label: "Chaussures" },
-  { href: "/boosters", label: "Boosters" },
   { href: "/colles", label: "Colles" },
+  { href: "/chaussures", label: "Chaussures" },
 ]
 
 export default function Navbar() {
