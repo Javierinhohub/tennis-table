@@ -23,6 +23,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Navbar />
         {children}
+        <footer style={{ borderTop: "1px solid var(--border)", background: "#fff", padding: "1.5rem 2rem", textAlign: "center", marginTop: "auto" }}>
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif" }}>
+            Copyright TT-Kip 2026 — Tous droits réservés
+          </p>
+        </footer>
       </body>
     </html>
   )
