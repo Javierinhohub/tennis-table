@@ -47,7 +47,14 @@ export default function RevatementsPage() {
       .order("nom")
       .range(from, to)
 
-    if (search) query = query.ilike("nom", "%" + search + "%")
+    if (search) {
+      const marqueMatch = marques.find(m => m.nom.toLowerCase().includes(search.toLowerCase()))
+      if (marqueMatch) {
+        query = query.eq("marque_id", marqueMatch.id)
+      } else {
+        query = query.ilike("nom", "%" + search + "%")
+      }
+    }
     if (marqueFilter) query = query.eq("marque_id", marqueFilter)
 
     const { data, count, error } = await query
