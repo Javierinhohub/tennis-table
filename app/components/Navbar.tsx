@@ -71,7 +71,7 @@ export default function Navbar() {
             )}
             {user ? (
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>{pseudo}</span>
+                <a href="/profil" style={{ color: "var(--text-muted)", fontSize: "13px", textDecoration: "none", fontWeight: 500 }}>{pseudo}</a>
                 <button onClick={handleLogout} style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px 12px", fontSize: "13px", fontWeight: 500 }}>
                   Déconnexion
                 </button>
