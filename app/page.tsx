@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
-const TYPE_LABELS = { In: "Inversé", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
+const TYPE_LABELS: Record<string, string> = { In: "Inversé", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
 
 export default function Home() {
-  const [tous, setTous] = useState([])
+  const [tous, setTous] = useState<any[]>([])
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [loading, setLoading] = useState(true)
