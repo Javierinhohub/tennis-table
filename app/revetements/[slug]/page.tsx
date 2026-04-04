@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
+import NotesSection from "./NotesSection"
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
