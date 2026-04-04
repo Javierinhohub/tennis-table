@@ -4,6 +4,31 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
+function renderMarkdownPreview(text: string): string {
+  if (!text) return '<p style="color:var(--text-muted);font-style:italic">L\'aperçu s\'affiche ici...</p>'
+  const lines = text.split("\n")
+  const html: string[] = []
+  let inList = false
+  for (const line of lines) {
+    const t = line.trim()
+    if (!t) { if (inList) { html.push("</ul>"); inList = false } html.push("<br/>"); continue }
+    if (t.startsWith("### ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h3 style="font-size:15px;font-weight:700;margin:1rem 0 0.3rem;color:#D97757">${t.slice(4)}</h3>`); continue }
+    if (t.startsWith("## ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h2 style="font-size:17px;font-weight:700;margin:1.2rem 0 0.4rem;border-bottom:2px solid #D97757;padding-bottom:4px">${t.slice(3)}</h2>`); continue }
+    if (t.startsWith("# ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h1 style="font-size:20px;font-weight:800;margin:1rem 0 0.4rem">${t.slice(2)}</h1>`); continue }
+    if (t.startsWith("- ") || t.startsWith("* ")) {
+      if (!inList) { html.push('<ul style="margin:0.4rem 0 0.4rem 1.2rem;">'); inList = true }
+      let item = t.slice(2).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\_(.+?)\_/g, "<em>$1</em>")
+      html.push(`<li style="margin-bottom:3px">${item}</li>`)
+      continue
+    }
+    if (inList) { html.push("</ul>"); inList = false }
+    let p = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\_(.+?)\_/g, "<em>$1</em>")
+    html.push(`<p style="margin:0.5rem 0;line-height:1.7">${p}</p>`)
+  }
+  if (inList) html.push("</ul>")
+  return html.join("")
+}
+
 const CATEGORIES = ["test", "conseil", "actualite", "comparatif"]
 
 export default function AdminArticlesPage() {
