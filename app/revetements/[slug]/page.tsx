@@ -12,7 +12,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   const { slug } = await params
   const { data: produit } = await supabase
     .from("produits")
-    .select("id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max)")
+    .select("id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max, note_marque_vitesse, note_marque_spin, note_marque_controle, note_marque_durete, commentaire_marque)")
     .eq("slug", slug)
     .single()
 
