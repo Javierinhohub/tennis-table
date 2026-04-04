@@ -13,6 +13,8 @@ const CATEGORIES = [
   { href: "/joueurs", label: "Joueurs pro", icon: "J" },
   { href: "/articles", label: "Articles & Tests", icon: "A" },
   { href: "/forum", label: "Forum", icon: "F" },
+  { href: "/a-propos", label: "À propos", icon: "?" },
+  { href: "/contact", label: "Contact", icon: "✉" },
 ]
 
 export default function Navbar() {
