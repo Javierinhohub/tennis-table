@@ -8,6 +8,12 @@ const geist = Geist({
   subsets: ['latin'],
 })
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata: Metadata = {
   title: 'TT-Kip',
   description: 'Liste complète du matériel de TT-Kip homologué LARC 2026',
