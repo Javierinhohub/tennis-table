@@ -3,26 +3,59 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import AdminSearchBar from "@/app/components/AdminSearchBar"
+
+function BarreNotes({ label, value, onChange, color }: { label: string, value: string, onChange: (v: string) => void, color: string }) {
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+        <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>{label}</label>
+        <span style={{ fontSize: "13px", fontWeight: 700, color }}>{value || "—"}{value ? "/10" : ""}</span>
+      </div>
+      <div style={{ display: "flex", gap: "4px" }}>
+        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+          <button key={n} type="button" onClick={() => onChange(value === String(n) ? "" : String(n))}
+            style={{ flex: 1, height: "28px", borderRadius: "4px", border: "none", cursor: "pointer", transition: "background 0.1s", fontFamily: "Poppins, sans-serif", fontSize: "11px", fontWeight: 600,
+              background: parseInt(value) >= n ? color : "var(--border)",
+              color: parseInt(value) >= n ? "#fff" : "var(--text-muted)"
+            }}>
+            {n}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function ModifierPage() {
-  const [search, setSearch] = useState("")
-  const [resultats, setResultats] = useState<any[]>([])
   const [produit, setProduit] = useState<any>(null)
   const [rev, setRev] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const router = useRouter()
 
-  // Champs modifiables
+  // Infos générales
   const [nom, setNom] = useState("")
-  const [vitesse, setVitesse] = useState("")
-  const [effet, setEffet] = useState("")
-  const [controle, setControle] = useState("")
-  const [poids, setPoids] = useState("")
   const [couleurs, setCouleurs] = useState("")
   const [numeroLarc, setNumeroLarc] = useState("")
   const [typeRev, setTypeRev] = useState("")
   const [epaisseur, setEpaisseur] = useState("")
+  const [poids, setPoids] = useState("")
+
+  // Notes admin (staff TT-Kip)
+  const [vitesse, setVitesse] = useState("")
+  const [effet, setEffet] = useState("")
+  const [controle, setControle] = useState("")
+
+  // Notes marque
+  const [marqueVitesse, setMarqueVitesse] = useState("")
+  const [marqueSpin, setMarqueSpin] = useState("")
+  const [marqueControle, setMarqueControle] = useState("")
+  const [marqueDurete, setMarqueDurete] = useState("")
+  const [commentaireMarque, setCommentaireMarque] = useState("")
+
+  // Stats utilisateurs
+  const [statsUtilisateurs, setStatsUtilisateurs] = useState<any>(null)
 
   useEffect(() => { checkAdmin() }, [])
 
@@ -33,155 +66,184 @@ export default function ModifierPage() {
     if (!profil || profil.role !== "admin") { router.push("/"); return }
   }
 
-  useEffect(() => {
-    if (search.length < 2) { setResultats([]); return }
-    const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("produits")
-        .select("id, nom, slug, marques(nom), revetements(id, numero_larc, type_revetement, couleurs_dispo, vitesse_note, effet_note, controle_note, poids, epaisseur_max)")
-        .ilike("nom", "%" + search + "%")
-        .limit(8)
-      setResultats(data || [])
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  function selectionnerProduit(p: any) {
-    setProduit(p)
-    const r = p.revetements
+  async function selectionnerProduit(p: any) {
+    setMessage("")
+    const { data } = await supabase
+      .from("produits")
+      .select("id, nom, marques(nom), revetements(*)")
+      .eq("id", p.id)
+      .single()
+    if (!data) return
+    setProduit(data)
+    const r = data.revetements as any
     setRev(r)
-    setNom(p.nom)
+    setNom(data.nom || "")
     setNumeroLarc(r?.numero_larc || "")
     setTypeRev(r?.type_revetement || "In")
     setCouleurs(r?.couleurs_dispo || "")
+    setEpaisseur(r?.epaisseur_max ? String(r.epaisseur_max) : "")
+    setPoids(r?.poids || "")
     setVitesse(r?.vitesse_note ? String(r.vitesse_note) : "")
     setEffet(r?.effet_note ? String(r.effet_note) : "")
     setControle(r?.controle_note ? String(r.controle_note) : "")
-    setPoids(r?.poids || "")
-    setEpaisseur(r?.epaisseur_max ? String(r.epaisseur_max) : "")
-    setResultats([])
-    setSearch("")
-    setMessage("")
+    setMarqueVitesse(r?.note_marque_vitesse ? String(r.note_marque_vitesse) : "")
+    setMarqueSpin(r?.note_marque_spin ? String(r.note_marque_spin) : "")
+    setMarqueControle(r?.note_marque_controle ? String(r.note_marque_controle) : "")
+    setMarqueDurete(r?.note_marque_durete ? String(r.note_marque_durete) : "")
+    setCommentaireMarque(r?.commentaire_marque || "")
+    fetchStatsUtilisateurs(data.id)
+  }
+
+  async function fetchStatsUtilisateurs(produitId: string) {
+    const { data: avisData } = await supabase
+      .from("avis")
+      .select("note")
+      .eq("produit_id", produitId)
+      .eq("valide", true)
+    if (!avisData || avisData.length === 0) { setStatsUtilisateurs(null); return }
+    const total = avisData.length
+    const moyenne = avisData.reduce((s, a) => s + a.note, 0) / total
+    const distribution = [1,2,3,4,5].map(n => ({
+      note: n,
+      count: avisData.filter(a => a.note === n).length,
+      pct: Math.round(avisData.filter(a => a.note === n).length / total * 100)
+    }))
+    setStatsUtilisateurs({ total, moyenne: Math.round(moyenne * 10) / 10, distribution })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setMessage("")
-
-    const { error: prodErr } = await supabase
-      .from("produits")
-      .update({ nom })
-      .eq("id", produit.id)
-
-    const { error: revErr } = await supabase
-      .from("revetements")
-      .update({
-        numero_larc: numeroLarc || null,
-        type_revetement: typeRev,
-        couleurs_dispo: couleurs || null,
-        vitesse_note: vitesse ? parseInt(vitesse) : null,
-        effet_note: effet ? parseInt(effet) : null,
-        controle_note: controle ? parseInt(controle) : null,
-        poids: poids || null,
-        epaisseur_max: epaisseur ? parseFloat(epaisseur) : null,
-      })
-      .eq("produit_id", produit.id)
-
-    if (prodErr || revErr) {
-      setMessage("Erreur : " + (prodErr?.message || revErr?.message))
-    } else {
-      setMessage("Revêtement mis à jour avec succès !")
-    }
+    await supabase.from("produits").update({ nom }).eq("id", produit.id)
+    await supabase.from("revetements").update({
+      numero_larc: numeroLarc || null,
+      type_revetement: typeRev,
+      couleurs_dispo: couleurs || null,
+      epaisseur_max: epaisseur ? parseFloat(epaisseur) : null,
+      poids: poids || null,
+      vitesse_note: vitesse ? parseInt(vitesse) : null,
+      effet_note: effet ? parseInt(effet) : null,
+      controle_note: controle ? parseInt(controle) : null,
+      note_marque_vitesse: marqueVitesse ? parseInt(marqueVitesse) : null,
+      note_marque_spin: marqueSpin ? parseInt(marqueSpin) : null,
+      note_marque_controle: marqueControle ? parseInt(marqueControle) : null,
+      note_marque_durete: marqueDurete ? parseInt(marqueDurete) : null,
+      commentaire_marque: commentaireMarque || null,
+    }).eq("produit_id", produit.id)
+    setMessage("Modifications enregistrées !")
     setLoading(false)
   }
 
-  const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Inter, sans-serif", outline: "none", color: "var(--text)" }
+  const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" as const }
   const labelStyle = { display: "block" as const, fontSize: "12px", fontWeight: 600 as const, color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" as const, letterSpacing: "0.4px" }
+  const cardStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "12px" }
 
   return (
-    <main style={{ maxWidth: "700px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <a href="/admin" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>
-        Retour à l'administration
-      </a>
+    <main style={{ maxWidth: "900px", margin: "0 auto", padding: "2.5rem 2rem" }}>
+      <a href="/admin" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>← Retour à l'administration</a>
       <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "0.5rem" }}>Modifier un revêtement</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "2rem" }}>Recherchez un revêtement pour modifier ses informations.</p>
+      <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "2rem" }}>Recherchez un revêtement pour modifier ses caractéristiques et ses notes.</p>
 
-      <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
-        <label style={labelStyle}>Rechercher un revêtement</label>
-        <div style={{ position: "relative" }}>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} style={inputStyle} placeholder="Tapez le nom du revêtement..." />
-          {resultats.length > 0 && (
-            <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", marginTop: "4px", zIndex: 10, overflow: "hidden" }}>
-              {resultats.map((p, i) => (
-                <div key={p.id}
-                  onClick={() => selectionnerProduit(p)}
-                  style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < resultats.length - 1 ? "1px solid var(--border)" : "none", fontSize: "13px" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#fff"}
-                >
-                  <span style={{ fontWeight: 500 }}>{p.nom}</span>
-                  <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>{p.marques?.nom}</span>
-                  {p.revetements?.numero_larc && <span style={{ color: "var(--text-light)", marginLeft: "8px", fontFamily: "monospace", fontSize: "12px" }}>#{p.revetements.numero_larc}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <AdminSearchBar onSelect={selectionnerProduit} />
 
       {produit && (
         <form onSubmit={handleSubmit}>
-          {message && (
-            <div style={{ background: message.startsWith("Erreur") ? "#FEF2F2" : "var(--success-light)", border: "1px solid " + (message.startsWith("Erreur") ? "#FECACA" : "#A7F3D0"), color: message.startsWith("Erreur") ? "#DC2626" : "var(--success)", borderRadius: "8px", padding: "12px 16px", marginBottom: "1.5rem", fontSize: "14px", fontWeight: 500 }}>
-            {message}
-          </div>
-          )}
+          {message && <div style={{ background: "var(--success-light)", border: "1px solid #A7F3D0", color: "var(--success)", borderRadius: "8px", padding: "12px 16px", marginBottom: "1rem", fontSize: "14px", fontWeight: 500 }}>{message}</div>}
 
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "12px" }}>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Informations générales</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div><label style={labelStyle}>Nom du revêtement</label><input type="text" value={nom} onChange={e => setNom(e.target.value)} required style={inputStyle} /></div>
-              <div><label style={labelStyle}>Numéro LARC</label><input type="text" value={numeroLarc} onChange={e => setNumeroLarc(e.target.value)} style={inputStyle} placeholder="Ex: 012-345" /></div>
-              <div><label style={labelStyle}>Type</label>
-                <select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}>
-                  <option value="In">Backside</option>
-                  <option value="Out">Picots courts</option>
-                  <option value="Long">Picots longs</option>
-                  <option value="Anti">Anti-spin</option>
-                </select>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+
+            <div>
+              <div style={cardStyle}>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  Informations générales
+                  <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text-muted)", background: "var(--bg)", padding: "2px 8px", borderRadius: "4px" }}>{(produit.marques as any)?.nom}</span>
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={e => setNom(e.target.value)} required style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Code LARC</label><input type="text" value={numeroLarc} onChange={e => setNumeroLarc(e.target.value)} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Type</label>
+                    <select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}>
+                      <option value="In">Backside</option>
+                      <option value="Out">Picots courts</option>
+                      <option value="Long">Picots longs</option>
+                      <option value="Anti">Anti-spin</option>
+                    </select>
+                  </div>
+                  <div><label style={labelStyle}>Couleurs</label><input type="text" value={couleurs} onChange={e => setCouleurs(e.target.value)} style={inputStyle} /></div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <div><label style={labelStyle}>Poids</label><input type="text" value={poids} onChange={e => setPoids(e.target.value)} style={inputStyle} placeholder="Ex: 45g" /></div>
+                    <div><label style={labelStyle}>Épaisseur max</label><input type="number" step="0.1" value={epaisseur} onChange={e => setEpaisseur(e.target.value)} style={inputStyle} /></div>
+                  </div>
+                </div>
               </div>
-              <div><label style={labelStyle}>Couleurs disponibles</label><input type="text" value={couleurs} onChange={e => setCouleurs(e.target.value)} style={inputStyle} placeholder="Ex: Black, Red" /></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <div><label style={labelStyle}>Poids</label><input type="text" value={poids} onChange={e => setPoids(e.target.value)} style={inputStyle} placeholder="Ex: 45g" /></div>
-                <div><label style={labelStyle}>Epaisseur max (mm)</label><input type="number" step="0.1" value={epaisseur} onChange={e => setEpaisseur(e.target.value)} style={inputStyle} placeholder="Ex: 2.1" /></div>
+
+              <div style={cardStyle}>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#1A56DB", marginBottom: "16px" }}>Notes TT-Kip (évaluation interne)</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <BarreNotes label="Vitesse" value={vitesse} onChange={setVitesse} color="#1A56DB" />
+                  <BarreNotes label="Effet / Spin" value={effet} onChange={setEffet} color="#1A56DB" />
+                  <BarreNotes label="Contrôle" value={controle} onChange={setControle} color="#1A56DB" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={cardStyle}>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#D97757", marginBottom: "16px" }}>Notes de la marque</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <BarreNotes label="Vitesse" value={marqueVitesse} onChange={setMarqueVitesse} color="#D97757" />
+                  <BarreNotes label="Spin" value={marqueSpin} onChange={setMarqueSpin} color="#D97757" />
+                  <BarreNotes label="Contrôle" value={marqueControle} onChange={setMarqueControle} color="#D97757" />
+                  <BarreNotes label="Dureté" value={marqueDurete} onChange={setMarqueDurete} color="#D97757" />
+                  <div>
+                    <label style={labelStyle}>Commentaire officiel de la marque</label>
+                    <textarea value={commentaireMarque} onChange={e => setCommentaireMarque(e.target.value)} rows={3}
+                      style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.5 }}
+                      placeholder="Description officielle du revêtement par la marque..." />
+                  </div>
+                </div>
+              </div>
+
+              <div style={cardStyle}>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#0E7F4F", marginBottom: "16px" }}>
+                  Avis utilisateurs
+                  {statsUtilisateurs && <span style={{ fontWeight: 400, color: "var(--text-muted)", marginLeft: "8px" }}>({statsUtilisateurs.total} avis)</span>}
+                </p>
+                {!statsUtilisateurs ? (
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Aucun avis utilisateur pour ce revêtement.</p>
+                ) : (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ fontSize: "36px", fontWeight: 800, color: "#0E7F4F", lineHeight: 1 }}>{statsUtilisateurs.moyenne}</p>
+                        <p style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>/ 5</p>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        {[5,4,3,2,1].map((n: number) => {
+                          const d = statsUtilisateurs.distribution.find((x: any) => x.note === n)
+                          return (
+                            <div key={n} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "12px", color: "var(--text-muted)", width: "12px" }}>{n}</span>
+                              <span style={{ color: "#F59E0B", fontSize: "11px" }}>★</span>
+                              <div style={{ flex: 1, background: "var(--border)", borderRadius: "4px", height: "6px" }}>
+                                <div style={{ height: "100%", background: "#0E7F4F", borderRadius: "4px", width: (d?.pct || 0) + "%" }} />
+                              </div>
+                              <span style={{ fontSize: "11px", color: "var(--text-muted)", width: "28px" }}>{d?.count || 0}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "12px" }}>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Performances</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-              <div>
-                <label style={labelStyle}>Vitesse /10</label>
-                <input type="number" min="1" max="10" value={vitesse} onChange={e => setVitesse(e.target.value)} style={inputStyle} placeholder="1-10" />
-                {vitesse && <div style={{ marginTop: "6px", height: "4px", background: "var(--border)", borderRadius: "2px" }}><div style={{ height: "100%", background: "#1A56DB", borderRadius: "2px", width: (parseInt(vitesse) / 10 * 100) + "%" }} /></div>}
-              </div>
-              <div>
-                <label style={labelStyle}>Effet /10</label>
-                <input type="number" min="1" max="10" value={effet} onChange={e => setEffet(e.target.value)} style={inputStyle} placeholder="1-10" />
-                {effet && <div style={{ marginTop: "6px", height: "4px", background: "var(--border)", borderRadius: "2px" }}><div style={{ height: "100%", background: "#0E7F4F", borderRadius: "2px", width: (parseInt(effet) / 10 * 100) + "%" }} /></div>}
-              </div>
-              <div>
-                <label style={labelStyle}>Contrôle /10</label>
-                <input type="number" min="1" max="10" value={controle} onChange={e => setControle(e.target.value)} style={inputStyle} placeholder="1-10" />
-                {controle && <div style={{ marginTop: "6px", height: "4px", background: "var(--border)", borderRadius: "2px" }}><div style={{ height: "100%", background: "#B45309", borderRadius: "2px", width: (parseInt(controle) / 10 * 100) + "%" }} /></div>}
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" disabled={loading} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: "8px", padding: "12px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%", opacity: loading ? 0.7 : 1 }}>
-            {loading ? "Mise à jour..." : "Enregistrer les modifications"}
+          <button type="submit" disabled={loading}
+            style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%", opacity: loading ? 0.7 : 1, fontFamily: "Poppins, sans-serif", marginTop: "4px" }}>
+            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
           </button>
         </form>
       )}
