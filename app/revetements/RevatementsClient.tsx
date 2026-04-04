@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import NoteRapide from "@/app/components/NoteRapide"
+import NoteModal from "@/app/components/NoteModal"
 import { supabase } from "@/lib/supabase"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -21,6 +21,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
   const [marqueFilter, setMarqueFilter] = useState("")
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [produitANoter, setProduitANoter] = useState<any>(null)
   const isFiltered = search || typeFilter || marqueFilter || page > 0
 
   useEffect(() => {
@@ -140,7 +141,10 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
                     </td>
                     {user && (
                       <td style={{ padding: "11px 16px" }} onClick={e => e.stopPropagation()}>
-                        <NoteRapide produitId={p.id} user={user} />
+                        <button onClick={() => setProduitANoter(p)}
+                          style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", fontWeight: 500, color: "var(--text-muted)", cursor: "pointer", fontFamily: "Poppins, sans-serif", whiteSpace: "nowrap" as const }}>
+                          ★ Noter
+                        </button>
                       </td>
                     )}
                   </tr>
@@ -168,6 +172,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
           <button onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 12px", fontSize: "13px", cursor: page >= totalPages - 1 ? "default" : "pointer", opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: "Poppins, sans-serif" }}>»</button>
         </div>
       )}
+      {produitANoter && <NoteModal produit={produitANoter} onClose={() => setProduitANoter(null)} />}
     </main>
   )
 }

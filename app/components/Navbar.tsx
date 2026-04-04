@@ -28,12 +28,13 @@ export default function Navbar() {
   }, [pathname])
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user)
-      if (data.user) {
-        const { data: profil } = await supabase.from("utilisateurs").select("pseudo, role").eq("id", data.user.id).single()
-        setPseudo(profil?.pseudo || "")
-        setRole(profil?.role || "")
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        supabase.from("utilisateurs").select("pseudo, role").eq("id", session.user.id).single().then(({ data }) => {
+          setPseudo(data?.pseudo || "")
+          setRole(data?.role || "")
+        })
       }
     })
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -47,9 +48,12 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
+  function handleLogout() {
+    setUser(null)
+    setPseudo("")
+    setRole("")
     setOpen(false)
+    supabase.auth.signOut()
     router.push("/")
   }
 

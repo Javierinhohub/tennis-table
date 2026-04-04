@@ -107,6 +107,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             </div>
           )}
 
+          <NotesSection produitId={produit.id} revetement={rev} />
           <AvisSection produitId={produit.id} revetement={rev} />
         </div>
 
