@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="fr" className={geist.variable}>
       <body className="min-h-full flex flex-col">
         <Navbar />
-        {children}
+        <div style={{ paddingTop: "0" }}>{children}</div>
         <footer style={{ borderTop: "1px solid var(--border)", background: "#fff", padding: "1.5rem 2rem", textAlign: "center", marginTop: "auto" }}>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif" }}>
             Copyright TT-Kip 2026 — Tous droits réservés

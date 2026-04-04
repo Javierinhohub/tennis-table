@@ -3,24 +3,29 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 const CATEGORIES = [
-  { href: "/", label: "Accueil" },
-  { href: "/revetements", label: "Revêtements" },
-  { href: "/bois", label: "Bois" },
-  { href: "/autre-materiel", label: "Autre matériel" },
-  { href: "/joueurs", label: "Joueurs" },
-  { href: "/articles", label: "Articles & Tests" },
-  { href: "/forum", label: "Forum" },
+  { href: "/", label: "Accueil", icon: "⌂" },
+  { href: "/revetements", label: "Revêtements", icon: "R" },
+  { href: "/bois", label: "Bois", icon: "B" },
+  { href: "/autre-materiel", label: "Autre matériel", icon: "+" },
+  { href: "/joueurs", label: "Joueurs pro", icon: "J" },
+  { href: "/articles", label: "Articles & Tests", icon: "A" },
+  { href: "/forum", label: "Forum", icon: "F" },
 ]
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null)
   const [pseudo, setPseudo] = useState("")
   const [role, setRole] = useState("")
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -44,91 +49,99 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    setMenuOpen(false)
+    setOpen(false)
     router.push("/")
   }
 
   return (
     <>
-      <nav style={{ background: "#D97757", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid #C4694A" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1rem", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", height: "56px", gap: "1rem" }}>
+      <div style={{ position: "fixed", top: "16px", left: "16px", zIndex: 200 }}>
+        <button onClick={() => setOpen(!open)}
+          style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#D97757", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", boxShadow: "0 2px 12px rgba(217,119,87,0.4)" }}>
+          <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s", transform: open ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+          <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "opacity 0.2s", opacity: open ? 0 : 1 }} />
+          <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s", transform: open ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+        </button>
+      </div>
 
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-            <svg width="28" height="28" viewBox="0 0 200 200"><rect width="200" height="200" rx="14" fill="rgba(255,255,255,0.25)"/><text x="100" y="148" textAnchor="middle" fontFamily="Poppins, sans-serif" fontWeight="700" fontSize="82" fill="#ffffff" letterSpacing="-3">TTK</text></svg>
-            <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff", letterSpacing: "-0.3px" }}>TT-Kip</span>
-            <span style={{ background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px" }}>2026</span>
-          </Link>
+      {open && (
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 150 }} />
+      )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap", overflow: "hidden", justifyContent: "center" }} className="desktop-nav">
-            {CATEGORIES.map(cat => (
-              <Link key={cat.href} href={cat.href}
-                style={{ color: "#fff", textDecoration: "none", fontSize: "13px", fontWeight: 500, padding: "6px 8px", borderRadius: "6px", whiteSpace: "nowrap" as const, transition: "background 0.15s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >
-                {cat.label}
-              </Link>
-            ))}
-            {role === "admin" && (
-              <Link href="/admin" style={{ color: "#fff", textDecoration: "none", fontSize: "13px", fontWeight: 600, padding: "6px 10px", borderRadius: "6px", background: "rgba(255,255,255,0.2)" }}>Admin</Link>
-            )}
-            {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "8px" }}>
-                <a href="/profil" style={{ color: "rgba(255,255,255,0.9)", fontSize: "13px", textDecoration: "none", fontWeight: 500 }}>{pseudo}</a>
-                <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Déconnexion</button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: "6px", marginLeft: "8px" }}>
-                <Link href="/auth/login" style={{ color: "#fff", textDecoration: "none", border: "1px solid rgba(255,255,255,0.4)", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontWeight: 500 }}>Connexion</Link>
-                <Link href="/auth/signup" style={{ background: "#fff", color: "#D97757", textDecoration: "none", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontWeight: 700 }}>Inscription</Link>
-              </div>
-            )}
+      <div style={{
+        position: "fixed", top: 0, left: 0, height: "100vh", width: "260px",
+        background: "#fff", borderRight: "1px solid var(--border)",
+        zIndex: 160, transform: open ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        display: "flex", flexDirection: "column",
+        boxShadow: open ? "4px 0 20px rgba(0,0,0,0.1)" : "none"
+      }}>
+
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "10px" }}>
+          <svg width="32" height="32" viewBox="0 0 200 200"><rect width="200" height="200" rx="14" fill="#D97757"/><text x="100" y="148" textAnchor="middle" fontFamily="Poppins, sans-serif" fontWeight="700" fontSize="82" fill="#ffffff" letterSpacing="-3">TTK</text></svg>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: "15px", color: "var(--text)", letterSpacing: "-0.3px", lineHeight: 1.2 }}>TT-Kip</p>
+            <p style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 500 }}>LARC 2026</p>
           </div>
-
-          <button onClick={() => setMenuOpen(!menuOpen)} className="hamburger"
-            style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "8px", padding: "8px", cursor: "pointer", display: "none", flexDirection: "column" as const, gap: "4px" }}>
-            <span style={{ display: "block", width: "20px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s", transform: menuOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }} />
-            <span style={{ display: "block", width: "20px", height: "2px", background: "#fff", borderRadius: "2px", opacity: menuOpen ? 0 : 1, transition: "opacity 0.2s" }} />
-            <span style={{ display: "block", width: "20px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s", transform: menuOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }} />
-          </button>
         </div>
 
-        {menuOpen && (
-          <div style={{ background: "#C4694A", borderTop: "1px solid rgba(255,255,255,0.2)", padding: "0.5rem 1rem 1rem" }}>
-            {CATEGORIES.map(cat => (
-              <Link key={cat.href} href={cat.href} onClick={() => setMenuOpen(false)}
-                style={{ display: "block", color: "#fff", textDecoration: "none", fontSize: "15px", fontWeight: 500, padding: "10px 8px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
+          {CATEGORIES.map(cat => {
+            const isActive = pathname === cat.href || (cat.href !== "/" && pathname.startsWith(cat.href))
+            return (
+              <Link key={cat.href} href={cat.href}
+                style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", textDecoration: "none", marginBottom: "2px",
+                  background: isActive ? "#FFF0EB" : "transparent",
+                  color: isActive ? "#D97757" : "var(--text-muted)",
+                  fontWeight: isActive ? 600 : 400,
+                  fontSize: "14px",
+                  transition: "background 0.15s, color 0.15s"
+                }}>
+                <span style={{ width: "28px", height: "28px", borderRadius: "6px", background: isActive ? "#D97757" : "var(--bg)", color: isActive ? "#fff" : "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>
+                  {cat.icon}
+                </span>
                 {cat.label}
               </Link>
-            ))}
-            {role === "admin" && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ display: "block", color: "#fff", textDecoration: "none", fontSize: "15px", fontWeight: 600, padding: "10px 8px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                Administration
-              </Link>
-            )}
-            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              {user ? (
-                <>
-                  <a href="/profil" onClick={() => setMenuOpen(false)} style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px", textDecoration: "none", fontWeight: 500, padding: "4px 8px" }}>Mon profil ({pseudo})</a>
-                  <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif", textAlign: "left" as const }}>Déconnexion</button>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth/login" onClick={() => setMenuOpen(false)} style={{ display: "block", color: "#fff", textDecoration: "none", border: "1px solid rgba(255,255,255,0.4)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", fontWeight: 500, textAlign: "center" as const }}>Connexion</Link>
-                  <Link href="/auth/signup" onClick={() => setMenuOpen(false)} style={{ display: "block", background: "#fff", color: "#D97757", textDecoration: "none", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", fontWeight: 700, textAlign: "center" as const }}>Inscription</Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
+            )
+          })}
 
-      <style>{`
-        @media (max-width: 900px) {
-          .desktop-nav { display: none !important; }
-          .hamburger { display: flex !important; }
-        }
-      `}</style>
+          {role === "admin" && (
+            <Link href="/admin"
+              style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", textDecoration: "none", marginTop: "8px", background: "var(--accent-light)", color: "var(--accent)", fontWeight: 600, fontSize: "14px" }}>
+              <span style={{ width: "28px", height: "28px", borderRadius: "6px", background: "var(--accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>⚙</span>
+              Administration
+            </Link>
+          )}
+        </nav>
+
+        <div style={{ padding: "16px", borderTop: "1px solid var(--border)" }}>
+          {user ? (
+            <div>
+              <a href="/profil" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", textDecoration: "none", marginBottom: "8px", background: "var(--bg)" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#D97757", flexShrink: 0 }}>
+                  {pseudo?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{pseudo}</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>Mon profil</p>
+                </div>
+              </a>
+              <button onClick={handleLogout} style={{ width: "100%", background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                Déconnexion
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <Link href="/auth/login" style={{ display: "block", textAlign: "center", color: "var(--text)", textDecoration: "none", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 500, background: "var(--bg)" }}>
+                Connexion
+              </Link>
+              <Link href="/auth/signup" style={{ display: "block", textAlign: "center", background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 700 }}>
+                Inscription
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   )
 }
