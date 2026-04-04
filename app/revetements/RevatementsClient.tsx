@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import NoteRapide from "@/app/components/NoteRapide"
 import { supabase } from "@/lib/supabase"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -19,6 +20,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
   const [typeFilter, setTypeFilter] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const isFiltered = search || typeFilter || marqueFilter || page > 0
 
   useEffect(() => {
@@ -112,6 +114,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
                 <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Code LARC</th>
                 <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Couleurs</th>
                 <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Statut</th>
+                {user && <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Noter</th>}
               </tr>
             </thead>
             <tbody>
@@ -135,6 +138,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
                     <td style={{ padding: "11px 16px" }}>
                       <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "4px", background: "var(--success-light)", color: "var(--success)", letterSpacing: "0.3px" }}>APPROUVE</span>
                     </td>
+                    {user && (
+                      <td style={{ padding: "11px 16px" }} onClick={e => e.stopPropagation()}>
+                        <NoteRapide produitId={p.id} user={user} />
+                      </td>
+                    )}
                   </tr>
                 )
               })}
