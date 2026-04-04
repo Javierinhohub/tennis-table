@@ -108,8 +108,8 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             </div>
           )}
 
-          <NotesSection produitId={produit.id} revetement={rev} />
-          <AvisSection produitId={produit.id} revetement={rev} />
+          <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
+          <AvisSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
         </div>
 
         <div style={{ position: "sticky", top: "80px" }}>

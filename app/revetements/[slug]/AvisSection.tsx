@@ -89,7 +89,7 @@ function BarreCaracteristique({ label, valueUser, valueMarque, valueTTK }: { lab
 
 export { BarreCaracteristique }
 
-export default function AvisSection({ produitId, revetement }: { produitId: string, revetement?: any }) {
+export default function AvisSection({ produitId, revetement, typeRev }: { produitId: string, revetement?: any, typeRev?: string }) {
   const [avis, setAvis] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [note, setNote] = useState(0)
