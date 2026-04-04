@@ -8,6 +8,10 @@ const CAT_COLORS: Record<string, string> = {
   test: "#1A56DB", conseil: "#0E7F4F", actualite: "#D97757", comparatif: "#7C3AED"
 }
 
+function sanitize(str: string) {
+  return str.replace(/<script[^>]*>.*?<\/script>/gis, '').replace(/on\w+="[^"]*"/gi, '').replace(/javascript:/gi, '')
+}
+
 function renderMarkdown(text: string) {
   const lines = text.split("\n")
   const html: string[] = []
@@ -33,7 +37,7 @@ function renderMarkdown(text: string) {
     html.push(`<p style="margin:0.6rem 0;line-height:1.8">${p}</p>`)
   }
   if (inList) html.push("</ul>")
-  return html.join("")
+  return sanitize(html.join(""))
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
