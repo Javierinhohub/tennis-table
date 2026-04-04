@@ -15,7 +15,7 @@ export default function Page() {
   async function fetchData() {
     setLoading(true)
     const [{ data: produits }, { data: marquesData }] = await Promise.all([
-      supabase.from("produits").select("id, nom, slug, marques(id, nom), bois(nombre_plis, vitesse_note, controle_note, composition, rigidite, poids, taille_lame, type_jeu, type_manche)").eq("actif", true).order("nom").limit(2000),
+      supabase.from("produits").select("id, nom, slug, marques(id, nom), bois(nb_plis, poids_g, epaisseur_mm, composition, pli1, pli2, pli3, pli4, pli5)").eq("actif", true).not("bois", "is", null).order("nom").limit(2000),
       supabase.from("marques").select("id, nom").order("nom")
     ])
     setTous(produits || [])
