@@ -51,7 +51,7 @@ export default function Navbar() {
   return (
     <>
       <nav style={{ background: "#D97757", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid #C4694A" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", height: "56px" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1rem", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", height: "56px", gap: "1rem" }}>
 
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
             <svg width="28" height="28" viewBox="0 0 200 200"><rect width="200" height="200" rx="14" fill="rgba(255,255,255,0.25)"/><text x="100" y="148" textAnchor="middle" fontFamily="Poppins, sans-serif" fontWeight="700" fontSize="82" fill="#ffffff" letterSpacing="-3">TTK</text></svg>
@@ -59,7 +59,7 @@ export default function Navbar() {
             <span style={{ background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px" }}>2026</span>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap", overflow: "hidden" }} className="desktop-nav">
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap", overflow: "hidden", justifyContent: "center" }} className="desktop-nav">
             {CATEGORIES.map(cat => (
               <Link key={cat.href} href={cat.href}
                 style={{ color: "#fff", textDecoration: "none", fontSize: "13px", fontWeight: 500, padding: "6px 8px", borderRadius: "6px", whiteSpace: "nowrap" as const, transition: "background 0.15s" }}
