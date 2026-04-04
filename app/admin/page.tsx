@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [joueurs, setJoueurs] = useState<any[]>([])
   const [liaisons, setLiaisons] = useState<any[]>([])
   const [message, setMessage] = useState("")
+  const [searchProduits, setSearchProduits] = useState("")
   const router = useRouter()
 
   // Nouveau revêtement
@@ -261,7 +262,11 @@ export default function AdminPage() {
 
       {onglet === "produits" && (
         <div>
-          <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Tous les produits ({produits.length})</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <h2 style={{ fontSize: "14px", fontWeight: 600 }}>Tous les produits ({produits.length})</h2>
+          <input type="text" placeholder="Rechercher..." value={searchProduits} onChange={e => setSearchProduits(e.target.value)}
+            style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "7px 12px", fontSize: "13px", outline: "none", color: "var(--text)", fontFamily: "Poppins, sans-serif", width: "220px" }} />
+        </div>
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -273,7 +278,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {produits.map((p, i) => (
+                {produits.filter(p => !searchProduits || p.nom.toLowerCase().includes(searchProduits.toLowerCase()) || (p.marques?.nom || "").toLowerCase().includes(searchProduits.toLowerCase())).map((p, i) => (
                   <tr key={p.id} style={{ borderBottom: i < produits.length - 1 ? "1px solid var(--border)" : "none", opacity: p.actif ? 1 : 0.5 }}>
                     <td style={{ padding: "10px 16px", fontWeight: 500, fontSize: "13px" }}>{p.nom}</td>
                     <td style={{ padding: "10px 16px", color: "var(--text-muted)", fontSize: "13px" }}>{p.marques?.nom}</td>
