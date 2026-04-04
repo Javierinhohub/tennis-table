@@ -172,22 +172,7 @@ export default function AvisSection({ produitId, revetement }: { produitId: stri
   return (
     <div style={{ marginTop: "2rem" }}>
 
-      {(Object.values(moyennes).some(v => v) || revetement) && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", gap: "16px", marginBottom: "12px", fontSize: "11px", fontWeight: 600 }}>
-            <span style={{ color: "#1A56DB" }}>■ TT-Kip</span>
-            <span style={{ color: "#D97757" }}>■ Marque</span>
-            <span style={{ color: "#0E7F4F" }}>■ Utilisateurs</span>
-          </div>
-          <BarreCaracteristique label="Vitesse" valueTTK={revetement?.vitesse_note} valueMarque={revetement?.note_marque_vitesse} valueUser={moyennes.vitesse} />
-          <BarreCaracteristique label="Effet / Spin" valueTTK={revetement?.effet_note} valueMarque={revetement?.note_marque_spin} valueUser={moyennes.effet} />
-          <BarreCaracteristique label="Contrôle" valueTTK={revetement?.controle_note} valueMarque={revetement?.note_marque_controle} valueUser={moyennes.controle} />
-          <BarreCaracteristique label="Durabilité" valueUser={moyennes.durabilite} />
-          <BarreCaracteristique label="Dureté mousse" valueMarque={revetement?.note_marque_durete} valueUser={moyennes.durete} />
-          <BarreCaracteristique label="Rejet" valueUser={moyennes.rejet} />
-          <BarreCaracteristique label="Qualité / Prix" valueUser={moyennes.qualitePrix} />
-        </div>
-      )}
+
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <div>
