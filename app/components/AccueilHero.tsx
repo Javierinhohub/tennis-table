@@ -9,18 +9,18 @@ export default function AccueilHero() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (search.length < 2) { setResultats([]); return }
+    if (search.length < 2) { setResultats([]); setLoading(false); return }
     setLoading(true)
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from("produits")
         .select("id, nom, slug, marques(nom), revetements(type_revetement)")
-        .ilike("nom", "%" + search + "%")
+        .ilike("nom", search + "%")
         .eq("actif", true)
-        .limit(6)
+        .limit(5)
       setResultats(data || [])
       setLoading(false)
-    }, 300)
+    }, 200)
     return () => clearTimeout(timer)
   }, [search])
 
