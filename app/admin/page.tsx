@@ -1,5 +1,7 @@
 "use client"
 
+import AdminSearchBar from "@/app/components/AdminSearchBar"
+
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
@@ -186,6 +188,7 @@ export default function AdminPage() {
 
   return (
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
+      <AdminSearchBar onSelect={p => window.open("/" + (p.sous_categories?.slug?.startsWith("bois") ? "bois" : "revetements") + "/" + p.slug, "_blank")} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <div>
           <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Administration</h1>
