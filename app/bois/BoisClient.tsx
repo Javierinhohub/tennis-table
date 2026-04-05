@@ -6,12 +6,15 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
   const [search, setSearch] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
 
-  const resultats = useMemo(() => produits.filter(p => {
+  const resultats = useMemo(() => {
+    if (!search && !marqueFilter) return produits
     const s = search.toLowerCase()
-    const nomOk = !search || p.nom.toLowerCase().includes(s) || (p.marques?.nom || "").toLowerCase().includes(s)
-    const marqueOk = !marqueFilter || p.marques?.id === marqueFilter
-    return nomOk && marqueOk
-  }), [produits, search, marqueFilter])
+    return produits.filter(p => {
+      const nomOk = !search || p.nom.toLowerCase().includes(s) || (p.marques?.nom || "").toLowerCase().includes(s)
+      const marqueOk = !marqueFilter || p.marques?.id === marqueFilter
+      return nomOk && marqueOk
+    })
+  }, [produits, search, marqueFilter])
 
   const inputStyle: React.CSSProperties = {
     flex: 2, minWidth: "200px", padding: "10px 14px", fontSize: "14px",
@@ -32,7 +35,7 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
         {(search || marqueFilter) && (
           <button onClick={() => { setSearch(""); setMarqueFilter("") }}
             style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-            Réinitialiser
+            ✕ Réinitialiser
           </button>
         )}
       </div>
@@ -50,15 +53,13 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                <th style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Nom</th>
-                <th style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Marque</th>
-                <th style={{ padding: "10px 16px", textAlign: "center" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Plis</th>
-                <th style={{ padding: "10px 16px", textAlign: "center" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Poids</th>
-                <th style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Composition</th>
+                {["Nom", "Marque", "Plis", "Poids", "Composition"].map(h => (
+                  <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {resultats.map((p, i) => (
+              {resultats.map((p: any, i: number) => (
                 <tr key={p.id}
                   onClick={() => window.location.href = "/bois/" + p.slug}
                   style={{ borderBottom: i < resultats.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
@@ -67,7 +68,7 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
                 >
                   <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "14px" }}>{p.nom}</td>
                   <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>{p.marques?.nom}</td>
-                  <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px" }}>
+                  <td style={{ padding: "12px 16px", textAlign: "center" as const }}>
                     {p.bois?.nb_plis ? <span style={{ background: "#FFF0EB", color: "#D97757", padding: "2px 8px", borderRadius: "10px", fontWeight: 600, fontSize: "12px" }}>{p.bois.nb_plis} plis</span> : "—"}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", color: "var(--text-muted)" }}>
