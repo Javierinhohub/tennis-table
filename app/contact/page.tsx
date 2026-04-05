@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import emailjs from "@emailjs/browser"
 
 export default function ContactPage() {
   const [nom, setNom] = useState("")
@@ -15,22 +16,19 @@ export default function ContactPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
-
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom, email, sujet, message }),
-    })
-
-    const data = await res.json()
-    setLoading(false)
-
-    if (data.success) {
+    try {
+      await emailjs.send(
+        "service_wdt9hnv",
+        "template_st83v3p",
+        { nom, email, sujet, message },
+        "8_JnU6PMHYxNPdmbT"
+      )
       setSuccess(true)
       setNom(""); setEmail(""); setSujet(""); setMessage("")
-    } else {
+    } catch (err: any) {
       setError("Erreur lors de l'envoi. Réessayez dans quelques instants.")
     }
+    setLoading(false)
   }
 
   const inputStyle = {
@@ -48,7 +46,7 @@ export default function ContactPage() {
       </p>
 
       {success ? (
-        <div style={{ background: "#ECFDF5", border: "1px solid #10B981", borderRadius: "12px", padding: "2rem", textAlign: "center" }}>
+        <div style={{ background: "#ECFDF5", border: "1px solid #10B981", borderRadius: "12px", padding: "2rem", textAlign: "center" as const }}>
           <p style={{ fontSize: "32px", marginBottom: "12px" }}>✅</p>
           <p style={{ fontWeight: 700, fontSize: "16px", color: "#065F46", marginBottom: "6px" }}>Message envoyé !</p>
           <p style={{ color: "#047857", fontSize: "14px" }}>Nous vous répondrons dans les plus brefs délais.</p>
@@ -58,7 +56,7 @@ export default function ContactPage() {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "2rem", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "2rem", display: "flex", flexDirection: "column" as const, gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div>
               <label style={{ fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>Nom *</label>
@@ -69,34 +67,29 @@ export default function ContactPage() {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="votre@email.com" style={inputStyle} />
             </div>
           </div>
-
           <div>
             <label style={{ fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>Sujet</label>
             <input value={sujet} onChange={e => setSujet(e.target.value)} placeholder="Objet de votre message" style={inputStyle} />
           </div>
-
           <div>
             <label style={{ fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>Message *</label>
             <textarea value={message} onChange={e => setMessage(e.target.value)} required rows={6}
               placeholder="Votre message..."
               style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.6 }} />
           </div>
-
           {error && (
             <div style={{ background: "#FEF2F2", border: "1px solid #EF4444", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#991B1B" }}>
               {error}
             </div>
           )}
-
           <button type="submit" disabled={loading}
-            style={{ background: loading ? "#ccc" : "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif", transition: "background 0.2s" }}>
+            style={{ background: loading ? "#ccc" : "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
             {loading ? "Envoi en cours..." : "Envoyer le message →"}
           </button>
         </form>
       )}
-
       <div style={{ marginTop: "1.5rem", background: "var(--bg)", borderRadius: "10px", padding: "1rem 1.2rem", fontSize: "13px", color: "var(--text-muted)" }}>
-        💬 Vous pouvez aussi nous retrouver directement sur le <a href="/forum" style={{ color: "#D97757", textDecoration: "none", fontWeight: 500 }}>forum TT-Kip</a>.
+        💬 Vous pouvez aussi nous retrouver sur le <a href="/forum" style={{ color: "#D97757", textDecoration: "none", fontWeight: 500 }}>forum TT-Kip</a>.
       </div>
     </main>
   )
