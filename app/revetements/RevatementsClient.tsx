@@ -27,12 +27,18 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
 
   // Debounce recherche réduit à 250ms
   useEffect(() => {
-    const timer = setTimeout(() => { setSearch(searchInput); setPage(0) }, 250)
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(0) }, 400)
     return () => clearTimeout(timer)
   }, [searchInput])
 
   useEffect(() => {
+    // Récupérer la session immédiatement
     supabase.auth.getSession().then(({ data }) => setUser(data?.session?.user || null))
+    // Écouter les changements de session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
