@@ -15,7 +15,7 @@ export default function ContactPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
-    const res = await fetch("https://formspree.io/f/VOTRE_ID", {
+    const res = await fetch("https://formspree.io/f/xvzvvdov", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ nom, email, sujet, message }),
