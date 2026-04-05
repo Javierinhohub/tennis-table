@@ -9,8 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: "ttk-auth",
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    flowType: "pkce",
   },
-  global: {
-    fetch: (url, options) => fetch(url, { ...options, cache: "no-store" })
-  }
 })

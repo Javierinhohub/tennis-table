@@ -3,6 +3,7 @@ import { Geist } from 'next/font/google'
 import './globals.css'
 import Navbar from './components/Navbar'
 import Script from 'next/script'
+import SessionProvider from './components/SessionProvider'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -37,8 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={geist.variable}>
       <body className="min-h-full flex flex-col">
+        <SessionProvider>
         <Navbar />
         <div style={{ paddingTop: "0" }}>{children}</div>
+        </SessionProvider>
         <footer style={{ borderTop: "1px solid var(--border)", background: "#fff", padding: "1.5rem 2rem", textAlign: "center", marginTop: "auto" }}>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif" }}>
             Copyright TT-Kip 2026 — Tous droits réservés
