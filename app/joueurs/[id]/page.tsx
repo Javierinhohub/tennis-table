@@ -1,88 +1,105 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 
-export const revalidate = 3600
-
 const DRAPEAUX: Record<string, string> = {
-  "Chine": "🇨🇳", "France": "🇫🇷", "Allemagne": "🇩🇪", "Suède": "🇸🇪",
-  "Japon": "🇯🇵", "Corée du Sud": "🇰🇷", "Brésil": "🇧🇷", "Portugal": "🇵🇹",
-  "Autriche": "🇦🇹", "Roumanie": "🇷🇴", "Croatie": "🇭🇷", "Belgique": "🇧🇪",
+  "Chine": "🇨🇳", "Suède": "🇸🇪", "Brésil": "🇧🇷", "Japon": "🇯🇵",
+  "France": "🇫🇷", "Taipei": "🇹🇼", "Corée du Sud": "🇰🇷", "Allemagne": "🇩🇪",
+  "Danemark": "🇩🇰", "Slovénie": "🇸🇮", "Égypte": "🇪🇬", "Australie": "🇦🇺",
+  "Russie": "🇷🇺", "Inde": "🇮🇳", "États-Unis": "🇺🇸", "Tchéquie": "🇨🇿",
+  "Roumanie": "🇷🇴", "Croatie": "🇭🇷", "Pologne": "🇵🇱", "Nigeria": "🇳🇬",
+  "Hong Kong": "🇭🇰", "Espagne": "🇪🇸", "Portugal": "🇵🇹", "Argentine": "🇦🇷",
+  "Luxembourg": "🇱🇺", "Belgique": "🇧🇪", "Kazakhstan": "🇰🇿", "Iran": "🇮🇷",
+  "Algérie": "🇩🇿", "Chili": "🇨🇱", "Moldavie": "🇲🇩", "Hongrie": "🇭🇺",
+  "Angleterre": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Macao": "🇲🇴", "Porto Rico": "🇵🇷", "Autriche": "🇦🇹",
+  "Singapour": "🇸🇬", "Pays de Galles": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Ukraine": "🇺🇦", "Turquie": "🇹🇷",
+  "Thaïlande": "🇹🇭", "Italie": "🇮🇹", "Pays-Bas": "🇳🇱", "Serbie": "🇷🇸",
+  "Canada": "🇨🇦", "Cameroun": "🇨🇲", "Bénin": "🇧🇯",
 }
 
 export default async function JoueurPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const { data: j } = await supabase
+    .from("joueurs_pro")
+    .select("*")
+    .eq("id", id)
+    .single()
 
-  const [{ data: joueur }, { data: produits }] = await Promise.all([
-    supabase.from("joueurs_pro").select("*").eq("id", id).single(),
-    supabase
-      .from("joueurs_pro_produits")
-      .select("depuis, produits(id, nom, slug, marques(nom), sous_categories(nom), revetements(type_revetement))")
-      .eq("joueur_id", id)
-  ])
+  if (!j) notFound()
 
-  if (!joueur) notFound()
-
-  const TYPE_LABELS: Record<string, string> = {
-    In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
-  }
+  const drapeau = DRAPEAUX[j.pays] || "🏳️"
+  const badge = (label: string, value: string, color = "#D97757") => (
+    <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
+      <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>{label}</p>
+      <p style={{ fontSize: "15px", fontWeight: 700, color }}>{value || "—"}</p>
+    </div>
+  )
 
   return (
     <main style={{ maxWidth: "800px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <a href="/joueurs" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>
-        Retour aux joueurs
+      <a href="/joueurs" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
+        ← Retour aux joueurs
       </a>
 
-      <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "24px", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 800, color: "#D97757", flexShrink: 0 }}>
-            {joueur.classement_mondial <= 3 ? ["🥇","🥈","🥉"][joueur.classement_mondial - 1] : joueur.nom[0]}
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", borderRadius: "16px", padding: "2rem", marginBottom: "1.5rem", color: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" as const }}>
+          <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", flexShrink: 0 }}>
+            {drapeau}
           </div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: "26px", fontWeight: 700, marginBottom: "4px", letterSpacing: "-0.5px" }}>{joueur.nom}</h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px" }}>
-              {DRAPEAUX[joueur.pays] || ""} {joueur.pays}
-            </p>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: "36px", fontWeight: 800, color: "#D97757", lineHeight: 1 }}>#{joueur.classement_mondial}</p>
-            <p style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "4px" }}>Classement mondial</p>
+          <div>
+            <h1 style={{ fontSize: "clamp(1.4rem, 4vw, 2rem)", fontWeight: 800, marginBottom: "6px", letterSpacing: "-0.5px" }}>{j.nom}</h1>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" as const }}>
+              <span style={{ background: "rgba(255,255,255,0.2)", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: 600 }}>
+                #{j.classement_mondial} Mondial {j.genre === "F" ? "🏆 Femmes" : "🏆 Hommes"}
+              </span>
+              <span style={{ background: "rgba(255,255,255,0.2)", padding: "4px 12px", borderRadius: "20px", fontSize: "13px" }}>
+                {j.pays}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {produits && produits.length > 0 && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>
-            Matériel utilisé
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {produits.map((p: any) => {
-              const prod = p.produits
-              const rev = prod?.revetements
-              return (
-                <a key={prod?.id} href={"/" + (prod?.sous_categories?.nom?.toLowerCase().includes("bois") ? "bois" : "revetements") + "/" + prod?.slug}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "var(--bg)", borderRadius: "8px", textDecoration: "none", border: "1px solid transparent", transition: "border-color 0.15s" }}
-                >
-                  <div>
-                    <p style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)", marginBottom: "2px" }}>{prod?.nom}</p>
-                    <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{prod?.marques?.nom} · {prod?.sous_categories?.nom}</p>
-                  </div>
-                  <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                    {rev && <span style={{ fontSize: "11px", fontWeight: 500, padding: "3px 8px", borderRadius: "4px", background: "var(--accent-light)", color: "var(--accent)" }}>{TYPE_LABELS[rev.type_revetement] || rev.type_revetement}</span>}
-                    {p.depuis && <span style={{ fontSize: "11px", color: "var(--text-muted)", padding: "3px 8px", borderRadius: "4px", background: "#fff", border: "1px solid var(--border)" }}>Depuis {p.depuis}</span>}
-                  </div>
-                </a>
-              )
-            })}
+      {/* Caractéristiques */}
+      <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>Caractéristiques</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
+        {badge("Style de jeu", j.style || "—")}
+        {badge("Main", j.main || "—")}
+        {badge("Âge", j.age ? j.age + " ans" : "—")}
+        {badge("Pays", `${drapeau} ${j.pays}`)}
+      </div>
+
+      {/* Matériel */}
+      {(j.bois_nom || j.revetement_cd || j.revetement_rv) && (
+        <>
+          <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>Matériel</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
+            {j.bois_nom && (
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🏏 Bois</p>
+                <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.bois_nom}</p>
+              </div>
+            )}
+            {j.revetement_cd && (
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🔴 Coup droit</p>
+                <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_cd}</p>
+              </div>
+            )}
+            {j.revetement_rv && (
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>⚫ Revers</p>
+                <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_rv}</p>
+              </div>
+            )}
           </div>
-        </div>
+        </>
       )}
 
-      {(!produits || produits.length === 0) && (
-        <div style={{ textAlign: "center", padding: "3rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", color: "var(--text-muted)" }}>
-          Aucun matériel renseigné pour ce joueur.
-        </div>
-      )}
+      {/* Note info */}
+      <div style={{ background: "#FFF0EB", border: "1px solid #D97757", borderRadius: "10px", padding: "12px 16px", fontSize: "13px", color: "#C4694A" }}>
+        💡 Les informations matériel sont indicatives et peuvent évoluer en cours de saison.
+      </div>
     </main>
   )
 }
