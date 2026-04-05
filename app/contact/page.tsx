@@ -20,7 +20,7 @@ export default function ContactPage() {
       await emailjs.send(
         "service_wdt9hnv",
         "template_st83v3p",
-        { nom, email, sujet, message },
+        { nom, name: nom, email, sujet, message },
         "8_JnU6PMHYxNPdmbT"
       )
       setSuccess(true)
