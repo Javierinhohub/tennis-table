@@ -30,26 +30,27 @@ export default async function JoueursPage() {
 
   const Colonne = ({ titre, liste }: { titre: string, liste: any[] }) => (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem", paddingBottom: "10px", borderBottom: "2px solid #D97757" }}>
-        <span style={{ fontSize: "18px" }}>🏓</span>
-        <h2 style={{ fontSize: "17px", fontWeight: 700 }}>{titre}</h2>
-        <span style={{ marginLeft: "auto", fontSize: "12px", color: "var(--text-muted)", background: "var(--bg)", padding: "2px 10px", borderRadius: "10px" }}>
-          {liste.length} joueur{liste.length > 1 ? "s" : ""}
-        </span>
+      <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
+        <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>{titre}</h2>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{liste.length} joueurs classés</p>
       </div>
-      <div style={{ display: "flex", flexDirection: "column" as const, gap: "6px" }}>
+      <div style={{ display: "flex", flexDirection: "column" as const, gap: "4px" }}>
         {liste.map((j: any) => (
           <Link key={j.id} href={"/joueurs/" + j.id}
-            style={{ display: "flex", alignItems: "center", gap: "12px", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 14px", textDecoration: "none" }}
+            style={{ display: "grid", gridTemplateColumns: "32px 1fr auto", alignItems: "center", gap: "12px", background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", textDecoration: "none" }}
           >
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#D97757", flexShrink: 0 }}>
-              {j.classement_mondial <= 3 ? ["🥇","🥈","🥉"][j.classement_mondial - 1] : j.nom[0]}
+            <span style={{ fontSize: "13px", fontWeight: 700, color: j.classement_mondial <= 3 ? "#D97757" : "var(--text-muted)", textAlign: "center" as const }}>
+              {j.classement_mondial}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontWeight: 600, fontSize: "13px", color: "var(--text)", whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>{j.nom}</p>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>{DRAPEAUX[j.pays] || ""} {j.pays}</p>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontWeight: 700, fontSize: "13px", color: "var(--text)", marginBottom: "1px", whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>{j.nom}</p>
-              <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{DRAPEAUX[j.pays] || ""} {j.pays}</p>
-            </div>
-            <p style={{ fontSize: "16px", fontWeight: 800, color: "#D97757", flexShrink: 0 }}>#{j.classement_mondial}</p>
+            {j.style && (
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "var(--bg)", padding: "2px 8px", borderRadius: "6px", whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                {j.style}
+              </span>
+            )}
           </Link>
         ))}
       </div>
@@ -60,9 +61,9 @@ export default async function JoueursPage() {
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Joueurs professionnels</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Classement mondial ITTF — Top 100 Hommes & Femmes</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Classement mondial ITTF avril 2026</p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}>
         <Colonne titre="Hommes" liste={hommes} />
         <Colonne titre="Femmes" liste={femmes} />
       </div>
