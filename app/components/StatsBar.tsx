@@ -13,8 +13,9 @@ export default async function StatsBar() {
 
   const stats = [
     { label: "Revêtements", value: (r1.count || 0).toLocaleString("fr-FR") },
-    { label: "Marques", value: (r2.count || 0).toLocaleString("fr-FR") },
     { label: "Bois", value: (r3.count || 0).toLocaleString("fr-FR") },
+    { label: "Marques", value: (r2.count || 0).toLocaleString("fr-FR") },
+    
     { label: "Membres", value: (r4.count || 0).toLocaleString("fr-FR") },
     { label: "Avis publiés", value: (r5.count || 0).toLocaleString("fr-FR") },
   ]
