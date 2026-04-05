@@ -6,8 +6,7 @@ import { supabase } from "@/lib/supabase"
 const LABELS = ["", "Mauvais", "Passable", "Moyen", "Bien", "Excellent"]
 const COLORS = ["", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#16A34A"]
 
-export default function NoteModal({ produit, onClose }: { produit: any, onClose: () => void }) {
-  const [user, setUser] = useState<any>(null)
+export default function NoteModal({ produit, userId, onClose }: { produit: any, userId?: string, onClose: () => void }) {
   const [hover, setHover] = useState(0)
   const [noteGlobale, setNoteGlobale] = useState(0)
   const [noteVitesse, setNoteVitesse] = useState("")
@@ -20,18 +19,22 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [maNote, setMaNote] = useState<any>(null)
+  const [fetchDone, setFetchDone] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      if (data.user) fetchMaNote(data.user.id)
-    })
     document.body.style.overflow = "hidden"
+    if (userId) fetchMaNote(userId)
+    else setFetchDone(true)
     return () => { document.body.style.overflow = "" }
-  }, [])
+  }, [userId])
 
-  async function fetchMaNote(userId: string) {
-    const { data } = await supabase.from("notes_revetements").select("*").eq("produit_id", produit.id).eq("user_id", userId).single()
+  async function fetchMaNote(uid: string) {
+    const { data } = await supabase
+      .from("notes_revetements")
+      .select("*")
+      .eq("produit_id", produit.id)
+      .eq("user_id", uid)
+      .single()
     if (data) {
       setMaNote(data)
       setNoteGlobale(data.note_globale || 0)
@@ -43,14 +46,15 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
       setNoteRejet(data.note_rejet ? String(data.note_rejet) : "")
       setNoteQP(data.note_qualite_prix ? String(data.note_qualite_prix) : "")
     }
+    setFetchDone(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!noteGlobale) return
+    if (!noteGlobale || !userId) return
     setLoading(true)
     const payload = {
-      produit_id: produit.id, user_id: user.id,
+      produit_id: produit.id, user_id: userId,
       note_globale: noteGlobale,
       note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
       note_effet: noteEffet ? parseInt(noteEffet) : null,
@@ -90,7 +94,7 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: "#fff", borderRadius: "14px", width: "100%", maxWidth: "460px", maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
 
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky" as const, top: 0, background: "#fff", zIndex: 1 }}>
           <div>
             <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "2px" }}>{produit.nom}</h2>
             <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{produit.marques?.nom} · {maNote ? "Modifier ma note" : "Noter ce revêtement"}</p>
@@ -99,18 +103,21 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
         </div>
 
         {saved ? (
-          <div style={{ padding: "3rem", textAlign: "center" }}>
+          <div style={{ padding: "3rem", textAlign: "center" as const }}>
             <div style={{ fontSize: "48px", marginBottom: "12px" }}>✅</div>
-            <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--success)" }}>Note enregistrée !</p>
+            <p style={{ fontSize: "16px", fontWeight: 600, color: "#16A34A" }}>Note enregistrée !</p>
           </div>
-        ) : !user ? (
-          <div style={{ padding: "3rem", textAlign: "center" }}>
-            <p style={{ color: "var(--text-muted)", marginBottom: "16px" }}>Connectez-vous pour noter ce revêtement</p>
+        ) : !fetchDone ? (
+          <div style={{ padding: "3rem", textAlign: "center" as const, color: "var(--text-muted)", fontSize: "14px" }}>
+            Chargement...
+          </div>
+        ) : !userId ? (
+          <div style={{ padding: "3rem", textAlign: "center" as const }}>
+            <p style={{ color: "var(--text-muted)", marginBottom: "16px", fontSize: "14px" }}>Connectez-vous pour noter ce revêtement</p>
             <a href="/auth/login" style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600 }}>Se connecter</a>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-
+          <form onSubmit={handleSubmit} style={{ padding: "20px", display: "flex", flexDirection: "column" as const, gap: "16px" }}>
             <div>
               <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "10px" }}>Note globale *</p>
               <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "6px" }}>
@@ -125,11 +132,11 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
                 ))}
               </div>
               {(hover > 0 || noteGlobale > 0) && (
-                <p style={{ textAlign: "center", fontSize: "14px", fontWeight: 600, color: COLORS[hover || noteGlobale] }}>{LABELS[hover || noteGlobale]}</p>
+                <p style={{ textAlign: "center" as const, fontSize: "14px", fontWeight: 600, color: COLORS[hover || noteGlobale] }}>{LABELS[hover || noteGlobale]}</p>
               )}
             </div>
 
-            <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column" as const, gap: "12px" }}>
               <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>Critères détaillés — optionnels</p>
               <Slider label="Vitesse" value={noteVitesse} onChange={setNoteVitesse} color="#1A56DB" />
               <Slider label="Effet / Spin" value={noteEffet} onChange={setNoteEffet} color="#7C3AED" />
@@ -141,9 +148,12 @@ export default function NoteModal({ produit, onClose }: { produit: any, onClose:
             </div>
 
             <div style={{ display: "flex", gap: "8px" }}>
-              <button type="button" onClick={onClose} style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Annuler</button>
+              <button type="button" onClick={onClose}
+                style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                Annuler
+              </button>
               <button type="submit" disabled={loading || noteGlobale === 0}
-                style={{ flex: 2, background: noteGlobale === 0 ? "var(--border)" : "#D97757", color: noteGlobale === 0 ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: noteGlobale === 0 ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif", transition: "background 0.15s" }}>
+                style={{ flex: 2, background: noteGlobale === 0 ? "var(--border)" : "#D97757", color: noteGlobale === 0 ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: noteGlobale === 0 ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
                 {loading ? "Enregistrement..." : maNote ? "Mettre à jour" : "Enregistrer"}
               </button>
             </div>
