@@ -7,6 +7,9 @@ export default function Home() {
   return (
     <>
       <AccueilHero />
+      <section style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "1.2rem 2rem", textAlign: "center" }}>
+        <p style={{ maxWidth: "700px", margin: "0 auto", fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7 }}>TT-Kip, la nouvelle référence en matière d'équipements de tennis de table. Vous y trouverez un maximum d'informations sur les revêtements, les bois et autre matériel. L'objectif est le partage et de ne pas se perdre avec ces milliers de références.</p>
+      </section>
       <Suspense fallback={
         <section style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)", padding: "1.5rem 2rem", textAlign: "center" }}>
           <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Chargement des statistiques...</p>
