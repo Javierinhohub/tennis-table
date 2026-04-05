@@ -1,8 +1,9 @@
+"use client"
+
 import { Suspense } from "react"
 import { supabase } from "@/lib/supabase"
 import RevatementsClient from "./RevatementsClient"
 
-export const revalidate = 3600
 
 export default async function RevatementsPage() {
   const [{ data: produits, count }, { data: marques }] = await Promise.all([
@@ -25,4 +26,4 @@ export default async function RevatementsPage() {
       />
     </Suspense>
   )
-}
+}// SEO metadata already handled by layout

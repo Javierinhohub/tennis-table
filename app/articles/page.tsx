@@ -1,3 +1,8 @@
+export const metadata = {
+  title: "Articles & Tests tennis de table",
+  description: "Tests, conseils et comparatifs de matériel de tennis de table par des joueurs passionnés. Guides d'achat et analyses approfondies.",
+  openGraph: { title: "Articles & Tests tennis de table", description: "Tests et conseils matériel ping pong par TT-Kip.", url: "https://tt-kip.com/articles" }
+}
 import { supabase } from "@/lib/supabase"
 import ArticlesClient from "./ArticlesClient"
 
