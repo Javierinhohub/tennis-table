@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase"
 
-export const revalidate = 300
+export const revalidate = 60
 
 export default async function StatsBar() {
   const [r1, r2, r3, r4, r5] = await Promise.all([
