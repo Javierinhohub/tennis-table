@@ -26,7 +26,7 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
     <>
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" as const }}>
         <input type="text" placeholder="Rechercher un bois..." value={search}
-          onChange={e => setSearch(e.target.value)} style={inputStyle} />
+          onChange={e => setSearch(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={inputStyle} />
         <select value={marqueFilter} onChange={e => setMarqueFilter(e.target.value)}
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}>
           <option value="">Toutes les marques</option>

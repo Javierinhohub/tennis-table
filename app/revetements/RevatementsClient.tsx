@@ -100,7 +100,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, marqu
 
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" as const }}>
         <input type="text" placeholder="Rechercher..." value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
+          onChange={e => setSearchInput(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
           style={{ ...inputStyle, flex: 2, minWidth: "200px" }} />
         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "140px" }}>

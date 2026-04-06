@@ -76,7 +76,7 @@ export default function AccueilHero() {
           <input ref={inputRef} type="text"
             placeholder="Rechercher revêtement, bois, marque, joueur..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 200)}
             style={{ width: "100%", padding: "14px 44px 14px 18px", fontSize: "16px", border: "none", borderRadius: "12px", outline: "none", background: "#fff", color: "#111", fontFamily: "Poppins, sans-serif", boxSizing: "border-box" as const, boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}
