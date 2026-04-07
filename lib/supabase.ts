@@ -46,7 +46,7 @@ function getCookie(name: string): string | null {
 
 function setCookie(name: string, value: string) {
   if (typeof document === "undefined") return
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=604800;SameSite=Lax`
+  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=2592000;SameSite=Lax`
 }
 
 function deleteCookie(name: string) {
