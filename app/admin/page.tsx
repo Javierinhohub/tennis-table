@@ -2,10 +2,69 @@
 
 import AdminSearchBar from "@/app/components/AdminSearchBar"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
+// ─── Autocomplete bois / revêtements ─────────────────────────────────────────
+function Autocomplete({ label, placeholder, value, onSelect, searchFn, displayFn }: {
+  label: string; placeholder: string; value: string
+  onSelect: (item: any) => void
+  searchFn: (q: string) => Promise<any[]>
+  displayFn: (item: any) => string
+}) {
+  const [query, setQuery] = useState(value)
+  const [results, setResults] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setQuery(value) }, [value])
+
+  useEffect(() => {
+    if (query.length < 2) { setResults([]); return }
+    const t = setTimeout(async () => {
+      const r = await searchFn(query)
+      setResults(r)
+      setOpen(true)
+    }, 200)
+    return () => clearTimeout(t)
+  }, [query])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  const labelStyle: React.CSSProperties = { display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px" }
+  const inputStyle: React.CSSProperties = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <label style={labelStyle}>{label}</label>
+      <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder={placeholder} style={inputStyle} />
+      {open && results.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100, background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", marginTop: "4px", maxHeight: "220px", overflowY: "auto", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+          {results.map((item, i) => (
+            <button key={i} type="button"
+              onClick={() => { onSelect(item); setQuery(displayFn(item)); setOpen(false) }}
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif", borderBottom: i < results.length - 1 ? "1px solid var(--border)" : "none" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "var(--bg)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              {displayFn(item)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [onglet, setOnglet] = useState("avis")
@@ -41,6 +100,19 @@ export default function AdminPage() {
   const [liaisonProduitSearch, setLiaisonProduitSearch] = useState("")
   const [liaisonProduitId, setLiaisonProduitId] = useState("")
   const [produitsFiltres, setProduitsFiltres] = useState<any[]>([])
+
+  // ── Modification joueur pro ──
+  const [joueurSelectionne, setJoueurSelectionne] = useState<any>(null)
+  const [filtreJoueur, setFiltreJoueur] = useState("")
+  const [editClassement, setEditClassement] = useState("")
+  const [editStyle, setEditStyle] = useState("")
+  const [editMain, setEditMain] = useState("")
+  const [editAge, setEditAge] = useState("")
+  const [editBoisNom, setEditBoisNom] = useState("")
+  const [editRevetementCd, setEditRevetementCd] = useState("")
+  const [editRevetementRv, setEditRevetementRv] = useState("")
+  const [savingJoueur, setSavingJoueur] = useState(false)
+  const [messageJoueur, setMessageJoueur] = useState("")
 
   useEffect(() => { checkAdmin() }, [])
 
@@ -88,6 +160,64 @@ export default function AdminPage() {
     const s = liaisonProduitSearch.toLowerCase()
     setProduitsFiltres(produits.filter(p => p.nom.toLowerCase().includes(s) || (p.marques && p.marques.nom.toLowerCase().includes(s))).slice(0, 8))
   }, [liaisonProduitSearch, produits])
+
+  // ── Helpers autocomplete matériel ──
+  async function searchBois(q: string) {
+    const { data } = await supabase.from("produits").select("id, nom, marques(nom), bois!inner(nb_plis)").ilike("nom", `%${q}%`).limit(8)
+    return data || []
+  }
+
+  async function searchRevetement(q: string) {
+    const { data } = await supabase.from("produits").select("id, nom, marques(nom), revetements!inner(type_revetement)").ilike("nom", `%${q}%`).limit(8)
+    return data || []
+  }
+
+  function displayBois(item: any) {
+    const marque = (item.marques as any)?.nom || ""
+    const plis = (item.bois as any)?.nb_plis
+    return `${marque} ${item.nom}${plis ? ` (${plis} plis)` : ""}`
+  }
+
+  function displayRevetement(item: any) {
+    const marque = (item.marques as any)?.nom || ""
+    const TYPE: Record<string, string> = { In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
+    const type = TYPE[(item.revetements as any)?.type_revetement] || ""
+    return `${marque} ${item.nom}${type ? ` — ${type}` : ""}`
+  }
+
+  function selectionnerJoueur(j: any) {
+    setMessageJoueur("")
+    setJoueurSelectionne(j)
+    setEditClassement(j.classement_mondial ? String(j.classement_mondial) : "")
+    setEditStyle(j.style || "")
+    setEditMain(j.main || "")
+    setEditAge(j.age ? String(j.age) : "")
+    setEditBoisNom(j.bois_nom || "")
+    setEditRevetementCd(j.revetement_cd || "")
+    setEditRevetementRv(j.revetement_rv || "")
+  }
+
+  async function handleSaveJoueur(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingJoueur(true)
+    setMessageJoueur("")
+    const { error } = await supabase.from("joueurs_pro").update({
+      classement_mondial: editClassement ? parseInt(editClassement) : null,
+      style: editStyle || null,
+      main: editMain || null,
+      age: editAge ? parseInt(editAge) : null,
+      bois_nom: editBoisNom || null,
+      revetement_cd: editRevetementCd || null,
+      revetement_rv: editRevetementRv || null,
+    }).eq("id", joueurSelectionne.id)
+    setSavingJoueur(false)
+    if (error) {
+      setMessageJoueur("❌ Erreur : " + error.message)
+    } else {
+      setMessageJoueur("✅ Modifications enregistrées !")
+      await fetchJoueurs()
+    }
+  }
 
   async function validerAvis(id: string, valide: boolean) {
     await supabase.from("avis").update({ valide }).eq("id", id)
@@ -170,12 +300,14 @@ export default function AdminPage() {
 
   const avisEnAttente = avis.filter(a => !a.valide)
   const avisValides = avis.filter(a => a.valide)
+  const joueursFiltres = joueurs.filter(j => j.nom.toLowerCase().includes(filtreJoueur.toLowerCase()))
 
   const onglets = [
     { id: "avis", label: "Avis", count: avisEnAttente.length },
     { id: "produits", label: "Produits", count: produits.length },
     { id: "ajouter", label: "Ajouter un revêtement" },
     { id: "joueurs", label: "Joueurs pro", count: joueurs.length },
+    { id: "modifier-joueur", label: "Modifier un joueur" },
     { id: "liaisons", label: "Lier joueur / revêtement" },
     { id: "articles", label: "Articles & Tests", href: "/admin/articles" },
   ]
@@ -185,6 +317,7 @@ export default function AdminPage() {
   const btnPrimary = { background: "var(--accent)", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%" }
   const btnDanger = { background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }
   const btnSuccess = { background: "var(--success-light)", color: "var(--success)", border: "none", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }
+  const inputStyleAC: React.CSSProperties = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" }
 
   return (
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
@@ -213,6 +346,7 @@ export default function AdminPage() {
 
       {message && <div style={{ background: "var(--success-light)", border: "1px solid #A7F3D0", color: "var(--success)", borderRadius: "8px", padding: "12px 16px", marginBottom: "1.5rem", fontSize: "14px", fontWeight: 500 }}>{message}</div>}
 
+      {/* ── AVIS ── */}
       {onglet === "avis" && (
         <div>
           {avisEnAttente.length > 0 && (
@@ -263,21 +397,21 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── PRODUITS ── */}
       {onglet === "produits" && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: 600 }}>Tous les produits ({produits.length})</h2>
-          <input type="text" placeholder="Rechercher..." value={searchProduits} onChange={e => setSearchProduits(e.target.value)}
-            style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "7px 12px", fontSize: "13px", outline: "none", color: "var(--text)", fontFamily: "Poppins, sans-serif", width: "220px" }} />
-        </div>
+            <h2 style={{ fontSize: "14px", fontWeight: 600 }}>Tous les produits ({produits.length})</h2>
+            <input type="text" placeholder="Rechercher..." value={searchProduits} onChange={e => setSearchProduits(e.target.value)}
+              style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "7px 12px", fontSize: "13px", outline: "none", color: "var(--text)", fontFamily: "Poppins, sans-serif", width: "220px" }} />
+          </div>
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Nom</th>
-                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Marque</th>
-                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Catégorie</th>
-                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Actions</th>
+                  {["Nom", "Marque", "Catégorie", "Actions"].map(h => (
+                    <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -300,6 +434,7 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── AJOUTER REVÊTEMENT ── */}
       {onglet === "ajouter" && (
         <div style={{ maxWidth: "560px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "1.5rem" }}>Ajouter un revêtement</h2>
@@ -321,6 +456,7 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── JOUEURS (ajouter / supprimer) ── */}
       {onglet === "joueurs" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", alignItems: "start" }}>
           <div>
@@ -349,6 +485,125 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── MODIFIER UN JOUEUR ── */}
+      {onglet === "modifier-joueur" && (
+        <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1.5rem", alignItems: "start" }}>
+
+          {/* Liste joueurs */}
+          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
+            <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--border)" }}>
+              <input type="text" placeholder="Rechercher..." value={filtreJoueur}
+                onChange={e => setFiltreJoueur(e.target.value)}
+                style={{ ...inputStyleAC, padding: "7px 10px", fontSize: "13px" }} />
+            </div>
+            <div style={{ maxHeight: "560px", overflowY: "auto" }}>
+              {joueursFiltres.map(j => (
+                <button key={j.id} type="button" onClick={() => selectionnerJoueur(j)}
+                  style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "10px 14px", textAlign: "left", background: joueurSelectionne?.id === j.id ? "#FFF0EB" : "none", border: "none", borderBottom: "1px solid var(--border)", cursor: "pointer", fontFamily: "Poppins, sans-serif", borderLeft: joueurSelectionne?.id === j.id ? "3px solid #D97757" : "3px solid transparent" }}>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", minWidth: "28px" }}>#{j.classement_mondial}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{j.nom}</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{j.genre === "F" ? "Femme" : "Homme"} · {j.pays}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Formulaire modification */}
+          {!joueurSelectionne ? (
+            <div style={{ background: "#fff", border: "1px dashed var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+              <p style={{ fontSize: "28px", marginBottom: "10px" }}>👈</p>
+              <p style={{ fontSize: "14px" }}>Sélectionnez un joueur dans la liste</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveJoueur}>
+              {messageJoueur && (
+                <div style={{ background: messageJoueur.startsWith("✅") ? "#ECFDF5" : "#FEF2F2", border: `1px solid ${messageJoueur.startsWith("✅") ? "#A7F3D0" : "#FECACA"}`, color: messageJoueur.startsWith("✅") ? "#065F46" : "#DC2626", borderRadius: "8px", padding: "12px 16px", marginBottom: "12px", fontSize: "14px", fontWeight: 500 }}>
+                  {messageJoueur}
+                </div>
+              )}
+
+              {/* Header */}
+              <div style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", borderRadius: "10px", padding: "14px 18px", marginBottom: "12px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: "17px" }}>{joueurSelectionne.nom}</p>
+                  <p style={{ fontSize: "13px", opacity: 0.85 }}>{joueurSelectionne.pays} · {joueurSelectionne.genre === "F" ? "Femmes" : "Hommes"}</p>
+                </div>
+                <span style={{ background: "rgba(255,255,255,0.2)", padding: "5px 12px", borderRadius: "20px", fontSize: "14px", fontWeight: 700 }}>
+                  #{joueurSelectionne.classement_mondial}
+                </span>
+              </div>
+
+              {/* Classement & Infos */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginBottom: "12px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>📊 Classement & Informations</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Classement</label>
+                    <input type="number" value={editClassement} onChange={e => setEditClassement(e.target.value)} style={inputStyleAC} placeholder="Ex: 12" />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Âge</label>
+                    <input type="number" value={editAge} onChange={e => setEditAge(e.target.value)} style={inputStyleAC} placeholder="Ex: 28" />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Style de jeu</label>
+                    <select value={editStyle} onChange={e => setEditStyle(e.target.value)} style={inputStyleAC}>
+                      <option value="">—</option>
+                      <option value="Attaquant">Attaquant</option>
+                      <option value="Défenseur">Défenseur</option>
+                      <option value="Tout-jeu">Tout-jeu</option>
+                      <option value="Bloqueur">Bloqueur</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Main</label>
+                    <select value={editMain} onChange={e => setEditMain(e.target.value)} style={inputStyleAC}>
+                      <option value="">—</option>
+                      <option value="Droitier">Droitier</option>
+                      <option value="Gaucher">Gaucher</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Matériel */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginBottom: "12px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>🏏 Matériel</p>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Tapez au moins 2 caractères pour rechercher dans la base TT-Kip.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <Autocomplete label="Bois" placeholder="Ex: Viscaria, Timo Boll ALC..." value={editBoisNom}
+                    onSelect={item => setEditBoisNom(displayBois(item))} searchFn={searchBois} displayFn={displayBois} />
+                  <Autocomplete label="🔴 Revêtement coup droit" placeholder="Ex: Tenergy 05, Dignics..." value={editRevetementCd}
+                    onSelect={item => setEditRevetementCd(displayRevetement(item))} searchFn={searchRevetement} displayFn={displayRevetement} />
+                  <Autocomplete label="⚫ Revêtement revers" placeholder="Ex: Rozena, Glayzer..." value={editRevetementRv}
+                    onSelect={item => setEditRevetementRv(displayRevetement(item))} searchFn={searchRevetement} displayFn={displayRevetement} />
+                </div>
+
+                {/* Aperçu */}
+                {(editBoisNom || editRevetementCd || editRevetementRv) && (
+                  <div style={{ marginTop: "14px", background: "var(--bg)", borderRadius: "8px", padding: "10px 14px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "8px" }}>Aperçu</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      {editBoisNom && <div style={{ display: "flex", gap: "8px" }}><span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "80px" }}>🏏 Bois</span><span style={{ fontSize: "13px", fontWeight: 600 }}>{editBoisNom}</span></div>}
+                      {editRevetementCd && <div style={{ display: "flex", gap: "8px" }}><span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "80px" }}>🔴 CD</span><span style={{ fontSize: "13px", fontWeight: 600 }}>{editRevetementCd}</span></div>}
+                      {editRevetementRv && <div style={{ display: "flex", gap: "8px" }}><span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "80px" }}>⚫ RV</span><span style={{ fontSize: "13px", fontWeight: 600 }}>{editRevetementRv}</span></div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button type="submit" disabled={savingJoueur}
+                style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%", opacity: savingJoueur ? 0.7 : 1, fontFamily: "Poppins, sans-serif" }}>
+                {savingJoueur ? "Enregistrement..." : "Enregistrer les modifications"}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* ── LIAISONS ── */}
       {onglet === "liaisons" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", alignItems: "start" }}>
           <div>
@@ -371,8 +626,7 @@ export default function AdminPage() {
                         onClick={() => { setLiaisonProduitId(p.id); setLiaisonProduitSearch(p.nom + " — " + p.marques?.nom); setProduitsFiltres([]) }}
                         style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < produitsFiltres.length - 1 ? "1px solid var(--border)" : "none", fontSize: "13px", background: liaisonProduitId === p.id ? "var(--accent-light)" : "#fff" }}
                         onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
-                        onMouseLeave={e => e.currentTarget.style.background = liaisonProduitId === p.id ? "var(--accent-light)" : "#fff"}
-                      >
+                        onMouseLeave={e => e.currentTarget.style.background = liaisonProduitId === p.id ? "var(--accent-light)" : "#fff"}>
                         <span style={{ fontWeight: 500 }}>{p.nom}</span>
                         <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>{p.marques?.nom}</span>
                       </div>
