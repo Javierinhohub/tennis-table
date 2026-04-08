@@ -6,7 +6,7 @@ export default function AProposPage() {
 
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "2rem", marginBottom: "1.5rem", lineHeight: 1.8, fontSize: "15px", color: "var(--text)" }}>
         <p>
-          TT-Kip, c&apos;est l&apos;idée d&apos;un groupe de potes passionnés de ping, qui partagent depuis des années sur des forums et groupes Facebook. Parmi nous, des joueurs de picots longs, backside et picots courts — classés de 8 à 16.
+          TT-Kip, c&apos;est l&apos;idée d&apos;un groupe de passionnés de ping, qui partagent depuis des années sur des forums et groupes Facebook. Parmi nous, des joueurs de picots longs, backside et picots courts — classés de 8 à 16.
         </p>
         <p style={{ marginTop: "1rem" }}>
           Notre objectif, c&apos;est de partager un maximum d&apos;informations, de manière indépendante, sur la culture du matos de ping : la nôtre, mais surtout la vôtre. Un espace pour échanger librement, pongistiquement et cordialement.
@@ -15,10 +15,10 @@ export default function AProposPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "2rem" }}>
         {[
-          { titre: "Indépendants", desc: "Aucun sponsor, aucune publicité. Que des avis de joueurs." },
+          { titre: "Indépendants", desc: "Aucun sponsor, aucune publicité. Que des avis de joueurs amateurs." },
           { titre: "Passionnés", desc: "Des joueurs de tous styles, classés de 8 à 16." },
           { titre: "Communauté", desc: "Le partage avant tout, sur le forum et les articles." },
-          { titre: "Exhaustif", desc: "1 690 revêtements LARC 2026, des centaines de bois." },
+          { titre: "Exhaustif", desc: "Pls de 1500 revêtements repertoriés, des centaines de bois." },
         ].map(c => (
           <div key={c.titre} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "1.2rem" }}>
             <p style={{ fontWeight: 700, fontSize: "14px", color: "var(--text)", marginBottom: "6px" }}>{c.titre}</p>

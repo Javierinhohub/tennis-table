@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import BoisClient from "./BoisClient"
+import AvisSectionBois from "./AvisSectionBois"
 
 export const revalidate = 300
 

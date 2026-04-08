@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
+import AvisSectionBois from "./AvisSectionBois"
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -166,7 +167,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
           {/* Utilisateurs du site */}
           {utilisateurs && utilisateurs.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem" }}>
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
               <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>
                 Membres TT-Kip qui utilisent ce bois
               </h2>
@@ -183,6 +184,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               </div>
             </div>
           )}
+
+          {/* ✅ Section avis bois */}
+          <AvisSectionBois produitId={produit.id} />
+
         </div>
 
         {/* Sidebar */}

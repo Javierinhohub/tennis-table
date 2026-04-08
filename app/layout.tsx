@@ -30,6 +30,22 @@ export const metadata: Metadata = {
     siteName: 'TT-Kip',
     title: 'TT-Kip — La référence des équipements de tennis de table',
     description: 'Base de données de revêtements, bois et équipements de tennis de table.',
+    // Ajoute ceci pour qu'une image apparaisse lors des partages :
+    images: [
+      {
+        url: '/og-image.jpg', // Place une image (1200x630px) dans ton dossier public/
+        width: 1200,
+        height: 630,
+        alt: 'Aperçu du site TT-Kip',
+      },
+    ],
+  },
+  // Ajoute ceci pour les partages sur X (Twitter)
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TT-Kip — La référence des équipements de ping',
+    description: 'Tests, avis et base de données de revêtements et bois de tennis de table.',
+    images: ['/og-image.jpg'],
   },
   metadataBase: new URL('https://tt-kip.com'),
 }

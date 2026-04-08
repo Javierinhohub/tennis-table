@@ -9,15 +9,33 @@ export default function ForumPage() {
 
   useEffect(() => { fetchData() }, [])
 
-  async function fetchData() {
-    setLoading(true)
-    const { data } = await supabase
+async function fetchData() {
+  try {
+    setLoading(true);
+    
+    const { data, error } = await supabase
       .from("forum_categories")
       .select("*, forum_sujets(id, titre, cree_le, user_id, utilisateurs:user_id(pseudo))")
-      .order("ordre")
-    setCategories(data || [])
-    setLoading(false)
+      .order("ordre");
+
+    // Si Supabase renvoie une erreur (ex: table introuvable ou problème de droits RLS)
+    if (error) {
+      console.error("Erreur Supabase :", error.message);
+      setCategories([]);
+      return; 
+    }
+
+    setCategories(data || []);
+  } catch (err) {
+    // Si le code JavaScript plante complètement
+    console.error("Erreur critique d'exécution :", err);
+    setCategories([]);
+  } finally {
+    // Le bloc 'finally' s'exécute TOUJOURS, qu'il y ait eu une erreur ou non.
+    // Ça garantit que le "Chargement..." va disparaître.
+    setLoading(false);
   }
+}
 
   if (loading) return <div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>
 
