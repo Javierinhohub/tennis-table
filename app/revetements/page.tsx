@@ -5,7 +5,8 @@ import RevatementsClient from "./RevatementsClient"
 export const revalidate = 60
 
 export default async function RevatementsPage() {
-  const [{ data: produits, count }, { data: marques }] = await Promise.all([
+  const [{ data: produits, count }, { data: produitsIndex }] = await Promise.all([
+    // Page initiale (50 premiers)
     supabase
       .from("produits")
       .select("id, nom, slug, marques(id, nom), revetements(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
@@ -13,7 +14,13 @@ export default async function RevatementsPage() {
       .not("revetements", "is", null)
       .order("nom")
       .range(0, 49),
-    supabase.from("marques").select("id, nom").order("nom")
+
+    // Index léger : tous les produits avec juste marque + type (pour les filtres dynamiques)
+    supabase
+      .from("produits")
+      .select("marque_id, marques(id, nom), revetements(type_revetement)")
+      .eq("actif", true)
+      .not("revetements", "is", null)
   ])
 
   return (
@@ -21,7 +28,7 @@ export default async function RevatementsPage() {
       <RevatementsClient
         initialProduits={produits || []}
         initialTotal={count || 0}
-        marques={marques || []}
+        produitsIndex={produitsIndex || []}
       />
     </Suspense>
   )
