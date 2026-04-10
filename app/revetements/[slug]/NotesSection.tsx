@@ -42,17 +42,27 @@ const CRITERES: Record<string, { key: string, label: string, color: string }[]> 
   ],
 }
 
-// Mapping key -> champ DB
+// Mapping key -> champ DB (notes utilisateurs dans notes_revetements)
 const KEY_TO_DB: Record<string, string> = {
   vitesse: "note_vitesse", effet: "note_effet", controle: "note_controle",
   durabilite: "note_durabilite", durete: "note_durete_mousse",
   rejet: "note_rejet", qualite_prix: "note_qualite_prix",
   adherence: "note_adherence", gene: "note_gene", inversion: "note_inversion",
 }
+// Mapping key -> champ DB (notes TT-Kip dans revetements)
+const KEY_TO_TTK: Record<string, string> = {
+  vitesse: "vitesse_note", effet: "effet_note", controle: "controle_note",
+  durabilite: "note_ttk_durabilite", durete: "note_ttk_durete",
+  rejet: "note_ttk_rejet", qualite_prix: "note_ttk_qualite_prix",
+  adherence: "note_ttk_adherence", gene: "note_ttk_gene", inversion: "note_ttk_inversion",
+}
+// Mapping key -> champ DB (notes marque dans revetements)
 const KEY_TO_MARQUE: Record<string, string> = {
   vitesse: "note_marque_vitesse", effet: "note_marque_spin", controle: "note_marque_controle",
   durete: "note_marque_durete", adherence: "note_marque_adherence",
   gene: "note_marque_gene", inversion: "note_marque_inversion",
+  durabilite: "note_marque_durabilite", rejet: "note_marque_rejet",
+  qualite_prix: "note_marque_qualite_prix",
 }
 
 function BarreComparative({ label, ttk, marque, users, color }: any) {
@@ -173,7 +183,8 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
   }
 
   const hasStats = Object.values(stats).some(v => v)
-  const hasMarque = criteres.some(c => revetement?.[KEY_TO_MARQUE[c.key]])
+  const hasMarque = criteres.some(c => KEY_TO_MARQUE[c.key] && revetement?.[KEY_TO_MARQUE[c.key]])
+  const hasTTK = criteres.some(c => KEY_TO_TTK[c.key] && revetement?.[KEY_TO_TTK[c.key]])
 
   return (
     <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden", marginBottom: "1.5rem" }}>
@@ -194,10 +205,10 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
         )}
       </div>
       <div style={{ padding: "20px" }}>
-        {(hasStats || hasMarque) && criteres.map(c => (
+        {(hasStats || hasMarque || hasTTK) && criteres.map(c => (
           <BarreComparative key={c.key} label={c.label} color={c.color}
-            ttk={revetement?.vitesse_note && c.key === "vitesse" ? revetement.vitesse_note : revetement?.effet_note && c.key === "effet" ? revetement.effet_note : revetement?.controle_note && c.key === "controle" ? revetement.controle_note : null}
-            marque={revetement?.[KEY_TO_MARQUE[c.key]]}
+            ttk={KEY_TO_TTK[c.key] ? revetement?.[KEY_TO_TTK[c.key]] || null : null}
+            marque={KEY_TO_MARQUE[c.key] ? revetement?.[KEY_TO_MARQUE[c.key]] || null : null}
             users={stats[c.key]}
           />
         ))}
