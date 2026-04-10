@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
+import { useSession } from "@/app/components/SessionProvider"
 
 const CATEGORIES = [
   { href: "/", label: "Accueil", icon: "⌂" },
@@ -29,16 +30,8 @@ export default function Navbar() {
     setOpen(false)
   }, [pathname])
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user)
-        supabase.from("utilisateurs").select("pseudo, role").eq("id", session.user.id).single().then(({ data }) => {
-          setPseudo(data?.pseudo || "")
-          setRole(data?.role || "")
-        })
-      }
-    })
+const { user } = useSession()
+
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null)
       if (session?.user) {

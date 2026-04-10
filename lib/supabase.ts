@@ -9,29 +9,29 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: "ttk-auth",
+    // Storage simplifié : localStorage en priorité, cookie en fallback (pas les deux à la fois)
     storage: {
       getItem: (key: string) => {
         if (typeof window === "undefined") return null
         try {
-          return window.localStorage.getItem(key)
-        } catch {
-          return getCookie(key)
-        }
+          const val = window.localStorage.getItem(key)
+          if (val) return val
+        } catch {}
+        // Fallback cookie (utile si localStorage bloqué)
+        return getCookie(key)
       },
       setItem: (key: string, value: string) => {
         if (typeof window === "undefined") return
         try {
           window.localStorage.setItem(key, value)
-        } catch {
-          setCookie(key, value)
-        }
+          return // localStorage OK, pas besoin du cookie
+        } catch {}
+        // Fallback cookie uniquement si localStorage échoue
         setCookie(key, value)
       },
       removeItem: (key: string) => {
         if (typeof window === "undefined") return
-        try {
-          window.localStorage.removeItem(key)
-        } catch {}
+        try { window.localStorage.removeItem(key) } catch {}
         deleteCookie(key)
       },
     },
@@ -40,7 +40,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null
-  const match = document.cookie.match(new RegExp("(^| )" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "=([^;]+)"))
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const match = document.cookie.match(new RegExp("(^| )" + escaped + "=([^;]+)"))
   return match ? decodeURIComponent(match[2]) : null
 }
 

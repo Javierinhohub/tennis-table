@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { useSession } from "@/app/components/SessionProvider"
 
 export default function MaterialSection({ produitId, produitNom }: { produitId: string, produitNom: string }) {
   const [user, setUser] = useState<any>(null)
@@ -10,10 +11,7 @@ export default function MaterialSection({ produitId, produitNom }: { produitId: 
   const [utilisateursEquip, setUtilisateursEquip] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    fetchData()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-  }, [])
+const { user } = useSession()
 
   async function fetchData() {
     const [{ data: matData }, { data: cdData }, { data: rvData }] = await Promise.all([
