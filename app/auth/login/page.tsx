@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export default function Login() {
+// Composant interne qui utilise useSearchParams (doit être dans un Suspense)
+function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -141,5 +142,14 @@ export default function Login() {
         )}
       </div>
     </main>
+  )
+}
+
+// Export par défaut : wrapper avec Suspense requis par Next.js 16 pour useSearchParams
+export default function Login() {
+  return (
+    <Suspense fallback={<main style={{ maxWidth: "400px", margin: "0 auto", padding: "4rem 2rem" }} />}>
+      <LoginForm />
+    </Suspense>
   )
 }
