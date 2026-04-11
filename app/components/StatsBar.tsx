@@ -4,20 +4,21 @@ export const revalidate = 60
 
 export default async function StatsBar() {
   const [r1, r2, r3, r4, r5] = await Promise.all([
-    supabase.from("revetements").select("*", { count: "exact", head: true }),
+    supabase.from("produits").select("*", { count: "exact", head: true })
+      .eq("actif", true).not("revetements", "is", null),
     supabase.from("marques").select("*", { count: "exact", head: true }),
-    supabase.from("bois").select("*", { count: "exact", head: true }),
-    supabase.from("utilisateurs").select("*", { count: "exact", head: true }),
-    supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true)
+    supabase.from("produits").select("*", { count: "exact", head: true })
+      .eq("actif", true).not("bois", "is", null),
+    supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true),
+    supabase.from("notes_revetements").select("*", { count: "exact", head: true }),
   ])
 
   const stats = [
     { label: "Revêtements", value: (r1.count || 0).toLocaleString("fr-FR") },
     { label: "Bois", value: (r3.count || 0).toLocaleString("fr-FR") },
     { label: "Marques", value: (r2.count || 0).toLocaleString("fr-FR") },
-    
-    { label: "Membres", value: (r4.count || 0).toLocaleString("fr-FR") },
-    { label: "Avis publiés", value: (r5.count || 0).toLocaleString("fr-FR") },
+    { label: "Avis publiés", value: (r4.count || 0).toLocaleString("fr-FR") },
+    { label: "Notes", value: (r5.count || 0).toLocaleString("fr-FR") },
   ]
 
   return (
