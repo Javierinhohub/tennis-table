@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 function Etoiles({
   note, onChange, readonly = false,
@@ -85,6 +86,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 export default function AvisSectionBois({ produitId }: { produitId: string }) {
+  const pathname = usePathname()
   const [avis, setAvis] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [mode, setMode] = useState<"" | "note" | "avis">("")
@@ -326,7 +328,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
           <p style={{ color: "var(--text-muted)", marginBottom: "12px", fontSize: "14px" }}>
             Connectez-vous pour noter ou laisser un avis
           </p>
-          <Link href="/auth/login" style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600 }}>
+          <Link href={`/auth/login?redirect=${encodeURIComponent(pathname)}`} style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600 }}>
             Se connecter
           </Link>
         </div>

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -16,6 +16,8 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get("redirect") || "/"
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -23,14 +25,16 @@ export default function Login() {
     setError("")
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError("Email ou mot de passe incorrect."); setLoading(false) }
-    else { router.push("/"); router.refresh() }
+    else { router.push(redirect); router.refresh() }
   }
 
   async function handleGoogle() {
     setLoadingGoogle(true)
+    // On passe le redirect en state via le callback
+    const callbackUrl = window.location.origin + "/auth/callback?redirect=" + encodeURIComponent(redirect)
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/auth/callback" }
+      options: { redirectTo: callbackUrl }
     })
   }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import PolarChart, { PolarAxis } from "@/app/components/PolarChart"
 
 // Caractéristiques selon type de revêtement
@@ -122,6 +123,7 @@ function Slider({ label, value, onChange, color }: any) {
 export default function NotesSection({ produitId, revetement, typeRev }: { produitId: string, revetement?: any, typeRev?: string }) {
   const type = typeRev || "In"
   const criteres = CRITERES[type] || CRITERES.In
+  const pathname = usePathname()
 
   const [user, setUser] = useState<any>(null)
   const [maNote, setMaNote] = useState<any>(null)
@@ -135,6 +137,23 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
 
   const LABELS = ["", "Mauvais", "Passable", "Moyen", "Bien", "Excellent"]
   const COLORS = ["", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#16A34A"]
+
+  useEffect(() => {
+    fetchData()
+    // Chargement initial de la session
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user ?? null
+      setUser(u)
+      if (u) fetchMaNote(u.id)
+    })
+    // Écoute les changements d'état d'auth (login, logout, refresh token...)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null
+      setUser(u)
+      if (u) fetchMaNote(u.id)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function fetchData() {
     const { data } = await supabase.from("notes_revetements")
@@ -277,7 +296,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
         ) : (
           <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)", textAlign: "center" }}>
             <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "10px" }}>Connectez-vous pour noter ce revêtement</p>
-            <Link href="/auth/login" style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "9px 18px", fontSize: "13px", fontWeight: 600 }}>Se connecter</Link>
+            <Link href={`/auth/login?redirect=${encodeURIComponent(pathname)}`} style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "9px 18px", fontSize: "13px", fontWeight: 600 }}>Se connecter</Link>
           </div>
         )}
       </div>

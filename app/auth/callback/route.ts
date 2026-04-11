@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const redirect = searchParams.get('redirect') || '/'
 
   if (code) {
     const supabase = createClient(
@@ -13,5 +14,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  return NextResponse.redirect(`${origin}/`)
+  // Redirige vers la page d'origine (revetement, bois...) ou l'accueil
+  const destination = redirect.startsWith('/') ? redirect : '/'
+  return NextResponse.redirect(`${origin}${destination}`)
 }
