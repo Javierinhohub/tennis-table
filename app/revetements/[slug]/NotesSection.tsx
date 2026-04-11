@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import { useSession } from "@/app/components/SessionProvider"
 
 // Caractéristiques selon type de revêtement
 const CRITERES: Record<string, { key: string, label: string, color: string }[]> = {
@@ -135,8 +134,6 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
 
   const LABELS = ["", "Mauvais", "Passable", "Moyen", "Bien", "Excellent"]
   const COLORS = ["", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#16A34A"]
-
-const { user } = useSession()
 
   async function fetchData() {
     const { data } = await supabase.from("notes_revetements")

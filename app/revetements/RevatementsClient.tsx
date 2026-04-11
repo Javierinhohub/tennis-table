@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo } from "react"
 import NoteModal from "@/app/components/NoteModal"
 import { supabase } from "@/lib/supabase"
-import { useSession } from "@/app/components/SessionProvider"
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
@@ -59,7 +58,6 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   }, [produitsIndex, marqueFilter])
 
   // Si le filtre actif n'est plus disponible → le réinitialiser automatiquement
-const { user } = useSession()
 
   useEffect(() => {
     if (typeFilter && !typesDisponibles.includes(typeFilter)) {

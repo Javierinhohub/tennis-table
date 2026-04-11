@@ -19,32 +19,37 @@ const CATEGORIES = [
 ]
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null)
+  const { user } = useSession()           // ← source unique pour l'état auth
   const [pseudo, setPseudo] = useState("")
   const [role, setRole] = useState("")
   const [open, setOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
+  // Fermer le menu au changement de page
   useEffect(() => {
     setOpen(false)
   }, [pathname])
 
-const { user } = useSession()
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user || null)
-      if (session?.user) {
-        const { data: profil } = await supabase.from("utilisateurs").select("pseudo, role").eq("id", session.user.id).single()
-        setPseudo(profil?.pseudo || "")
-        setRole(profil?.role || "")
-      } else { setPseudo(""); setRole("") }
-    })
-    return () => listener.subscription.unsubscribe()
-  }, [])
+  // Charger le pseudo et le rôle quand user change
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("utilisateurs")
+        .select("pseudo, role")
+        .eq("id", user.id)
+        .single()
+        .then(({ data: profil }) => {
+          setPseudo(profil?.pseudo || "")
+          setRole(profil?.role || "")
+        })
+    } else {
+      setPseudo("")
+      setRole("")
+    }
+  }, [user])
 
   function handleLogout() {
-    setUser(null)
     setPseudo("")
     setRole("")
     setOpen(false)

@@ -1,217 +1,385 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { notFound } from "next/navigation"
-import AvisSectionBois from "./AvisSectionBois"
+import { useRouter } from "next/navigation"
 
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+const REGIONS = ["Auvergne-Rhône-Alpes","Bourgogne-Franche-Comté","Bretagne","Centre-Val de Loire","Corse","Grand Est","Hauts-de-France","Île-de-France","Normandie","Nouvelle-Aquitaine","Occitanie","Pays de la Loire","Provence-Alpes-Côte d'Azur","Guadeloupe","Martinique","Guyane","La Réunion","Mayotte","Autre"]
 
-  const { data: produit } = await supabase
-    .from("produits")
-    .select(`
-      id, nom, slug,
-      marques(nom, site_web),
-      bois(
-        nb_plis, poids_g, epaisseur_mm, composition,
-        pli1, pli2, pli3, pli4, pli5, pli6, pli7,
-        style, prix,
-        note_vitesse, note_controle, note_flexibilite, note_durete, note_qualite_prix
-      )
-    `)
-    .eq("slug", slug)
-    .single()
+export default function ProfilPage() {
+  const [user, setUser] = useState<any>(null)
+  const [profil, setProfil] = useState<any>(null)
+  const [materiel, setMateriel] = useState<any[]>([])
+  const [avis, setAvis] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [onglet, setOnglet] = useState("materiel")
+  const [message, setMessage] = useState("")
+  const router = useRouter()
 
-  if (!produit) notFound()
+  // Champs profil
+  const [pseudo, setPseudo] = useState("")
+  const [classement, setClassement] = useState("")
+  const [region, setRegion] = useState("")
+  const [club, setClub] = useState("")
 
-  const b = produit.bois as any
-  const marque = produit.marques as any
+  // Recherche produits
+  const [searchBois, setSearchBois] = useState("")
+  const [searchCD, setSearchCD] = useState("")
+  const [searchRV, setSearchRV] = useState("")
+  const [resultsBois, setResultsBois] = useState<any[]>([])
+  const [resultsCD, setResultsCD] = useState<any[]>([])
+  const [resultsRV, setResultsRV] = useState<any[]>([])
+  const [boisId, setBoisId] = useState<string | null>(null)
+  const [cdId, setCdId] = useState<string | null>(null)
+  const [rvId, setRvId] = useState<string | null>(null)
+  const [boisNom, setBoisNom] = useState("")
+  const [cdNom, setCdNom] = useState("")
+  const [rvNom, setRvNom] = useState("")
 
-  // Joueurs pro qui utilisent ce bois
-  const { data: joueursPro } = await supabase
-    .from("joueurs_pro")
-    .select("id, nom, pays, classement_mondial, genre")
-    .ilike("bois_nom", "%" + produit.nom + "%")
-    .eq("actif", true)
-    .order("classement_mondial")
+  // Suppression de compte
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState("")
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
-  // Utilisateurs du site qui utilisent ce bois
-  const { data: utilisateurs } = await supabase
-    .from("utilisateurs")
-    .select("id, pseudo, classement, club")
-    .eq("bois_id", produit.id)
-    .limit(10)
+  useEffect(() => { fetchData() }, [])
 
-  const DRAPEAUX: Record<string, string> = {
-    "Chine":"🇨🇳","France":"🇫🇷","Allemagne":"🇩🇪","Suède":"🇸🇪","Japon":"🇯🇵",
-    "Corée du Sud":"🇰🇷","Brésil":"🇧🇷","Taipei":"🇹🇼","Danemark":"🇩🇰",
-    "Slovénie":"🇸🇮","Égypte":"🇪🇬","Australie":"🇦🇺","Russie":"🇷🇺",
-    "Inde":"🇮🇳","États-Unis":"🇺🇸","Luxembourg":"🇱🇺","Hong Kong":"🇭🇰",
-    "Portugal":"🇵🇹","Espagne":"🇪🇸","Croatie":"🇭🇷","Roumanie":"🇷🇴",
-    "Pologne":"🇵🇱","Belgique":"🇧🇪",
+  async function fetchData() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push("/auth/login"); return }
+    setUser(user)
+    const [{ data: profilData }, { data: materielData }, { data: avisData }] = await Promise.all([
+      supabase.from("utilisateurs").select("*").eq("id", user.id).single(),
+      supabase.from("utilisateurs_produits").select("id, depuis, produits(id, nom, slug, marques(nom), sous_categories(nom))").eq("user_id", user.id),
+      supabase.from("avis").select("*, produits(nom, slug)").eq("user_id", user.id).order("cree_le", { ascending: false })
+    ])
+    setProfil(profilData)
+    setPseudo(profilData?.pseudo || "")
+    setClassement(profilData?.classement || "")
+    setRegion(profilData?.region || "")
+    setClub(profilData?.club || "")
+    setBoisId(profilData?.bois_id || null)
+    setCdId(profilData?.revetement_cd_id || null)
+    setRvId(profilData?.revetement_rv_id || null)
+    if (profilData?.bois_id) {
+      const { data: b } = await supabase.from("produits").select("nom, marques(nom)").eq("id", profilData.bois_id).single()
+      if (b) setBoisNom(b.nom + " — " + (b.marques as any)?.nom)
+    }
+    if (profilData?.revetement_cd_id) {
+      const { data: cd } = await supabase.from("produits").select("nom, marques(nom)").eq("id", profilData.revetement_cd_id).single()
+      if (cd) setCdNom(cd.nom + " — " + (cd.marques as any)?.nom)
+    }
+    if (profilData?.revetement_rv_id) {
+      const { data: rv } = await supabase.from("produits").select("nom, marques(nom)").eq("id", profilData.revetement_rv_id).single()
+      if (rv) setRvNom(rv.nom + " — " + (rv.marques as any)?.nom)
+    }
+    setMateriel(materielData || [])
+    setAvis(avisData || [])
+    setLoading(false)
   }
 
-  const plis = [b?.pli1, b?.pli2, b?.pli3, b?.pli4, b?.pli5, b?.pli6, b?.pli7].filter(Boolean)
+  async function searchProduits(q: string, type: string) {
+    if (q.length < 2) {
+      if (type === "bois") setResultsBois([])
+      if (type === "cd") setResultsCD([])
+      if (type === "rv") setResultsRV([])
+      return
+    }
+    const { data } = await supabase.from("produits").select("id, nom, marques(nom)").ilike("nom", "%" + q + "%").eq("actif", true).limit(6)
+    if (type === "bois") setResultsBois(data || [])
+    if (type === "cd") setResultsCD(data || [])
+    if (type === "rv") setResultsRV(data || [])
+  }
 
-  const NoteBar = ({ label, value, color = "#D97757" }: { label: string, value: number | null, color?: string }) => (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-        <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>{label}</span>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>
-          {value ? `${value}/10` : "Non renseigné"}
-        </span>
-      </div>
-      <div style={{ background: "var(--bg)", borderRadius: "6px", height: "6px", overflow: "hidden" }}>
-        {value && <div style={{ width: `${(value / 10) * 100}%`, height: "100%", background: color, borderRadius: "6px" }} />}
-      </div>
+  async function updateProfil(e: React.FormEvent) {
+    e.preventDefault()
+    setMessage("")
+    const { error } = await supabase.from("utilisateurs").update({
+      pseudo, classement: classement || null,
+      region: region || null, club: club || null,
+      bois_id: boisId || null,
+      revetement_cd_id: cdId || null,
+      revetement_rv_id: rvId || null,
+    }).eq("id", user.id)
+    if (error) { setMessage("Erreur : " + error.message); return }
+    setMessage("Profil mis à jour avec succès !")
+    await fetchData()
+  }
+
+  async function retirerMateriel(id: string) {
+    await supabase.from("utilisateurs_produits").delete().eq("id", id)
+    await fetchData()
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteError("")
+    if (deleteConfirm !== "SUPPRIMER") {
+      setDeleteError("Veuillez taper exactement SUPPRIMER pour confirmer.")
+      return
+    }
+    setDeleteLoading(true)
+    try {
+      // Appel de la fonction PostgreSQL qui supprime le compte auth
+      const { error } = await supabase.rpc("delete_user_account")
+      if (error) throw error
+      // Déconnexion locale
+      await supabase.auth.signOut()
+      router.push("/?compte_supprime=1")
+    } catch (err: any) {
+      setDeleteError("Une erreur est survenue : " + (err?.message || "réessayez plus tard."))
+      setDeleteLoading(false)
+    }
+  }
+
+  if (loading) return <div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>
+
+  const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" as const }
+  const labelStyle = { display: "block" as const, fontSize: "12px", fontWeight: 600 as const, color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" as const, letterSpacing: "0.4px" }
+
+  const SearchInput = ({ label, value, onChange, results, onSelect, selected }: any) => (
+    <div style={{ position: "relative" }}>
+      <label style={labelStyle}>{label}</label>
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} style={inputStyle} placeholder={"Rechercher " + label.toLowerCase() + "..."} />
+      {selected && <p style={{ fontSize: "12px", color: "var(--success)", marginTop: "4px", fontWeight: 500 }}>Sélectionné : {selected}</p>}
+      {results.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", marginTop: "4px", zIndex: 10, overflow: "hidden" }}>
+          {results.map((p: any, i: number) => (
+            <div key={p.id}
+              onClick={() => onSelect(p)}
+              style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < results.length - 1 ? "1px solid var(--border)" : "none", fontSize: "13px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
+              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+            >
+              <span style={{ fontWeight: 500 }}>{p.nom}</span>
+              <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>{p.marques?.nom}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
-  return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <a href="/bois" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
-        ← Retour aux bois
-      </a>
+  const onglets = [
+    { id: "materiel", label: "Mon matériel" },
+    { id: "avis", label: "Mes avis" },
+    { id: "parametres", label: "Paramètres" },
+  ]
 
-      {/* Header */}
-      <div style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" as const }}>
-          <div>
-            <h1 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "4px" }}>{produit.nom}</h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px" }}>{marque?.nom}</p>
+  return (
+    <main style={{ maxWidth: "900px", margin: "0 auto", padding: "2.5rem 2rem" }}>
+
+      {/* ── Modale suppression compte ── */}
+      {showDeleteModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#fff", borderRadius: "14px", padding: "2rem", maxWidth: "440px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "40px", marginBottom: "12px" }}>⚠️</div>
+              <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px", color: "#DC2626" }}>Supprimer mon compte</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Cette action est <strong>irréversible</strong>. Votre profil, vos avis et tout votre historique seront définitivement supprimés.
+              </p>
+            </div>
+
+            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "12px 14px", marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>
+                Compte : <strong>{user?.email}</strong>
+              </p>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label style={{ ...labelStyle, color: "#DC2626" }}>
+                Tapez <strong>SUPPRIMER</strong> pour confirmer
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={e => { setDeleteConfirm(e.target.value); setDeleteError("") }}
+                placeholder="SUPPRIMER"
+                style={{ ...inputStyle, border: "1px solid #FECACA", outline: "none" }}
+                autoFocus
+              />
+              {deleteError && (
+                <p style={{ fontSize: "12px", color: "#DC2626", marginTop: "6px", fontWeight: 500 }}>{deleteError}</p>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); setDeleteError("") }}
+                disabled={deleteLoading}
+                style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading || deleteConfirm !== "SUPPRIMER"}
+                style={{ flex: 1, background: deleteConfirm === "SUPPRIMER" ? "#DC2626" : "#FCA5A5", color: "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: deleteConfirm === "SUPPRIMER" ? "pointer" : "not-allowed", fontFamily: "Poppins, sans-serif", transition: "background 0.15s" }}
+              >
+                {deleteLoading ? "Suppression..." : "Supprimer définitivement"}
+              </button>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
-            {b?.style && (
-              <span style={{ background: "#FFF0EB", color: "#D97757", padding: "4px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: 600 }}>
-                {b.style}
-              </span>
-            )}
-            {b?.nb_plis && (
-              <span style={{ background: "var(--bg)", color: "var(--text-muted)", padding: "4px 12px", borderRadius: "6px", fontSize: "13px", border: "1px solid var(--border)" }}>
-                {b.nb_plis} plis
-              </span>
-            )}
-          </div>
+        </div>
+      )}
+
+      {/* ── Header profil ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "2rem" }}>
+        <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 700, color: "#D97757", flexShrink: 0 }}>
+          {profil?.pseudo?.[0]?.toUpperCase() || "?"}
+        </div>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "2px" }}>{profil?.pseudo}</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>{user?.email}</p>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "1.5rem", alignItems: "start" }}>
-        <div>
+      {/* ── Onglets ── */}
+      <div style={{ display: "flex", gap: "0", borderBottom: "1px solid var(--border)", marginBottom: "1.5rem" }}>
+        {onglets.map(t => (
+          <button key={t.id} onClick={() => setOnglet(t.id)}
+            style={{ background: "none", border: "none", borderBottom: onglet === t.id ? "2px solid #D97757" : "2px solid transparent", color: onglet === t.id ? "#D97757" : "var(--text-muted)", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-          {/* Caractéristiques */}
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>Caractéristiques</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              {[
-                { label: "Style", value: b?.style || "Non renseigné" },
-                { label: "Poids", value: b?.poids_g ? b.poids_g + " g" : "Non renseigné" },
-                { label: "Épaisseur", value: b?.epaisseur_mm && b.epaisseur_mm !== "0.0" ? b.epaisseur_mm + " mm" : "Non renseigné" },
-                { label: "Prix indicatif", value: b?.prix ? b.prix + " €" : "Non renseigné" },
-                { label: "Nombre de plis", value: b?.nb_plis ? b.nb_plis + " plis" : "Non renseigné" },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "3px" }}>{label}</p>
-                  <p style={{ fontSize: "14px", fontWeight: 600, color: value === "Non renseigné" ? "var(--text-muted)" : "var(--text)" }}>{value}</p>
+      {/* ── Onglet Matériel ── */}
+      {onglet === "materiel" && (
+        <div>
+          {materiel.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "4rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)" }}>
+              <p style={{ marginBottom: "12px" }}>Vous n'avez pas encore ajouté de matériel.</p>
+              <a href="/revetements" style={{ color: "#D97757", textDecoration: "none", fontWeight: 600, fontSize: "14px" }}>Parcourir les revêtements</a>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "8px" }}>
+              {materiel.map((m: any) => (
+                <div key={m.id} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <span style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>{m.produits?.nom}</span>
+                      <span style={{ fontSize: "11px", background: "var(--bg)", color: "var(--text-muted)", padding: "2px 8px", borderRadius: "4px", fontWeight: 500 }}>{m.produits?.sous_categories?.nom}</span>
+                    </div>
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>{m.produits?.marques?.nom}</p>
+                  </div>
+                  <button onClick={() => retirerMateriel(m.id)} style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }}>Retirer</button>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Composition */}
-          {plis.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>Composition pli par pli</h2>
-              <div style={{ display: "flex", gap: "0", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border)" }}>
-                {plis.map((pli: string, i: number) => (
-                  <div key={i} style={{
-                    flex: 1, padding: "10px 6px", textAlign: "center" as const,
-                    background: i === Math.floor(plis.length / 2) ? "#FFF0EB" : i % 2 === 0 ? "#fff" : "var(--bg)",
-                    borderRight: i < plis.length - 1 ? "1px solid var(--border)" : "none"
-                  }}>
-                    <p style={{ fontSize: "10px", color: "var(--text-muted)", marginBottom: "3px" }}>Pli {i + 1}</p>
-                    <p style={{ fontSize: "11px", fontWeight: 700, color: i === Math.floor(plis.length / 2) ? "#D97757" : "var(--text)" }}>{pli}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
+        </div>
+      )}
 
-          {/* Notes */}
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>Notes TT-Kip</h2>
-            <div style={{ display: "flex", flexDirection: "column" as const, gap: "14px" }}>
-              <NoteBar label="Vitesse" value={b?.note_vitesse} color="#1A56DB" />
-              <NoteBar label="Contrôle" value={b?.note_controle} color="#0E7F4F" />
-              <NoteBar label="Flexibilité" value={b?.note_flexibilite} color="#D97757" />
-              <NoteBar label="Dureté" value={b?.note_durete} color="#7C3AED" />
-              <NoteBar label="Rapport qualité/prix" value={b?.note_qualite_prix} color="#EF4444" />
+      {/* ── Onglet Avis ── */}
+      {onglet === "avis" && (
+        <div>
+          {avis.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "4rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)" }}>
+              <p style={{ marginBottom: "12px" }}>Vous n'avez pas encore laissé d'avis.</p>
+              <a href="/revetements" style={{ color: "#D97757", textDecoration: "none", fontWeight: 600, fontSize: "14px" }}>Parcourir les revêtements</a>
             </div>
-          </div>
-
-          {/* Joueurs pro */}
-          {joueursPro && joueursPro.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>
-                Joueurs pro qui utilisent ce bois
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px" }}>
-                {joueursPro.map((j: any) => (
-                  <a key={j.id} href={"/joueurs/" + j.id}
-                    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--border)", textDecoration: "none", background: "var(--bg)" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#D97757", minWidth: "30px" }}>#{j.classement_mondial}</span>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)", flex: 1 }}>{j.nom}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{DRAPEAUX[j.pays] || ""} {j.pays}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Utilisateurs du site */}
-          {utilisateurs && utilisateurs.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>
-                Membres TT-Kip qui utilisent ce bois
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column" as const, gap: "6px" }}>
-                {utilisateurs.map((u: any) => (
-                  <div key={u.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "var(--bg)" }}>
-                    <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#D97757" }}>
-                      {(u.pseudo || "?")[0].toUpperCase()}
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {avis.map((a: any) => (
+                <div key={a.id} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "8px" }}>
+                    <div>
+                      <a href={"/revetements/" + a.produits?.slug} style={{ fontWeight: 600, fontSize: "14px", color: "#D97757", textDecoration: "none" }}>{a.produits?.nom}</a>
+                      <p style={{ fontWeight: 500, fontSize: "14px", marginTop: "2px" }}>{a.titre}</p>
                     </div>
-                    <span style={{ fontSize: "13px", fontWeight: 600, flex: 1 }}>{u.pseudo}</span>
-                    {u.classement && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{u.classement} pts</span>}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                      <span style={{ color: "#F59E0B", fontSize: "14px" }}>{"★".repeat(a.note)}{"☆".repeat(5 - a.note)}</span>
+                      <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "4px", background: a.valide ? "var(--success-light)" : "#FEF3C7", color: a.valide ? "var(--success)" : "#92400E", fontWeight: 600 }}>{a.valide ? "Publié" : "En attente"}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "8px" }}>{a.contenu}</p>
+                  <p style={{ color: "var(--text-light)", fontSize: "12px" }}>{new Date(a.cree_le).toLocaleDateString("fr-FR")}</p>
+                </div>
+              ))}
             </div>
           )}
-
-          {/* ✅ Section avis bois */}
-          <AvisSectionBois produitId={produit.id} />
-
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div style={{ position: "sticky" as const, top: "80px" }}>
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1rem" }}>
-            <div style={{ fontSize: "28px", fontWeight: 800, color: "#D97757", marginBottom: "4px" }}>
-              {b?.prix ? b.prix + " €" : "Prix non renseigné"}
+      {/* ── Onglet Paramètres ── */}
+      {onglet === "parametres" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", alignItems: "start" }}>
+          <div>
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1rem" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px" }}>Informations personnelles</h2>
+              {message && <div style={{ background: message.startsWith("Erreur") ? "#FEF2F2" : "var(--success-light)", border: "1px solid " + (message.startsWith("Erreur") ? "#FECACA" : "#A7F3D0"), color: message.startsWith("Erreur") ? "#DC2626" : "var(--success)", borderRadius: "8px", padding: "10px", marginBottom: "12px", fontSize: "13px", fontWeight: 500 }}>{message}</div>}
+              <form onSubmit={updateProfil} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div><label style={labelStyle}>Pseudo</label><input type="text" value={pseudo} onChange={e => setPseudo(e.target.value)} required minLength={3} style={inputStyle} /></div>
+                <div><label style={labelStyle}>Classement FFTT</label><input type="text" value={classement} onChange={e => setClassement(e.target.value)} style={inputStyle} placeholder="Ex: 500, N3, R6..." /></div>
+                <div><label style={labelStyle}>Club</label><input type="text" value={club} onChange={e => setClub(e.target.value)} style={inputStyle} placeholder="Nom de votre club" /></div>
+                <div>
+                  <label style={labelStyle}>Région</label>
+                  <select value={region} onChange={e => setRegion(e.target.value)} style={inputStyle}>
+                    <option value="">Choisir...</option>
+                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <button type="submit" style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Sauvegarder</button>
+              </form>
             </div>
-            {marque?.site_web && (
-              <a href={marque.site_web} target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", background: "#D97757", color: "#fff", textAlign: "center" as const, padding: "10px", borderRadius: "8px", textDecoration: "none", fontSize: "13px", fontWeight: 600, marginTop: "1rem" }}>
-                Voir sur le site {marque.nom}
-              </a>
-            )}
+
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1rem" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>Informations du compte</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "4px" }}>Email : {user?.email}</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Membre depuis : {new Date(profil?.cree_le).toLocaleDateString("fr-FR")}</p>
+            </div>
+
+            {/* ── Zone danger : suppression de compte ── */}
+            <div style={{ border: "1px solid #FECACA", borderRadius: "10px", padding: "20px", background: "#FFF5F5" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#DC2626", marginBottom: "8px" }}>Zone de danger</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.5 }}>
+                La suppression de votre compte est définitive. Toutes vos données (profil, avis, matériel) seront effacées.
+              </p>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                style={{ background: "none", border: "1px solid #DC2626", color: "#DC2626", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", width: "100%" }}
+              >
+                🗑️ Je veux supprimer mon compte
+              </button>
+            </div>
           </div>
 
-          {b?.composition && (
-            <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.2rem" }}>
-              <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "6px" }}>Composition</p>
-              <p style={{ fontSize: "13px", color: "var(--text)", lineHeight: 1.6 }}>{b.composition}</p>
+          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px" }}>
+            <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Mon équipement</h2>
+            <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "16px" }}>Tapez pour rechercher et sélectionner votre matériel.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <SearchInput
+                label="Bois"
+                value={searchBois || boisNom}
+                onChange={(v: string) => { setSearchBois(v); setBoisNom(v); setBoisId(null); searchProduits(v, "bois") }}
+                results={resultsBois}
+                onSelect={(p: any) => { setBoisId(p.id); setBoisNom(p.nom + " — " + p.marques?.nom); setSearchBois(""); setResultsBois([]) }}
+                selected={boisId ? boisNom : null}
+              />
+              <SearchInput
+                label="Revêtement coup droit"
+                value={searchCD || cdNom}
+                onChange={(v: string) => { setSearchCD(v); setCdNom(v); setCdId(null); searchProduits(v, "cd") }}
+                results={resultsCD}
+                onSelect={(p: any) => { setCdId(p.id); setCdNom(p.nom + " — " + p.marques?.nom); setSearchCD(""); setResultsCD([]) }}
+                selected={cdId ? cdNom : null}
+              />
+              <SearchInput
+                label="Revêtement revers"
+                value={searchRV || rvNom}
+                onChange={(v: string) => { setSearchRV(v); setRvNom(v); setRvId(null); searchProduits(v, "rv") }}
+                results={resultsRV}
+                onSelect={(p: any) => { setRvId(p.id); setRvNom(p.nom + " — " + p.marques?.nom); setSearchRV(""); setResultsRV([]) }}
+                selected={rvId ? rvNom : null}
+              />
+              <button onClick={updateProfil as any} style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                Sauvegarder l'équipement
+              </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </main>
   )
 }

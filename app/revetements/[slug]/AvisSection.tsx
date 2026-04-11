@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import { useSession } from "@/app/components/SessionProvider"
+
 
 function Etoiles({ note, onChange, readonly = false }: { note: number, onChange?: (n: number) => void, readonly?: boolean }) {
   const [hover, setHover] = useState(0)
@@ -55,8 +55,6 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
   const [noteQP, setNoteQP] = useState("")
 
   const moyenneNote = avis.length > 0 ? (avis.reduce((s, a) => s + a.note, 0) / avis.length).toFixed(1) : "0"
-
-const { user } = useSession()
 
   async function fetchAvis() {
     const { data } = await supabase
