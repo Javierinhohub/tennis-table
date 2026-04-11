@@ -4,11 +4,9 @@ export const revalidate = 60
 
 export default async function StatsBar() {
   const [r1, r2, r3, r4, r5] = await Promise.all([
-    supabase.from("produits").select("*", { count: "exact", head: true })
-      .eq("actif", true).not("revetements", "is", null),
+    supabase.from("revetements").select("*", { count: "exact", head: true }),
     supabase.from("marques").select("*", { count: "exact", head: true }),
-    supabase.from("produits").select("*", { count: "exact", head: true })
-      .eq("actif", true).not("bois", "is", null),
+    supabase.from("bois").select("*", { count: "exact", head: true }),
     supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true),
     supabase.from("notes_revetements").select("*", { count: "exact", head: true }),
   ])
