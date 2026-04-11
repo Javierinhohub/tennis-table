@@ -36,6 +36,12 @@ export default function ProfilPage() {
   const [cdNom, setCdNom] = useState("")
   const [rvNom, setRvNom] = useState("")
 
+  // Suppression de compte
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState("")
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+
   useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
@@ -105,6 +111,26 @@ export default function ProfilPage() {
     await fetchData()
   }
 
+  async function handleDeleteAccount() {
+    setDeleteError("")
+    if (deleteConfirm !== "SUPPRIMER") {
+      setDeleteError("Veuillez taper exactement SUPPRIMER pour confirmer.")
+      return
+    }
+    setDeleteLoading(true)
+    try {
+      // Appel de la fonction PostgreSQL qui supprime le compte auth
+      const { error } = await supabase.rpc("delete_user_account")
+      if (error) throw error
+      // Déconnexion locale
+      await supabase.auth.signOut()
+      router.push("/?compte_supprime=1")
+    } catch (err: any) {
+      setDeleteError("Une erreur est survenue : " + (err?.message || "réessayez plus tard."))
+      setDeleteLoading(false)
+    }
+  }
+
   if (loading) return <div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>
 
   const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" as const }
@@ -133,45 +159,92 @@ export default function ProfilPage() {
     </div>
   )
 
+  const onglets = [
+    { id: "materiel", label: "Mon matériel" },
+    { id: "avis", label: "Mes avis" },
+    { id: "parametres", label: "Paramètres" },
+  ]
+
   return (
     <main style={{ maxWidth: "900px", margin: "0 auto", padding: "2.5rem 2rem" }}>
+
+      {/* ── Modale suppression compte ── */}
+      {showDeleteModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#fff", borderRadius: "14px", padding: "2rem", maxWidth: "440px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "40px", marginBottom: "12px" }}>⚠️</div>
+              <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px", color: "#DC2626" }}>Supprimer mon compte</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Cette action est <strong>irréversible</strong>. Votre profil, vos avis et tout votre historique seront définitivement supprimés.
+              </p>
+            </div>
+
+            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "12px 14px", marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>
+                Compte : <strong>{user?.email}</strong>
+              </p>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label style={{ ...labelStyle, color: "#DC2626" }}>
+                Tapez <strong>SUPPRIMER</strong> pour confirmer
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={e => { setDeleteConfirm(e.target.value); setDeleteError("") }}
+                placeholder="SUPPRIMER"
+                style={{ ...inputStyle, border: "1px solid #FECACA", outline: "none" }}
+                autoFocus
+              />
+              {deleteError && (
+                <p style={{ fontSize: "12px", color: "#DC2626", marginTop: "6px", fontWeight: 500 }}>{deleteError}</p>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); setDeleteError("") }}
+                disabled={deleteLoading}
+                style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading || deleteConfirm !== "SUPPRIMER"}
+                style={{ flex: 1, background: deleteConfirm === "SUPPRIMER" ? "#DC2626" : "#FCA5A5", color: "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: deleteConfirm === "SUPPRIMER" ? "pointer" : "not-allowed", fontFamily: "Poppins, sans-serif", transition: "background 0.15s" }}
+              >
+                {deleteLoading ? "Suppression..." : "Supprimer définitivement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Header profil ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "2rem" }}>
-        <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 700, color: "#D97757" }}>
-          {profil?.pseudo?.[0]?.toUpperCase()}
+        <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 700, color: "#D97757", flexShrink: 0 }}>
+          {profil?.pseudo?.[0]?.toUpperCase() || "?"}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "2px" }}>{profil?.pseudo}</h1>
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            {profil?.classement && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Classement : <strong>{profil.classement}</strong></span>}
-            {profil?.club && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Club : <strong>{profil.club}</strong></span>}
-            {profil?.region && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{profil.region}</span>}
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <div style={{ textAlign: "center", padding: "8px 14px", background: "#fff", border: "1px solid var(--border)", borderRadius: "8px" }}>
-            <p style={{ fontSize: "18px", fontWeight: 700, color: "#D97757" }}>{materiel.length}</p>
-            <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.4px" }}>Matériel</p>
-          </div>
-          <div style={{ textAlign: "center", padding: "8px 14px", background: "#fff", border: "1px solid var(--border)", borderRadius: "8px" }}>
-            <p style={{ fontSize: "18px", fontWeight: 700, color: "#D97757" }}>{avis.length}</p>
-            <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.4px" }}>Avis</p>
-          </div>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "2px" }}>{profil?.pseudo}</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>{user?.email}</p>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "0", borderBottom: "1px solid var(--border)", marginBottom: "2rem" }}>
-        {[
-          { id: "materiel", label: "Mon matériel" },
-          { id: "avis", label: "Mes avis" },
-          { id: "parametres", label: "Paramètres" },
-        ].map(t => (
-          <button key={t.id} onClick={() => { setOnglet(t.id); setMessage("") }}
+      {/* ── Onglets ── */}
+      <div style={{ display: "flex", gap: "0", borderBottom: "1px solid var(--border)", marginBottom: "1.5rem" }}>
+        {onglets.map(t => (
+          <button key={t.id} onClick={() => setOnglet(t.id)}
             style={{ background: "none", border: "none", borderBottom: onglet === t.id ? "2px solid #D97757" : "2px solid transparent", color: onglet === t.id ? "#D97757" : "var(--text-muted)", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
             {t.label}
           </button>
         ))}
       </div>
 
+      {/* ── Onglet Matériel ── */}
       {onglet === "materiel" && (
         <div>
           {materiel.length === 0 ? (
@@ -198,6 +271,7 @@ export default function ProfilPage() {
         </div>
       )}
 
+      {/* ── Onglet Avis ── */}
       {onglet === "avis" && (
         <div>
           {avis.length === 0 ? (
@@ -228,6 +302,7 @@ export default function ProfilPage() {
         </div>
       )}
 
+      {/* ── Onglet Paramètres ── */}
       {onglet === "parametres" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", alignItems: "start" }}>
           <div>
@@ -248,10 +323,25 @@ export default function ProfilPage() {
                 <button type="submit" style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Sauvegarder</button>
               </form>
             </div>
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px" }}>
+
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1rem" }}>
               <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>Informations du compte</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "4px" }}>Email : {user?.email}</p>
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Membre depuis : {new Date(profil?.cree_le).toLocaleDateString("fr-FR")}</p>
+            </div>
+
+            {/* ── Zone danger : suppression de compte ── */}
+            <div style={{ border: "1px solid #FECACA", borderRadius: "10px", padding: "20px", background: "#FFF5F5" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#DC2626", marginBottom: "8px" }}>Zone de danger</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.5 }}>
+                La suppression de votre compte est définitive. Toutes vos données (profil, avis, matériel) seront effacées.
+              </p>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                style={{ background: "none", border: "1px solid #DC2626", color: "#DC2626", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", width: "100%" }}
+              >
+                🗑️ Je veux supprimer mon compte
+              </button>
             </div>
           </div>
 
