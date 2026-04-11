@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import AvisSectionBois from "./AvisSectionBois"
+import NotesBoisChart from "./NotesBoisChart"
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -134,7 +135,17 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             </div>
           )}
 
-          {/* Notes */}
+          {/* Polar chart (TTK + utilisateurs) */}
+          <NotesBoisChart
+            produitId={produit.id}
+            ttkVitesse={b?.note_vitesse}
+            ttkControle={b?.note_controle}
+            ttkFlexibilite={b?.note_flexibilite}
+            ttkDurete={b?.note_durete}
+            ttkQualitePrix={b?.note_qualite_prix}
+          />
+
+          {/* Notes barres TT-Kip */}
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
             <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>Notes TT-Kip</h2>
             <div style={{ display: "flex", flexDirection: "column" as const, gap: "14px" }}>

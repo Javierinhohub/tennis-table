@@ -178,6 +178,8 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
       setMessage("✅ Votre note a été enregistrée !")
       setNoteRapide(0); setNoteVitesse(""); setNoteControle("")
       setNoteFlexibilite(""); setNoteDurete(""); setNoteQP(""); setMode("")
+      // Notifie le polar chart de se mettre à jour
+      window.dispatchEvent(new Event("notes_bois_updated"))
     }
   }
 

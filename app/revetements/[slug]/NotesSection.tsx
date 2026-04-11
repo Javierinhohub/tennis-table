@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import PolarChart, { PolarAxis } from "@/app/components/PolarChart"
 
 // Caractéristiques selon type de revêtement
 const CRITERES: Record<string, { key: string, label: string, color: string }[]> = {
@@ -178,6 +179,14 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
   const hasMarque = criteres.some(c => KEY_TO_MARQUE[c.key] && revetement?.[KEY_TO_MARQUE[c.key]])
   const hasTTK = criteres.some(c => KEY_TO_TTK[c.key] && revetement?.[KEY_TO_TTK[c.key]])
 
+  // Données pour le polar chart
+  const polarAxes: PolarAxis[] = criteres.map(c => ({
+    label: c.label.replace(" / ", "/").replace(" mousse", ""),
+    ttk:    KEY_TO_TTK[c.key]    ? (revetement?.[KEY_TO_TTK[c.key]]    ?? null) : null,
+    marque: KEY_TO_MARQUE[c.key] ? (revetement?.[KEY_TO_MARQUE[c.key]] ?? null) : null,
+    users:  stats[c.key] ?? null,
+  }))
+
   return (
     <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden", marginBottom: "1.5rem" }}>
       <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg)" }}>
@@ -197,6 +206,19 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
         )}
       </div>
       <div style={{ padding: "20px" }}>
+
+        {/* ── Polar chart ── */}
+        {(hasTTK || hasMarque || hasStats) && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "20px", paddingBottom: "20px", borderBottom: "1px solid var(--border)" }}>
+            <PolarChart axes={polarAxes} size={280} />
+            <div style={{ display: "flex", gap: "16px", marginTop: "10px", fontSize: "11px", fontWeight: 600 }}>
+              {hasTTK    && <span style={{ color: "#1A56DB", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#1A56DB", borderRadius: "2px", display: "inline-block" }} />TT-Kip</span>}
+              {hasMarque && <span style={{ color: "#D97757", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#D97757", borderRadius: "2px", display: "inline-block" }} />Marque</span>}
+              {hasStats  && <span style={{ color: "#0E7F4F", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#0E7F4F", borderRadius: "2px", display: "inline-block" }} />Utilisateurs</span>}
+            </div>
+          </div>
+        )}
+
         {(hasStats || hasMarque || hasTTK) && criteres.map(c => (
           <BarreComparative key={c.key} label={c.label} color={c.color}
             ttk={KEY_TO_TTK[c.key] ? revetement?.[KEY_TO_TTK[c.key]] || null : null}
