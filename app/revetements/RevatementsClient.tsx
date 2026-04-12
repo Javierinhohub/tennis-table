@@ -10,10 +10,11 @@ const TYPE_LABELS: Record<string, string> = {
 const ALL_TYPES = ["In", "Out", "Long", "Anti"]
 const PAGE_SIZE = 50
 
-export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex }: {
+export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques }: {
   initialProduits: any[]
   initialTotal: number
   produitsIndex: any[]
+  toutesMarques: any[]
 }) {
   const [produits, setProduits] = useState(initialProduits)
   const [total, setTotal] = useState(initialTotal)
@@ -28,23 +29,22 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
 
   const isFiltered = search || typeFilter || marqueFilter || page > 0
 
-  // ── Calcul dynamique des filtres disponibles depuis l'index ──────────────
-
-  // Marques disponibles selon le type sélectionné
+  // ── Marques disponibles ──────────────────────────────────────────────────
+  // Si un type est sélectionné → seulement les marques qui ont ce type
+  // Sinon → toutes les marques ayant un revêtement
   const marquesDisponibles = useMemo(() => {
-    const subset = typeFilter
-      ? produitsIndex.filter((p: any) => p.revetements?.type_revetement === typeFilter)
-      : produitsIndex
+    if (!typeFilter) return toutesMarques
 
+    const subset = produitsIndex.filter((p: any) => p.revetements?.type_revetement === typeFilter)
     const map = new Map<string, any>()
     subset.forEach((p: any) => {
       const m = p.marques
       if (m && !map.has(m.id)) map.set(m.id, m)
     })
     return Array.from(map.values()).sort((a, b) => a.nom.localeCompare(b.nom))
-  }, [produitsIndex, typeFilter])
+  }, [produitsIndex, typeFilter, toutesMarques])
 
-  // Types disponibles selon la marque sélectionnée
+  // ── Types disponibles selon la marque sélectionnée ───────────────────────
   const typesDisponibles = useMemo(() => {
     const subset = marqueFilter
       ? produitsIndex.filter((p: any) => p.marque_id === marqueFilter)
@@ -57,7 +57,12 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
     return ALL_TYPES.filter(t => types.has(t))
   }, [produitsIndex, marqueFilter])
 
-  // Si le filtre actif n'est plus disponible → le réinitialiser automatiquement
+  // Réinitialiser les filtres si la sélection devient invalide
+  useEffect(() => {
+    if (marqueFilter && !marquesDisponibles.find((m: any) => m.id === marqueFilter)) {
+      setMarqueFilter("")
+    }
+  }, [marquesDisponibles])
 
   useEffect(() => {
     if (typeFilter && !typesDisponibles.includes(typeFilter)) {
@@ -138,13 +143,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
       </div>
 
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" as const }}>
-        {/* Recherche texte */}
         <input type="text" placeholder="Rechercher..." value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
           autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
           style={{ ...inputStyle, flex: 2, minWidth: "200px" }} />
 
-        {/* Filtre type — options filtrées selon la marque */}
         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "140px" }}>
           <option value="">Tous les types</option>
@@ -153,7 +156,6 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           ))}
         </select>
 
-        {/* Filtre marque — options filtrées selon le type */}
         <select value={marqueFilter} onChange={e => { setMarqueFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}>
           <option value="">Toutes les marques</option>

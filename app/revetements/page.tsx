@@ -5,8 +5,7 @@ import RevatementsClient from "./RevatementsClient"
 export const revalidate = 60
 
 export default async function RevatementsPage() {
-  const [{ data: produits, count }, { data: produitsIndex }] = await Promise.all([
-    // Page initiale (50 premiers)
+  const [{ data: produits, count }, { data: produitsIndex }, { data: toutesMarques }] = await Promise.all([
     supabase
       .from("produits")
       .select("id, nom, slug, marques(id, nom), revetements(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
@@ -15,13 +14,24 @@ export default async function RevatementsPage() {
       .order("nom")
       .range(0, 49),
 
-    // Index léger : tous les produits avec juste marque + type (pour les filtres dynamiques)
     supabase
       .from("produits")
       .select("marque_id, marques(id, nom), revetements(type_revetement)")
       .eq("actif", true)
-      .not("revetements", "is", null)
+      .not("revetements", "is", null),
+
+    // Toutes les marques ayant au moins un revêtement actif
+    supabase
+      .from("marques")
+      .select("id, nom")
+      .order("nom"),
   ])
+
+  // Filtrer les marques qui ont effectivement un revêtement
+  const marqueIdsAvecRev = new Set(
+    (produitsIndex || []).map((p: any) => p.marque_id).filter(Boolean)
+  )
+  const marquesAvecRev = (toutesMarques || []).filter((m: any) => marqueIdsAvecRev.has(m.id))
 
   return (
     <Suspense fallback={<div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>}>
@@ -29,6 +39,7 @@ export default async function RevatementsPage() {
         initialProduits={produits || []}
         initialTotal={count || 0}
         produitsIndex={produitsIndex || []}
+        toutesMarques={marquesAvecRev}
       />
     </Suspense>
   )
