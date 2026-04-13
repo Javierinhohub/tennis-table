@@ -8,17 +8,15 @@ export default async function RevatementsPage() {
   const [{ data: produits, count }, { data: produitsIndex }, { data: toutesMarques }] = await Promise.all([
     supabase
       .from("produits")
-      .select("id, nom, slug, marques(id, nom), revetements(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
+      .select("id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
       .eq("actif", true)
-      .not("revetements", "is", null)
       .order("nom")
       .range(0, 49),
 
     supabase
       .from("produits")
-      .select("marque_id, marques(id, nom), revetements(type_revetement)")
-      .eq("actif", true)
-      .not("revetements", "is", null),
+      .select("marque_id, marques(id, nom), revetements!inner(type_revetement)")
+      .eq("actif", true),
 
     // Toutes les marques ayant au moins un revêtement actif
     supabase

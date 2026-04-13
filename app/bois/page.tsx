@@ -6,9 +6,8 @@ export const revalidate = 300
 export default async function BoisPage() {
   const { data: produits } = await supabase
     .from("produits")
-    .select("id, nom, slug, marques(id, nom), bois(nb_plis, poids_g, epaisseur_mm, composition)")
+    .select("id, nom, slug, marques(id, nom), bois!inner(nb_plis, poids_g, epaisseur_mm, style, composition)")
     .eq("actif", true)
-    .not("bois", "is", null)
     .order("nom")
     .limit(2000)
 
