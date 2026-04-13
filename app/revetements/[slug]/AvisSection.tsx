@@ -87,20 +87,25 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
     if (note === 0) { setError("Veuillez sélectionner une note globale."); return }
     if (contenu.length < 20) { setError("L'avis doit contenir au moins 20 caractères."); return }
     setLoading(true)
-    const { error: err } = await supabase.from("avis").insert({
-      produit_id: produitId, user_id: user.id,
-      note, titre, contenu, style_jeu: styleJeu, valide: false,
-    })
-    setLoading(false)
-    if (err) {
-      if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
-        setError("Vous avez déjà soumis un avis pour ce revêtement.")
+    try {
+      const { error: err } = await supabase.from("avis").insert({
+        produit_id: produitId, user_id: user.id,
+        note, titre, contenu, style_jeu: styleJeu,
+      })
+      if (err) {
+        if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
+          setError("Vous avez déjà soumis un avis pour ce revêtement.")
+        } else {
+          setError("Erreur : " + err.message)
+        }
       } else {
-        setError("Erreur : " + err.message)
+        setMessage("✅ Votre avis a été soumis et sera visible après modération.")
+        setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
       }
-    } else {
-      setMessage("✅ Votre avis a été soumis et sera visible après modération.")
-      setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
+    } catch (ex: any) {
+      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -109,25 +114,30 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
     setError("")
     if (noteRapide === 0) { setError("Veuillez sélectionner une note globale."); return }
     setLoading(true)
-    const payload = {
-      produit_id: produitId, user_id: user.id,
-      note_globale: noteRapide,
-      note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
-      note_effet: noteEffet ? parseInt(noteEffet) : null,
-      note_controle: noteControle ? parseInt(noteControle) : null,
-      note_durabilite: noteDurabilite ? parseInt(noteDurabilite) : null,
-      note_durete_mousse: noteDurete ? parseInt(noteDurete) : null,
-      note_rejet: noteRejet ? parseInt(noteRejet) : null,
-      note_qualite_prix: noteQP ? parseInt(noteQP) : null,
-    }
-    const { error: err } = await supabase.from("notes_revetements").upsert(payload, { onConflict: "produit_id,user_id" })
-    setLoading(false)
-    if (err) {
-      setError("Erreur : " + err.message)
-    } else {
-      setMessage("✅ Votre note a été enregistrée !")
-      setNoteRapide(0); setNoteVitesse(""); setNoteEffet(""); setNoteControle("")
-      setNoteDurabilite(""); setNoteDurete(""); setNoteRejet(""); setNoteQP(""); setMode("")
+    try {
+      const payload = {
+        produit_id: produitId, user_id: user.id,
+        note_globale: noteRapide,
+        note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
+        note_effet: noteEffet ? parseInt(noteEffet) : null,
+        note_controle: noteControle ? parseInt(noteControle) : null,
+        note_durabilite: noteDurabilite ? parseInt(noteDurabilite) : null,
+        note_durete_mousse: noteDurete ? parseInt(noteDurete) : null,
+        note_rejet: noteRejet ? parseInt(noteRejet) : null,
+        note_qualite_prix: noteQP ? parseInt(noteQP) : null,
+      }
+      const { error: err } = await supabase.from("notes_revetements").upsert(payload, { onConflict: "produit_id,user_id" })
+      if (err) {
+        setError("Erreur : " + err.message)
+      } else {
+        setMessage("✅ Votre note a été enregistrée !")
+        setNoteRapide(0); setNoteVitesse(""); setNoteEffet(""); setNoteControle("")
+        setNoteDurabilite(""); setNoteDurete(""); setNoteRejet(""); setNoteQP(""); setMode("")
+      }
+    } catch (ex: any) {
+      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+    } finally {
+      setLoading(false)
     }
   }
 

@@ -138,20 +138,25 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     if (note === 0) { setError("Veuillez sélectionner une note globale."); return }
     if (contenu.length < 20) { setError("L'avis doit contenir au moins 20 caractères."); return }
     setLoading(true)
-    const { error: err } = await supabase.from("avis").insert({
-      produit_id: produitId, user_id: user.id,
-      note, titre, contenu, style_jeu: styleJeu, valide: false,
-    })
-    setLoading(false)
-    if (err) {
-      if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
-        setError("Vous avez déjà soumis un avis pour ce bois.")
+    try {
+      const { error: err } = await supabase.from("avis").insert({
+        produit_id: produitId, user_id: user.id,
+        note, titre, contenu, style_jeu: styleJeu,
+      })
+      if (err) {
+        if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
+          setError("Vous avez déjà soumis un avis pour ce bois.")
+        } else {
+          setError("Erreur : " + err.message)
+        }
       } else {
-        setError("Erreur : " + err.message)
+        setMessage("✅ Votre avis a été soumis et sera visible après modération.")
+        setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
       }
-    } else {
-      setMessage("✅ Votre avis a été soumis et sera visible après modération.")
-      setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
+    } catch (ex: any) {
+      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -160,28 +165,32 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     setError("")
     if (noteRapide === 0) { setError("Veuillez sélectionner une note globale."); return }
     setLoading(true)
-    const payload = {
-      produit_id: produitId,
-      user_id: user.id,
-      note_globale: noteRapide,
-      note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
-      note_controle: noteControle ? parseInt(noteControle) : null,
-      note_flexibilite: noteFlexibilite ? parseInt(noteFlexibilite) : null,
-      note_durete: noteDurete ? parseInt(noteDurete) : null,
-      note_qualite_prix: noteQP ? parseInt(noteQP) : null,
-    }
-    const { error: err } = await supabase
-      .from("notes_bois")
-      .upsert(payload, { onConflict: "produit_id,user_id" })
-    setLoading(false)
-    if (err) {
-      setError("Erreur : " + err.message)
-    } else {
-      setMessage("✅ Votre note a été enregistrée !")
-      setNoteRapide(0); setNoteVitesse(""); setNoteControle("")
-      setNoteFlexibilite(""); setNoteDurete(""); setNoteQP(""); setMode("")
-      // Notifie le polar chart de se mettre à jour
-      window.dispatchEvent(new Event("notes_bois_updated"))
+    try {
+      const payload = {
+        produit_id: produitId,
+        user_id: user.id,
+        note_globale: noteRapide,
+        note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
+        note_controle: noteControle ? parseInt(noteControle) : null,
+        note_flexibilite: noteFlexibilite ? parseInt(noteFlexibilite) : null,
+        note_durete: noteDurete ? parseInt(noteDurete) : null,
+        note_qualite_prix: noteQP ? parseInt(noteQP) : null,
+      }
+      const { error: err } = await supabase
+        .from("notes_bois")
+        .upsert(payload, { onConflict: "produit_id,user_id" })
+      if (err) {
+        setError("Erreur : " + err.message)
+      } else {
+        setMessage("✅ Votre note a été enregistrée !")
+        setNoteRapide(0); setNoteVitesse(""); setNoteControle("")
+        setNoteFlexibilite(""); setNoteDurete(""); setNoteQP(""); setMode("")
+        window.dispatchEvent(new Event("notes_bois_updated"))
+      }
+    } catch (ex: any) {
+      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+    } finally {
+      setLoading(false)
     }
   }
 

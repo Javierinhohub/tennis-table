@@ -184,14 +184,25 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
     e.preventDefault()
     if (!noteGlobale) return
     setLoading(true)
-    const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale }
-    criteres.forEach(c => { payload[KEY_TO_DB[c.key]] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
-    if (maNote) await supabase.from("notes_revetements").update(payload).eq("id", maNote.id)
-    else await supabase.from("notes_revetements").insert(payload)
-    setSaved(true); setShowForm(false)
-    await fetchData(); await fetchMaNote(user.id)
-    setLoading(false)
-    setTimeout(() => setSaved(false), 3000)
+    try {
+      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale }
+      criteres.forEach(c => { payload[KEY_TO_DB[c.key]] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
+      const { error: err } = maNote
+        ? await supabase.from("notes_revetements").update(payload).eq("id", maNote.id)
+        : await supabase.from("notes_revetements").insert(payload)
+      if (err) {
+        // Affiche l'erreur dans la console pour debug, mais ne bloque pas l'UX
+        console.error("notes_revetements error:", err.message)
+      } else {
+        setSaved(true); setShowForm(false)
+        await fetchData(); await fetchMaNote(user.id)
+        setTimeout(() => setSaved(false), 3000)
+      }
+    } catch (ex: any) {
+      console.error("handleSubmit exception:", ex)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const hasStats = Object.values(stats).some(v => v)

@@ -40,6 +40,7 @@ export default function AdminArticlesPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
 
+  const [editId, setEditId] = useState<string | null>(null)
   const [titre, setTitre] = useState("")
   const [slug, setSlug] = useState("")
   const [extrait, setExtrait] = useState("")
@@ -77,17 +78,47 @@ export default function AdminArticlesPage() {
     if (titre) setSlug(titre.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80))
   }, [titre])
 
+  function ouvrirEdition(a: any) {
+    setEditId(a.id)
+    setTitre(a.titre || "")
+    setSlug(a.slug || "")
+    setExtrait(a.extrait || "")
+    setContenu(a.contenu || "")
+    setCategorie(a.categorie || "test")
+    setProduitSearch("")
+    setProduitId(a.produit_id || "")
+    setPublie(a.publie || false)
+    setMode("nouveau")
+  }
+
+  function resetForm() {
+    setEditId(null)
+    setTitre(""); setSlug(""); setExtrait(""); setContenu("")
+    setCategorie("test"); setProduitId(""); setProduitSearch(""); setPublie(false)
+  }
+
   async function publierArticle(e: React.FormEvent) {
     e.preventDefault()
     setMessage("")
-    const { error } = await supabase.from("articles").insert({
-      titre, slug, extrait: extrait || null, contenu,
-      categorie, produit_id: produitId || null,
-      auteur_id: user.id, publie
-    })
-    if (error) { setMessage("Erreur : " + error.message); return }
-    setMessage("Article créé avec succès !")
-    setTitre(""); setSlug(""); setExtrait(""); setContenu(""); setProduitId(""); setProduitSearch(""); setPublie(false)
+    if (editId) {
+      // Mode édition
+      const { error } = await supabase.from("articles").update({
+        titre, slug, extrait: extrait || null, contenu,
+        categorie, produit_id: produitId || null, publie
+      }).eq("id", editId)
+      if (error) { setMessage("Erreur : " + error.message); return }
+      setMessage("Article modifié avec succès !")
+    } else {
+      // Mode création
+      const { error } = await supabase.from("articles").insert({
+        titre, slug, extrait: extrait || null, contenu,
+        categorie, produit_id: produitId || null,
+        auteur_id: user.id, publie
+      })
+      if (error) { setMessage("Erreur : " + error.message); return }
+      setMessage("Article créé avec succès !")
+    }
+    resetForm()
     await checkAdmin()
     setMode("liste")
   }
@@ -113,7 +144,7 @@ export default function AdminArticlesPage() {
       <a href="/admin" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>Retour à l'administration</a>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "22px", fontWeight: 700 }}>Articles & Tests</h1>
-        <button onClick={() => setMode(mode === "liste" ? "nouveau" : "liste")}
+        <button onClick={() => { if (mode !== "liste") { resetForm(); setMode("liste") } else setMode("nouveau") }}
           style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 18px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
           {mode === "liste" ? "+ Nouvel article" : "Voir la liste"}
         </button>
@@ -150,6 +181,7 @@ export default function AdminArticlesPage() {
                       </td>
                       <td style={{ padding: "12px 16px" }}>
                         <div style={{ display: "flex", gap: "6px" }}>
+                          <button onClick={() => ouvrirEdition(a)} style={{ background: "#EFF6FF", color: "#1D4ED8", border: "none", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", cursor: "pointer" }}>Modifier</button>
                           <button onClick={() => togglePublie(a.id, a.publie)} style={{ background: a.publie ? "var(--bg)" : "var(--success-light)", color: a.publie ? "var(--text-muted)" : "var(--success)", border: "none", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", cursor: "pointer" }}>{a.publie ? "Dépublier" : "Publier"}</button>
                           <button onClick={() => supprimerArticle(a.id)} style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", cursor: "pointer" }}>Supprimer</button>
                         </div>
@@ -166,7 +198,9 @@ export default function AdminArticlesPage() {
       {mode === "nouveau" && (
         <form onSubmit={publierArticle} style={{ display: "flex", flexDirection: "column", gap: "0" }}>
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "12px" }}>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Informations</p>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>
+              {editId ? "Modifier l'article" : "Nouvel article"}
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div><label style={labelStyle}>Titre</label><input type="text" value={titre} onChange={e => setTitre(e.target.value)} required style={inputStyle} placeholder="Titre de l'article" /></div>
               <div><label style={labelStyle}>Slug (URL)</label><input type="text" value={slug} onChange={e => setSlug(e.target.value)} required style={{ ...inputStyle, fontFamily: "monospace", fontSize: "13px" }} /></div>
@@ -208,7 +242,7 @@ export default function AdminArticlesPage() {
               Publier immédiatement
             </label>
             <button type="submit" style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-              {publie ? "Publier l'article" : "Enregistrer en brouillon"}
+              {editId ? "Enregistrer les modifications" : publie ? "Publier l'article" : "Enregistrer en brouillon"}
             </button>
           </div>
         </form>
