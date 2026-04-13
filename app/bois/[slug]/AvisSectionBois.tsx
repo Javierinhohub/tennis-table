@@ -144,11 +144,11 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     })
     setLoading(false)
     if (err) {
-      setError(
-        err.message.includes("un_avis_par_produit")
-          ? "Vous avez déjà soumis un avis pour ce bois."
-          : "Une erreur est survenue."
-      )
+      if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
+        setError("Vous avez déjà soumis un avis pour ce bois.")
+      } else {
+        setError("Erreur : " + err.message)
+      }
     } else {
       setMessage("✅ Votre avis a été soumis et sera visible après modération.")
       setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
@@ -175,7 +175,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
       .upsert(payload, { onConflict: "produit_id,user_id" })
     setLoading(false)
     if (err) {
-      setError("Une erreur est survenue.")
+      setError("Erreur : " + err.message)
     } else {
       setMessage("✅ Votre note a été enregistrée !")
       setNoteRapide(0); setNoteVitesse(""); setNoteControle("")

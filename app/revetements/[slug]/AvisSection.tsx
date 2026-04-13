@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 
 function Etoiles({ note, onChange, readonly = false }: { note: number, onChange?: (n: number) => void, readonly?: boolean }) {
@@ -31,6 +32,7 @@ function Etoiles({ note, onChange, readonly = false }: { note: number, onChange?
 }
 
 export default function AvisSection({ produitId, typeRevetement }: { produitId: string, typeRevetement?: string }) {
+  const pathname = usePathname()
   const [avis, setAvis] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [mode, setMode] = useState<"" | "note" | "avis">("")
@@ -56,6 +58,19 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
 
   const moyenneNote = avis.length > 0 ? (avis.reduce((s, a) => s + a.note, 0) / avis.length).toFixed(1) : "0"
 
+  // ── MANQUAIT : chargement initial + écoute de la session ───────────────
+  useEffect(() => {
+    fetchAvis()
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data?.session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function fetchAvis() {
     const { data } = await supabase
       .from("avis")
@@ -78,7 +93,11 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
     })
     setLoading(false)
     if (err) {
-      setError(err.message.includes("un_avis_par_produit") ? "Vous avez déjà soumis un avis pour ce revêtement." : "Une erreur est survenue.")
+      if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
+        setError("Vous avez déjà soumis un avis pour ce revêtement.")
+      } else {
+        setError("Erreur : " + err.message)
+      }
     } else {
       setMessage("✅ Votre avis a été soumis et sera visible après modération.")
       setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
@@ -104,7 +123,7 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
     const { error: err } = await supabase.from("notes_revetements").upsert(payload, { onConflict: "produit_id,user_id" })
     setLoading(false)
     if (err) {
-      setError("Une erreur est survenue.")
+      setError("Erreur : " + err.message)
     } else {
       setMessage("✅ Votre note a été enregistrée !")
       setNoteRapide(0); setNoteVitesse(""); setNoteEffet(""); setNoteControle("")
@@ -252,7 +271,7 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
       {!user && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", textAlign: "center" as const, marginBottom: "1.5rem" }}>
           <p style={{ color: "var(--text-muted)", marginBottom: "12px", fontSize: "14px" }}>Connectez-vous pour noter ou laisser un avis</p>
-          <Link href="/auth/login" style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600 }}>Se connecter</Link>
+          <Link href={`/auth/login?redirect=${encodeURIComponent(pathname)}`} style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "14px", fontWeight: 600 }}>Se connecter</Link>
         </div>
       )}
 
