@@ -163,7 +163,6 @@ export default function AdminArticlesPage() {
                   <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                     <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Titre</th>
                     <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Catégorie</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Vues</th>
                     <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Statut</th>
                     <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Actions</th>
                   </tr>
@@ -175,7 +174,6 @@ export default function AdminArticlesPage() {
                         <a href={"/articles/" + a.slug} target="_blank" style={{ color: "var(--text)", textDecoration: "none" }}>{a.titre}</a>
                       </td>
                       <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--text-muted)", textTransform: "capitalize" }}>{a.categorie}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--text-muted)" }}>{a.vues}</td>
                       <td style={{ padding: "12px 16px" }}>
                         <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "4px", background: a.publie ? "var(--success-light)" : "#FEF3C7", color: a.publie ? "var(--success)" : "#92400E" }}>{a.publie ? "Publié" : "Brouillon"}</span>
                       </td>

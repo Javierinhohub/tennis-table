@@ -77,7 +77,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "var(--text-muted)" }}>
           <span>Par <strong style={{ color: "var(--text)" }}>{article.utilisateurs?.pseudo || "TT-Kip"}</strong></span>
           <span>{new Date(article.cree_le).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>
-          <span>{article.vues} vue{article.vues !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
