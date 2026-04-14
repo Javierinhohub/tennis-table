@@ -309,6 +309,7 @@ export default function AdminPage() {
     { id: "joueurs", label: "Joueurs pro", count: joueurs.length },
     { id: "modifier-joueur", label: "Modifier un joueur" },
     { id: "articles", label: "Articles & Tests", href: "/admin/articles" },
+    { id: "edit-produits", label: "Éditer revêtements / bois", href: "/admin/produits" },
   ]
 
   const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Inter, sans-serif", outline: "none", color: "var(--text)" }
@@ -334,12 +335,18 @@ export default function AdminPage() {
 
       <div style={{ display: "flex", gap: "0", borderBottom: "1px solid var(--border)", marginBottom: "2rem", overflowX: "auto" }}>
         {onglets.map(t => (
-          <button key={t.id} onClick={() => { setOnglet(t.id); setMessage("") }}
-            style={{ background: "none", border: "none", borderBottom: onglet === t.id ? "2px solid var(--accent)" : "2px solid transparent",
-              color: onglet === t.id ? "var(--accent)" : "var(--text-muted)", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const, display: "flex", alignItems: "center", gap: "6px" }}>
-            {t.label}
-            {t.count !== undefined && t.count > 0 && <span style={{ background: onglet === t.id ? "var(--accent-light)" : "var(--border)", color: onglet === t.id ? "var(--accent)" : "var(--text-muted)", borderRadius: "10px", padding: "1px 6px", fontSize: "11px" }}>{t.count}</span>}
-          </button>
+          (t as any).href
+            ? <a key={t.id} href={(t as any).href}
+                style={{ background: "none", border: "none", borderBottom: "2px solid transparent", textDecoration: "none",
+                  color: "var(--text-muted)", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const, display: "flex", alignItems: "center", gap: "6px" }}>
+                {t.label}
+              </a>
+            : <button key={t.id} onClick={() => { setOnglet(t.id); setMessage("") }}
+                style={{ background: "none", border: "none", borderBottom: onglet === t.id ? "2px solid var(--accent)" : "2px solid transparent",
+                  color: onglet === t.id ? "var(--accent)" : "var(--text-muted)", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const, display: "flex", alignItems: "center", gap: "6px" }}>
+                {t.label}
+                {t.count !== undefined && t.count > 0 && <span style={{ background: onglet === t.id ? "var(--accent-light)" : "var(--border)", color: onglet === t.id ? "var(--accent)" : "var(--text-muted)", borderRadius: "10px", padding: "1px 6px", fontSize: "11px" }}>{t.count}</span>}
+              </button>
         ))}
       </div>
 
