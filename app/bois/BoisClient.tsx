@@ -15,7 +15,7 @@ const STYLE_LABELS: Record<string, string> = {
 }
 const STYLE_ORDER = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
 
-export default function BoisClient({ produits, marques }: { produits: any[], marques: any[] }) {
+export default function BoisClient({ produits, marques, avisCount }: { produits: any[], marques: any[], avisCount: Record<string, number> }) {
   const [search, setSearch] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [styleFilter, setStyleFilter] = useState("")
@@ -29,16 +29,18 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
 
   const resultats = useMemo(() => {
     const s = search.toLowerCase().trim()
-    return produits.filter(p => {
-      const nomOk = !s
-        || p.nom.toLowerCase().includes(s)
-        || (p.marques?.nom || "").toLowerCase().includes(s)
-        || (p.bois?.composition || "").toLowerCase().includes(s)
-      const marqueOk = !marqueFilter || p.marques?.id === marqueFilter
-      const styleOk = !styleFilter || p.bois?.style === styleFilter
-      return nomOk && marqueOk && styleOk
-    })
-  }, [produits, search, marqueFilter, styleFilter])
+    return produits
+      .filter(p => {
+        const nomOk = !s
+          || p.nom.toLowerCase().includes(s)
+          || (p.marques?.nom || "").toLowerCase().includes(s)
+          || (p.bois?.composition || "").toLowerCase().includes(s)
+        const marqueOk = !marqueFilter || p.marques?.id === marqueFilter
+        const styleOk = !styleFilter || p.bois?.style === styleFilter
+        return nomOk && marqueOk && styleOk
+      })
+      .sort((a: any, b: any) => (avisCount[b.id] || 0) - (avisCount[a.id] || 0))
+  }, [produits, search, marqueFilter, styleFilter, avisCount])
 
   const hasFilter = !!(search || marqueFilter || styleFilter)
 
@@ -132,7 +134,7 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                {["Nom", "Marque", "Style", "Plis", "Poids", "Composition"].map(h => (
+                {["Nom", "Marque", "Style", "Plis", "Poids", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -173,8 +175,14 @@ export default function BoisClient({ produits, marques }: { produits: any[], mar
                   <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", color: "var(--text-muted)" }}>
                     {p.bois?.poids_g ? p.bois.poids_g + " g" : "—"}
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-muted)", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                    {p.bois?.composition || "—"}
+                  <td style={{ padding: "12px 16px" }}>
+                    {avisCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
+                        {avisCount[p.id]} avis
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
                   </td>
                 </tr>
               ))}

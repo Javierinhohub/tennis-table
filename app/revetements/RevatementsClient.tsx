@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import NoteModal from "@/app/components/NoteModal"
 import { supabase } from "@/lib/supabase"
@@ -11,11 +11,12 @@ const TYPE_LABELS: Record<string, string> = {
 const ALL_TYPES = ["In", "Out", "Long", "Anti"]
 const PAGE_SIZE = 50
 
-export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques }: {
+export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount }: {
   initialProduits: any[]
   initialTotal: number
   produitsIndex: any[]
   toutesMarques: any[]
+  avisCount: Record<string, number>
 }) {
   const searchParams = useSearchParams()
 
@@ -33,42 +34,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
 
   const isFiltered = search || typeFilter || marqueFilter || page > 0
 
-  // ── Marques disponibles selon le type sélectionné ────────────────────────
-  const marquesDisponibles = useMemo(() => {
-    if (!typeFilter) return toutesMarques
-    const subset = produitsIndex.filter((p: any) => p.revetements?.type_revetement === typeFilter)
-    const map = new Map<string, any>()
-    subset.forEach((p: any) => {
-      const m = p.marques
-      if (m && !map.has(m.id)) map.set(m.id, m)
-    })
-    return Array.from(map.values()).sort((a, b) => a.nom.localeCompare(b.nom))
-  }, [produitsIndex, typeFilter, toutesMarques])
+  // Toutes les marques toujours disponibles (pas de restriction par type)
+  const marquesDisponibles = toutesMarques
 
-  // ── Types disponibles selon la marque sélectionnée ───────────────────────
-  const typesDisponibles = useMemo(() => {
-    const subset = marqueFilter
-      ? produitsIndex.filter((p: any) => p.marque_id === marqueFilter)
-      : produitsIndex
-    const types = new Set<string>()
-    subset.forEach((p: any) => {
-      if (p.revetements?.type_revetement) types.add(p.revetements.type_revetement)
-    })
-    return ALL_TYPES.filter(t => types.has(t))
-  }, [produitsIndex, marqueFilter])
-
-  // Réinitialiser les filtres si la sélection devient invalide
-  useEffect(() => {
-    if (marqueFilter && !marquesDisponibles.find((m: any) => m.id === marqueFilter)) {
-      setMarqueFilter("")
-    }
-  }, [marquesDisponibles, marqueFilter])
-
-  useEffect(() => {
-    if (typeFilter && !typesDisponibles.includes(typeFilter)) {
-      setTypeFilter("")
-    }
-  }, [typesDisponibles, typeFilter])
+  // Types disponibles (toujours tous)
+  const typesDisponibles = ALL_TYPES
 
   // ── Debounce recherche ───────────────────────────────────────────────────
   useEffect(() => {
@@ -117,7 +87,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
     if (typeFilter) query = (query as any).eq("revetements.type_revetement", typeFilter)
 
     const { data, count } = await query
-    setProduits(data || [])
+    // Trier : produits avec avis en premier
+    const sorted = [...(data || [])].sort(
+      (a: any, b: any) => (avisCount[b.id] || 0) - (avisCount[a.id] || 0)
+    )
+    setProduits(sorted)
     setTotal(count || 0)
     setLoading(false)
   }
@@ -224,7 +198,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                {["Nom", "Marque", "Type", "LARC"].map(h => (
+                {["Nom", "Marque", "Type", "LARC", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
                 {user && (
@@ -258,6 +232,15 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>
                     {p.revetements?.numero_larc || "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {avisCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
+                        {avisCount[p.id]} avis
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
                   </td>
                   {user && (
                     <td
