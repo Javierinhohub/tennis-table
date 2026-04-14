@@ -5,7 +5,14 @@ import RevatementsClient from "./RevatementsClient"
 export const revalidate = 60
 
 export default async function RevatementsPage() {
-  const [{ data: produits, count }, { data: produitsIndex }, { data: avisData }, { data: notesData }] = await Promise.all([
+  const [
+    { data: produits, count },
+    { data: produitsIndex },
+    { data: avisData },
+    { data: notesData },
+    { data: marquesData },
+  ] = await Promise.all([
+    // 50 premiers produits pour l'affichage initial
     supabase
       .from("produits")
       .select("id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
@@ -13,14 +20,23 @@ export default async function RevatementsPage() {
       .order("nom")
       .range(0, 49),
 
+    // Index léger pour le filtre type côté client
     supabase
       .from("produits")
-      .select("id, marque_id, marques(id, nom), revetements!inner(type_revetement)")
+      .select("id, marque_id, revetements!inner(type_revetement)")
       .eq("actif", true)
-      .limit(5000),
+      .limit(1000),
 
     supabase.from("avis").select("produit_id").eq("valide", true),
     supabase.from("notes_revetements").select("produit_id"),
+
+    // Toutes les marques ayant au moins un revêtement actif
+    // Double !inner : marques → produits → revetements (peu de marques, pas de problème de limite)
+    supabase
+      .from("marques")
+      .select("id, nom, produits!inner(revetements!inner(id))")
+      .eq("produits.actif", true)
+      .order("nom"),
   ])
 
   const avisCount: Record<string, number> = {}
@@ -40,12 +56,8 @@ export default async function RevatementsPage() {
     return scoreB - scoreA
   })
 
-  // Toutes les marques ayant au moins un revêtement (sans doublon)
-  const marquesMap = new Map<string, any>()
-  ;(produitsIndex || []).forEach((p: any) => {
-    if (p.marques && !marquesMap.has(p.marques.id)) marquesMap.set(p.marques.id, p.marques)
-  })
-  const toutesMarques = Array.from(marquesMap.values()).sort((a, b) => a.nom.localeCompare(b.nom))
+  // Nettoyer les marques (retirer les données de jointure, garder seulement id + nom)
+  const toutesMarques = (marquesData || []).map((m: any) => ({ id: m.id, nom: m.nom }))
 
   return (
     <Suspense fallback={<div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>}>
