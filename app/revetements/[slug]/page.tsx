@@ -21,10 +21,13 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   const rev = produit.revetements as any
   const marque = produit.marques as any
 
+  // Cherche les pros qui utilisent ce revêtement (CD ou revers) en matchant le nom du produit
   const { data: joueursPro } = await supabase
-    .from("joueurs_pro_produits")
-    .select("depuis, joueurs_pro(nom, pays, classement_mondial)")
-    .eq("produit_id", produit.id)
+    .from("joueurs_pro")
+    .select("id, nom, pays, classement_mondial, genre, revetement_cd, revetement_rv")
+    .or(`revetement_cd.ilike.%${produit.nom}%,revetement_rv.ilike.%${produit.nom}%`)
+    .eq("actif", true)
+    .order("classement_mondial")
 
   const stats = [
     { label: "Vitesse", value: rev?.vitesse_note, color: "#1A56DB" },
@@ -93,16 +96,21 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
               <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Joueurs professionnels</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {joueursPro.map((jp: any) => (
-                  <div key={jp.joueurs_pro?.nom} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--bg)", borderRadius: "8px" }}>
+                  <a key={jp.id} href={"/joueurs/" + jp.id}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--bg)", borderRadius: "8px", textDecoration: "none" }}>
                     <div>
-                      <p style={{ fontWeight: 500, fontSize: "14px" }}>{jp.joueurs_pro?.nom}</p>
-                      <p style={{ color: "var(--text-muted)", fontSize: "12px" }}>{jp.joueurs_pro?.pays}</p>
+                      <p style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>{jp.nom}</p>
+                      <p style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                        {jp.pays}
+                        {jp.revetement_cd?.toLowerCase().includes(produit.nom.toLowerCase()) && " · Coup droit"}
+                        {jp.revetement_rv?.toLowerCase().includes(produit.nom.toLowerCase()) && " · Revers"}
+                      </p>
                     </div>
-                    <div style={{ textAlign: "right" }}>
+                    <div style={{ textAlign: "right" as const }}>
                       <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Classement mondial</p>
-                      <p style={{ fontWeight: 700, fontSize: "16px", color: "var(--accent)" }}>#{jp.joueurs_pro?.classement_mondial}</p>
+                      <p style={{ fontWeight: 700, fontSize: "16px", color: "var(--accent)" }}>#{jp.classement_mondial}</p>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
