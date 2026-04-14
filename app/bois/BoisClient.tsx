@@ -16,7 +16,7 @@ const STYLE_LABELS: Record<string, string> = {
 }
 const STYLE_ORDER = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
 
-export default function BoisClient({ produits, marques, avisCount }: { produits: any[], marques: any[], avisCount: Record<string, number> }) {
+export default function BoisClient({ produits, marques, avisCount, notesCount }: { produits: any[], marques: any[], avisCount: Record<string, number>, notesCount: Record<string, number> }) {
   const [search, setSearch] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [styleFilter, setStyleFilter] = useState("")
@@ -50,7 +50,11 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
         const styleOk = !styleFilter || p.bois?.style === styleFilter
         return nomOk && marqueOk && styleOk
       })
-      .sort((a: any, b: any) => (avisCount[b.id] || 0) - (avisCount[a.id] || 0))
+      .sort((a: any, b: any) => {
+        const scoreB = (notesCount[b.id] || 0) * 2 + (avisCount[b.id] || 0)
+        const scoreA = (notesCount[a.id] || 0) * 2 + (avisCount[a.id] || 0)
+        return scoreB - scoreA
+      })
   }, [produits, search, marqueFilter, styleFilter, avisCount])
 
   const hasFilter = !!(search || marqueFilter || styleFilter)
@@ -169,7 +173,7 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Style", "Plis", "Poids", "Avis"].map(h => (
+                {["Nom", "Marque", "Style", "Plis", "Poids", "Notes", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -224,6 +228,15 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", color: "var(--text-muted)" }}>
                     {p.bois?.poids_g ? p.bois.poids_g + " g" : "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {notesCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A56DB", background: "#EBF5FF", padding: "2px 8px", borderRadius: "10px" }}>
+                        {notesCount[p.id]} note{notesCount[p.id] > 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     {avisCount[p.id] > 0 ? (

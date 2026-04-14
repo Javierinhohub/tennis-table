@@ -4,7 +4,7 @@ import BoisClient from "./BoisClient"
 export const revalidate = 300
 
 export default async function BoisPage() {
-  const [{ data: produits }, { data: avisData }] = await Promise.all([
+  const [{ data: produits }, { data: avisData }, { data: notesData }] = await Promise.all([
     supabase
       .from("produits")
       .select("id, nom, slug, marques(id, nom), bois!inner(nb_plis, poids_g, epaisseur_mm, style, composition)")
@@ -12,22 +12,26 @@ export default async function BoisPage() {
       .order("nom")
       .limit(2000),
 
-    supabase
-      .from("avis")
-      .select("produit_id")
-      .eq("valide", true),
+    supabase.from("avis").select("produit_id").eq("valide", true),
+    supabase.from("notes_bois").select("produit_id"),
   ])
 
-  // Map produit_id → nombre d'avis
   const avisCount: Record<string, number> = {}
   avisData?.forEach((a: any) => {
     avisCount[a.produit_id] = (avisCount[a.produit_id] || 0) + 1
   })
 
-  // Trier : bois avec avis en premier
-  const sortedProduits = [...(produits || [])].sort(
-    (a: any, b: any) => (avisCount[b.id] || 0) - (avisCount[a.id] || 0)
-  )
+  const notesCount: Record<string, number> = {}
+  notesData?.forEach((n: any) => {
+    notesCount[n.produit_id] = (notesCount[n.produit_id] || 0) + 1
+  })
+
+  // Trier : notes en premier, puis avis
+  const sortedProduits = [...(produits || [])].sort((a: any, b: any) => {
+    const scoreB = (notesCount[b.id] || 0) * 2 + (avisCount[b.id] || 0)
+    const scoreA = (notesCount[a.id] || 0) * 2 + (avisCount[a.id] || 0)
+    return scoreB - scoreA
+  })
 
   const marquesAvecBois = Array.from(
     new Map(
@@ -44,7 +48,7 @@ export default async function BoisPage() {
         <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Bois</h1>
         <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{produits?.length || 0} bois disponibles</p>
       </div>
-      <BoisClient produits={sortedProduits} marques={marquesAvecBois} avisCount={avisCount} />
+      <BoisClient produits={sortedProduits} marques={marquesAvecBois} avisCount={avisCount} notesCount={notesCount} />
     </main>
   )
 }

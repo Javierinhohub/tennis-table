@@ -12,12 +12,13 @@ const TYPE_LABELS: Record<string, string> = {
 const ALL_TYPES = ["In", "Out", "Long", "Anti"]
 const PAGE_SIZE = 50
 
-export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount }: {
+export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount, notesCount }: {
   initialProduits: any[]
   initialTotal: number
   produitsIndex: any[]
   toutesMarques: any[]
   avisCount: Record<string, number>
+  notesCount: Record<string, number>
 }) {
   const searchParams = useSearchParams()
 
@@ -231,7 +232,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Type", "LARC", "Avis"].map(h => (
+                {["Nom", "Marque", "Type", "LARC", "Notes", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
                 {user && (
@@ -280,6 +281,15 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>
                     {p.revetements?.numero_larc || "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {notesCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A56DB", background: "#EBF5FF", padding: "2px 8px", borderRadius: "10px" }}>
+                        {notesCount[p.id]} note{notesCount[p.id] > 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     {avisCount[p.id] > 0 ? (

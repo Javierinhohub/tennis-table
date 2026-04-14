@@ -5,7 +5,7 @@ import RevatementsClient from "./RevatementsClient"
 export const revalidate = 60
 
 export default async function RevatementsPage() {
-  const [{ data: produits, count }, { data: produitsIndex }, { data: avisData }] = await Promise.all([
+  const [{ data: produits, count }, { data: produitsIndex }, { data: avisData }, { data: notesData }] = await Promise.all([
     supabase
       .from("produits")
       .select("id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
@@ -19,23 +19,26 @@ export default async function RevatementsPage() {
       .eq("actif", true)
       .limit(5000),
 
-    // Compter les avis validés par produit
-    supabase
-      .from("avis")
-      .select("produit_id")
-      .eq("valide", true),
+    supabase.from("avis").select("produit_id").eq("valide", true),
+    supabase.from("notes_revetements").select("produit_id"),
   ])
 
-  // Map produit_id → nombre d'avis
   const avisCount: Record<string, number> = {}
   avisData?.forEach((a: any) => {
     avisCount[a.produit_id] = (avisCount[a.produit_id] || 0) + 1
   })
 
-  // Trier les produits initiaux : ceux avec des avis en premier
-  const sortedProduits = [...(produits || [])].sort(
-    (a: any, b: any) => (avisCount[b.id] || 0) - (avisCount[a.id] || 0)
-  )
+  const notesCount: Record<string, number> = {}
+  notesData?.forEach((n: any) => {
+    notesCount[n.produit_id] = (notesCount[n.produit_id] || 0) + 1
+  })
+
+  // Trier : notes utilisateurs en premier, puis avis, puis le reste
+  const sortedProduits = [...(produits || [])].sort((a: any, b: any) => {
+    const scoreB = (notesCount[b.id] || 0) * 2 + (avisCount[b.id] || 0)
+    const scoreA = (notesCount[a.id] || 0) * 2 + (avisCount[a.id] || 0)
+    return scoreB - scoreA
+  })
 
   // Toutes les marques ayant au moins un revêtement (sans doublon)
   const marquesMap = new Map<string, any>()
@@ -52,6 +55,7 @@ export default async function RevatementsPage() {
         produitsIndex={produitsIndex || []}
         toutesMarques={toutesMarques}
         avisCount={avisCount}
+        notesCount={notesCount}
       />
     </Suspense>
   )
