@@ -107,10 +107,13 @@ export default function AdminJoueursPage() {
   const [main, setMain] = useState("")
   const [age, setAge] = useState("")
 
-  // Matériel — stocké comme texte dans joueurs_pro
+  // Matériel — texte affiché + ID produit pour la sync joueurs_pro_produits
   const [boisNom, setBoisNom] = useState("")
+  const [boisId, setBoisId] = useState<string | null>(null)
   const [revetementCd, setRevetementCd] = useState("")
+  const [revetementCdId, setRevetementCdId] = useState<string | null>(null)
   const [revetementRv, setRevetementRv] = useState("")
+  const [revetementRvId, setRevetementRvId] = useState<string | null>(null)
 
   useEffect(() => { checkAdmin() }, [])
 
@@ -140,8 +143,11 @@ export default function AdminJoueursPage() {
     setMain(j.main || "")
     setAge(j.age ? String(j.age) : "")
     setBoisNom(j.bois_nom || "")
+    setBoisId(null)
     setRevetementCd(j.revetement_cd || "")
+    setRevetementCdId(null)
     setRevetementRv(j.revetement_rv || "")
+    setRevetementRvId(null)
   }
 
   // Recherche bois dans la base
@@ -181,6 +187,8 @@ export default function AdminJoueursPage() {
     e.preventDefault()
     setLoading(true)
     setMessage("")
+
+    // 1. Sauvegarde du joueur
     const { error } = await supabase
       .from("joueurs_pro")
       .update({
@@ -193,13 +201,28 @@ export default function AdminJoueursPage() {
         revetement_rv: revetementRv || null,
       })
       .eq("id", joueur.id)
-    setLoading(false)
+
     if (error) {
-      setMessage("❌ Erreur : " + error.message)
-    } else {
-      setMessage("✅ Modifications enregistrées !")
-      fetchJoueurs()
+      setLoading(false)
+      setMessage("Erreur : " + error.message)
+      return
     }
+
+    // 2. Sync joueurs_pro_produits — uniquement si des IDs ont été sélectionnés via autocomplete
+    const newIds = [boisId, revetementCdId, revetementRvId].filter(Boolean) as string[]
+    if (newIds.length > 0) {
+      // Supprime les liaisons existantes pour ce joueur
+      await supabase.from("joueurs_pro_produits").delete().eq("joueur_id", joueur.id)
+      // Insère les nouvelles liaisons (dédupliquées)
+      const uniq = [...new Set(newIds)]
+      await supabase.from("joueurs_pro_produits").insert(
+        uniq.map(produit_id => ({ joueur_id: joueur.id, produit_id }))
+      )
+    }
+
+    setLoading(false)
+    setMessage("Modifications enregistrées !")
+    fetchJoueurs()
   }
 
   const joueursFiltres = joueurs.filter(j =>
@@ -279,7 +302,6 @@ export default function AdminJoueursPage() {
         {/* ── Formulaire ── */}
         {!joueur ? (
           <div style={{ background: "#fff", border: "1px dashed var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-            <p style={{ fontSize: "32px", marginBottom: "12px" }}>👈</p>
             <p style={{ fontSize: "14px" }}>Sélectionnez un joueur dans la liste</p>
           </div>
         ) : (
@@ -309,7 +331,7 @@ export default function AdminJoueursPage() {
 
             {/* Classement & Infos */}
             <div style={cardStyle}>
-              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "16px" }}>📊 Classement & Informations</p>
+              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "16px" }}>Classement & Informations</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px" }}>
                 <div>
                   <label style={labelStyle}>Classement mondial</label>
@@ -350,7 +372,7 @@ export default function AdminJoueursPage() {
 
             {/* Matériel */}
             <div style={cardStyle}>
-              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>🏏 Matériel</p>
+              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Matériel</p>
               <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "16px" }}>
                 Tapez au moins 2 caractères pour rechercher dans la base TT-Kip.
               </p>
@@ -360,25 +382,25 @@ export default function AdminJoueursPage() {
                   label="Bois"
                   placeholder="Rechercher un bois... (ex: Viscaria, Timo Boll)"
                   value={boisNom}
-                  onSelect={item => setBoisNom(displayBois(item))}
+                  onSelect={item => { setBoisNom(displayBois(item)); setBoisId(item.id) }}
                   searchFn={searchBois}
                   displayFn={displayBois}
                 />
 
                 <Autocomplete
-                  label="🔴 Revêtement coup droit"
+                  label="Revêtement coup droit"
                   placeholder="Rechercher un revêtement... (ex: Tenergy, Dignics)"
                   value={revetementCd}
-                  onSelect={item => setRevetementCd(displayRevetement(item))}
+                  onSelect={item => { setRevetementCd(displayRevetement(item)); setRevetementCdId(item.id) }}
                   searchFn={searchRevetement}
                   displayFn={displayRevetement}
                 />
 
                 <Autocomplete
-                  label="⚫ Revêtement revers"
+                  label="Revêtement revers"
                   placeholder="Rechercher un revêtement... (ex: Rozena, Glayzer)"
                   value={revetementRv}
-                  onSelect={item => setRevetementRv(displayRevetement(item))}
+                  onSelect={item => { setRevetementRv(displayRevetement(item)); setRevetementRvId(item.id) }}
                   searchFn={searchRevetement}
                   displayFn={displayRevetement}
                 />
@@ -394,19 +416,19 @@ export default function AdminJoueursPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {boisNom && (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>🏏 Bois</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>Bois</span>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{boisNom}</span>
                       </div>
                     )}
                     {revetementCd && (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>🔴 Coup droit</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>Coup droit</span>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{revetementCd}</span>
                       </div>
                     )}
                     {revetementRv && (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>⚫ Revers</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>Revers</span>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{revetementRv}</span>
                       </div>
                     )}

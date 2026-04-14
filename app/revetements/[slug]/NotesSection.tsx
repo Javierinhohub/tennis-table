@@ -261,13 +261,13 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
             {revetement.commentaire_marque}
           </div>
         )}
-        {saved && <div style={{ background: "var(--success-light)", color: "var(--success)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>✅ Note enregistrée !</div>}
+        {saved && <div style={{ background: "var(--success-light)", color: "var(--success)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>Note enregistrée !</div>}
         {user ? (
           <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
             {!showForm ? (
               <button onClick={() => setShowForm(true)}
                 style={{ width: "100%", background: maNote ? "var(--bg)" : "#D97757", color: maNote ? "var(--text)" : "#fff", border: "1px solid " + (maNote ? "var(--border)" : "#D97757"), borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-                {maNote ? "✏️ Modifier ma note" : "⭐ Noter ce revêtement"}
+                {maNote ? "Modifier ma note" : "Noter ce revêtement"}
               </button>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

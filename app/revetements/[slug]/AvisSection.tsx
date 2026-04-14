@@ -99,11 +99,11 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
           setError("Erreur : " + err.message)
         }
       } else {
-        setMessage("✅ Votre avis a été soumis et sera visible après modération.")
+        setMessage("Votre avis a été soumis et sera visible après modération.")
         setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
       }
     } catch (ex: any) {
-      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+      setError("Une erreur est survenue : " + (ex?.message || String(ex)))
     } finally {
       setLoading(false)
     }
@@ -130,12 +130,12 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
       if (err) {
         setError("Erreur : " + err.message)
       } else {
-        setMessage("✅ Votre note a été enregistrée !")
+        setMessage("Votre note a été enregistrée !")
         setNoteRapide(0); setNoteVitesse(""); setNoteEffet(""); setNoteControle("")
         setNoteDurabilite(""); setNoteDurete(""); setNoteRejet(""); setNoteQP(""); setMode("")
       }
     } catch (ex: any) {
-      setError("Erreur inattendue : " + (ex?.message || String(ex)))
+      setError("Une erreur est survenue : " + (ex?.message || String(ex)))
     } finally {
       setLoading(false)
     }
@@ -182,11 +182,11 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => setMode("note")}
               style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-              ⭐ Noter
+              Noter
             </button>
             <button onClick={() => setMode("avis")}
               style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-              ✍️ Laisser un avis
+              Laisser un avis
             </button>
           </div>
         )}

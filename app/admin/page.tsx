@@ -308,7 +308,6 @@ export default function AdminPage() {
     { id: "ajouter", label: "Ajouter un revêtement" },
     { id: "joueurs", label: "Joueurs pro", count: joueurs.length },
     { id: "modifier-joueur", label: "Modifier un joueur" },
-    { id: "liaisons", label: "Lier joueur / revêtement" },
     { id: "articles", label: "Articles & Tests", href: "/admin/articles" },
   ]
 

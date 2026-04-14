@@ -191,8 +191,8 @@ export default function AccueilHero() {
                 aria-label="Effacer"
               >✕</button>
             )}
-            <span style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "18px", pointerEvents: "none" as const }}>
-              {loading ? "⏳" : "🔍"}
+            <span style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "15px", pointerEvents: "none" as const, color: "#aaa" }}>
+              {loading ? "..." : "🔍"}
             </span>
           </div>
 
