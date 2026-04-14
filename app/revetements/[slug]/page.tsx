@@ -12,7 +12,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   const { slug } = await params
   const { data: produit } = await supabase
     .from("produits")
-    .select("id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max, note_marque_vitesse, note_marque_spin, note_marque_controle, note_marque_durete, note_marque_durabilite, note_marque_rejet, note_marque_qualite_prix, note_marque_adherence, note_marque_gene, note_marque_inversion, note_marque_globale, note_ttk_durabilite, note_ttk_durete, note_ttk_rejet, note_ttk_qualite_prix, note_ttk_adherence, note_ttk_gene, note_ttk_inversion, commentaire_marque)")
+    .select("id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max, prix, note_marque_vitesse, note_marque_spin, note_marque_controle, note_marque_durete, note_marque_durabilite, note_marque_rejet, note_marque_qualite_prix, note_marque_adherence, note_marque_gene, note_marque_inversion, note_marque_globale, note_ttk_durabilite, note_ttk_durete, note_ttk_rejet, note_ttk_qualite_prix, note_ttk_adherence, note_ttk_gene, note_ttk_inversion, commentaire_marque)")
     .eq("slug", slug)
     .single()
 
@@ -61,8 +61,9 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
                 { label: "Code LARC", value: rev?.numero_larc, mono: true },
                 { label: "Type", value: TYPE_LABELS[rev?.type_revetement] },
                 { label: "Couleurs", value: rev?.couleurs_dispo },
-                { label: "Epaisseur max", value: rev?.epaisseur_max ? rev.epaisseur_max + " mm" : null },
+                { label: "Épaisseur max", value: rev?.epaisseur_max ? rev.epaisseur_max + " mm" : null },
                 { label: "Poids", value: rev?.poids },
+                { label: "Prix indicatif", value: rev?.prix ? rev.prix + " €" : null },
                 { label: "Marque", value: marque?.nom },
               ].filter(item => item.value).map(item => (
                 <div key={item.label}>

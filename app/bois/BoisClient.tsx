@@ -173,7 +173,7 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Style", "Plis", "Poids", "Notes", "Avis"].map(h => (
+                {["Nom", "Marque", "Style", "Plis", "Prix", "Notes", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -226,8 +226,8 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
                       ? <span style={{ background: "#F5F0FF", color: "#7C3AED", padding: "2px 8px", borderRadius: "10px", fontWeight: 600, fontSize: "12px" }}>{p.bois.nb_plis} plis</span>
                       : <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>—</span>}
                   </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", color: "var(--text-muted)" }}>
-                    {p.bois?.poids_g ? p.bois.poids_g + " g" : "—"}
+                  <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", fontWeight: p.bois?.prix ? 600 : 400, color: p.bois?.prix ? "var(--text)" : "var(--text-muted)" }}>
+                    {p.bois?.prix ? p.bois.prix + " €" : "—"}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     {notesCount[p.id] > 0 ? (

@@ -86,7 +86,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
     let query = supabase
       .from("produits")
       .select(
-        "id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo)",
+        "id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo, prix)",
         { count: "exact" }
       )
       .eq("actif", true)
@@ -237,7 +237,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Type", "LARC", "Notes", "Avis"].map(h => (
+                {["Nom", "Marque", "Type", "Prix", "Notes", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
                 {user && (
@@ -284,8 +284,8 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>
-                    {p.revetements?.numero_larc || "—"}
+                  <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: p.revetements?.prix ? 600 : 400, color: p.revetements?.prix ? "var(--text)" : "var(--text-muted)" }}>
+                    {p.revetements?.prix ? p.revetements.prix + " €" : "—"}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     {notesCount[p.id] > 0 ? (

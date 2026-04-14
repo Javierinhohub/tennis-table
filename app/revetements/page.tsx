@@ -15,7 +15,7 @@ export default async function RevatementsPage() {
     // 50 premiers produits pour l'affichage initial
     supabase
       .from("produits")
-      .select("id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo)", { count: "exact" })
+      .select("id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo, prix)", { count: "exact" })
       .eq("actif", true)
       .order("nom")
       .range(0, 49),
