@@ -16,7 +16,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   initialProduits: any[]
   initialTotal: number
   produitsIndex: any[]
-  toutesMarques: any[]
+  toutesMarques: { id: string; nom: string; nbRevs: number }[]
   avisCount: Record<string, number>
   notesCount: Record<string, number>
 }) {
@@ -190,9 +190,14 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}
         >
           <option value="">Toutes les marques</option>
-          {marquesDisponibles.map((m: any) => (
+          {toutesMarques.filter(m => m.nbRevs >= 11).map((m) => (
             <option key={m.id} value={m.id}>{m.nom}</option>
           ))}
+          <optgroup label="── Autres marques ──">
+            {toutesMarques.filter(m => m.nbRevs < 11).map((m) => (
+              <option key={m.id} value={m.id}>{m.nom}</option>
+            ))}
+          </optgroup>
         </select>
 
         {hasFilter && (

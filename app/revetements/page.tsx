@@ -56,8 +56,14 @@ export default async function RevatementsPage() {
     return scoreB - scoreA
   })
 
-  // Nettoyer les marques (retirer les données de jointure, garder seulement id + nom)
-  const toutesMarques = (marquesData || []).map((m: any) => ({ id: m.id, nom: m.nom }))
+  // Compter les revêtements par marque et séparer principales / autres
+  const toutesMarques = (marquesData || []).map((m: any) => {
+    // produits!inner retourne un tableau, chaque produit a revetements!inner (tableau aussi)
+    const nbRevs = (m.produits || []).filter((p: any) =>
+      Array.isArray(p.revetements) ? p.revetements.length > 0 : !!p.revetements
+    ).length
+    return { id: m.id, nom: m.nom, nbRevs }
+  })
 
   return (
     <Suspense fallback={<div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>}>
