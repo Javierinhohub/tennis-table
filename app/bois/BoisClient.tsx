@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import ComparaisonModal from "@/app/components/ComparaisonModal"
 
 const STYLE_LABELS: Record<string, string> = {
   "OFF+":  "Offensif++",
@@ -19,6 +20,16 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
   const [search, setSearch] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [styleFilter, setStyleFilter] = useState("")
+  const [selection, setSelection] = useState<any[]>([])
+  const [showComparaison, setShowComparaison] = useState(false)
+
+  const toggleSelection = (p: any) => {
+    setSelection(prev => {
+      if (prev.find(s => s.id === p.id)) return prev.filter(s => s.id !== p.id)
+      if (prev.length >= 3) return prev
+      return [...prev, p]
+    })
+  }
 
   // Styles disponibles parmi les produits chargés
   const stylesDisponibles = useMemo(() => {
@@ -54,6 +65,29 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
 
   return (
     <>
+      {/* Bouton comparer */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+        <button
+          onClick={() => selection.length >= 2 && setShowComparaison(true)}
+          disabled={selection.length < 2}
+          style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            background: selection.length >= 2 ? "#D97757" : "var(--bg)",
+            color: selection.length >= 2 ? "#fff" : "var(--text-muted)",
+            border: `1.5px solid ${selection.length >= 2 ? "#D97757" : "var(--border)"}`,
+            borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600,
+            cursor: selection.length >= 2 ? "pointer" : "not-allowed",
+            fontFamily: "Poppins, sans-serif", transition: "all 0.15s",
+          }}
+        >
+          <span>Comparer</span>
+          <span style={{
+            background: selection.length >= 2 ? "rgba(255,255,255,0.25)" : "var(--border)",
+            borderRadius: "20px", padding: "1px 8px", fontSize: "12px", fontWeight: 700,
+          }}>{selection.length}/3</span>
+        </button>
+      </div>
+
       {/* Barre de filtres */}
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" as const }}>
 
@@ -134,6 +168,7 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
+                <th style={{ padding: "10px 12px", width: "44px" }} />
                 {["Nom", "Marque", "Style", "Plis", "Poids", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
@@ -148,6 +183,21 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                 >
+                  <td style={{ padding: "8px 12px" }} onClick={e => { e.stopPropagation(); toggleSelection(p) }}>
+                    <div style={{
+                      width: "20px", height: "20px", borderRadius: "6px", border: "2px solid",
+                      borderColor: selection.find(s => s.id === p.id) ? "#D97757" : "var(--border)",
+                      background: selection.find(s => s.id === p.id) ? "#D97757" : "#fff",
+                      cursor: !selection.find(s => s.id === p.id) && selection.length >= 3 ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.1s",
+                    }}>
+                      {selection.find(s => s.id === p.id) && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </td>
                   <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "14px" }}>
                     {highlightMatch(p.nom, search)}
                   </td>
@@ -188,6 +238,53 @@ export default function BoisClient({ produits, marques, avisCount }: { produits:
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {showComparaison && selection.length >= 2 && (
+        <ComparaisonModal
+          produits={selection}
+          type="bois"
+          onClose={() => setShowComparaison(false)}
+        />
+      )}
+
+      {/* Barre flottante sélection */}
+      {selection.length > 0 && !showComparaison && (
+        <div style={{
+          position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+          background: "#1F2937", color: "#fff", borderRadius: "14px",
+          padding: "12px 20px", display: "flex", alignItems: "center", gap: "16px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)", zIndex: 500, whiteSpace: "nowrap",
+          flexWrap: "wrap", justifyContent: "center",
+        }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {selection.map((p, i) => (
+              <div key={p.id} style={{
+                display: "flex", alignItems: "center", gap: "5px",
+                background: "rgba(255,255,255,0.1)", borderRadius: "6px", padding: "4px 10px",
+                borderLeft: `3px solid ${["#D97757","#1A56DB","#0E7F4F"][i]}`,
+              }}>
+                <span style={{ fontSize: "12px", fontWeight: 600 }}>{p.nom}</span>
+                <button onClick={() => toggleSelection(p)} style={{
+                  background: "none", border: "none", color: "#9CA3AF", cursor: "pointer",
+                  fontSize: "12px", padding: "0 2px", lineHeight: 1,
+                }}>✕</button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowComparaison(true)}
+            disabled={selection.length < 2}
+            style={{
+              background: selection.length >= 2 ? "#D97757" : "#6B7280",
+              color: "#fff", border: "none", borderRadius: "8px",
+              padding: "8px 18px", fontSize: "13px", fontWeight: 700,
+              cursor: selection.length >= 2 ? "pointer" : "not-allowed",
+              fontFamily: "Poppins, sans-serif",
+            }}
+          >
+            {selection.length < 2 ? "Sélectionner 2 min." : "Comparer"}
+          </button>
         </div>
       )}
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import NoteModal from "@/app/components/NoteModal"
+import ComparaisonModal from "@/app/components/ComparaisonModal"
 import { supabase } from "@/lib/supabase"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -31,6 +32,16 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   const [loading, setLoading] = useState(() => !!(searchParams.get("q")))
   const [user, setUser] = useState<any>(null)
   const [produitANoter, setProduitANoter] = useState<any>(null)
+  const [selection, setSelection] = useState<any[]>([])
+  const [showComparaison, setShowComparaison] = useState(false)
+
+  const toggleSelection = (p: any) => {
+    setSelection(prev => {
+      if (prev.find(s => s.id === p.id)) return prev.filter(s => s.id !== p.id)
+      if (prev.length >= 3) return prev
+      return [...prev, p]
+    })
+  }
 
   const isFiltered = search || typeFilter || marqueFilter || page > 0
 
@@ -112,9 +123,30 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Revêtements</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{total.toLocaleString("fr-FR")} revêtements LARC 2026</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Revêtements</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{total.toLocaleString("fr-FR")} revêtements LARC 2026</p>
+        </div>
+        <button
+          onClick={() => selection.length >= 2 && setShowComparaison(true)}
+          disabled={selection.length < 2}
+          style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            background: selection.length >= 2 ? "#D97757" : "var(--bg)",
+            color: selection.length >= 2 ? "#fff" : "var(--text-muted)",
+            border: `1.5px solid ${selection.length >= 2 ? "#D97757" : "var(--border)"}`,
+            borderRadius: "10px", padding: "10px 18px", fontSize: "14px", fontWeight: 600,
+            cursor: selection.length >= 2 ? "pointer" : "not-allowed",
+            fontFamily: "Poppins, sans-serif", transition: "all 0.15s",
+          }}
+        >
+          <span>Comparer</span>
+          <span style={{
+            background: selection.length >= 2 ? "rgba(255,255,255,0.25)" : "var(--border)",
+            borderRadius: "20px", padding: "1px 8px", fontSize: "12px", fontWeight: 700,
+          }}>{selection.length}/3</span>
+        </button>
       </div>
 
       {/* Barre de filtres */}
@@ -198,6 +230,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
+                <th style={{ padding: "10px 12px", width: "44px" }} />
                 {["Nom", "Marque", "Type", "LARC", "Avis"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
@@ -215,6 +248,21 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                 >
+                  <td style={{ padding: "8px 12px" }} onClick={e => { e.stopPropagation(); toggleSelection(p) }}>
+                    <div style={{
+                      width: "20px", height: "20px", borderRadius: "6px", border: "2px solid",
+                      borderColor: selection.find(s => s.id === p.id) ? "#D97757" : "var(--border)",
+                      background: selection.find(s => s.id === p.id) ? "#D97757" : "#fff",
+                      cursor: !selection.find(s => s.id === p.id) && selection.length >= 3 ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.1s",
+                    }}>
+                      {selection.find(s => s.id === p.id) && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </td>
                   <td style={{ padding: "12px 16px", fontWeight: 500, fontSize: "14px" }}>{p.nom}</td>
                   <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>{p.marques?.nom}</td>
                   <td style={{ padding: "12px 16px" }}>
@@ -282,6 +330,54 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
 
       {produitANoter && user && (
         <NoteModal produit={produitANoter} userId={user.id} onClose={() => setProduitANoter(null)} />
+      )}
+
+      {showComparaison && selection.length >= 2 && (
+        <ComparaisonModal
+          produits={selection}
+          type="revetement"
+          onClose={() => setShowComparaison(false)}
+        />
+      )}
+
+      {/* Barre flottante sélection */}
+      {selection.length > 0 && !showComparaison && (
+        <div style={{
+          position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+          background: "#1F2937", color: "#fff", borderRadius: "14px",
+          padding: "12px 20px", display: "flex", alignItems: "center", gap: "16px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)", zIndex: 500, whiteSpace: "nowrap",
+          flexWrap: "wrap", justifyContent: "center",
+        }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {selection.map((p, i) => (
+              <div key={p.id} style={{
+                display: "flex", alignItems: "center", gap: "5px",
+                background: "rgba(255,255,255,0.1)", borderRadius: "6px", padding: "4px 10px",
+                borderLeft: `3px solid ${["#D97757","#1A56DB","#0E7F4F"][i]}`,
+              }}>
+                <span style={{ fontSize: "12px", fontWeight: 600 }}>{p.nom}</span>
+                <button onClick={() => toggleSelection(p)} style={{
+                  background: "none", border: "none", color: "#9CA3AF", cursor: "pointer",
+                  fontSize: "12px", padding: "0 2px", lineHeight: 1,
+                }}>✕</button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowComparaison(true)}
+            disabled={selection.length < 2}
+            style={{
+              background: selection.length >= 2 ? "#D97757" : "#6B7280",
+              color: "#fff", border: "none", borderRadius: "8px",
+              padding: "8px 18px", fontSize: "13px", fontWeight: 700,
+              cursor: selection.length >= 2 ? "pointer" : "not-allowed",
+              fontFamily: "Poppins, sans-serif",
+            }}
+          >
+            {selection.length < 2 ? "Sélectionner 2 min." : "Comparer"}
+          </button>
+        </div>
       )}
     </main>
   )
