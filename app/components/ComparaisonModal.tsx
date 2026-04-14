@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
 
 // ── Couleurs par produit ──────────────────────────────────────────────────────
 const COLORS = ["#D97757", "#1A56DB", "#0E7F4F"]
@@ -145,29 +144,24 @@ export default function ComparaisonModal({
   async function fetchAll() {
     setLoading(true)
     const ids = produits.map(p => p.id)
-    const table = type === "revetement" ? "notes_revetements" : "notes_bois"
 
-    const selectCols = type === "revetement"
-      ? "produit_id, note_vitesse, note_effet, note_controle, note_durabilite, note_durete_mousse, note_rejet, note_qualite_prix, note_globale"
-      : "produit_id, note_vitesse, note_controle, note_flexibilite, note_durete, note_qualite_prix, note_globale"
+    try {
+      const res = await fetch(
+        `/api/compare-notes?ids=${ids.join(",")}&type=${type}`
+      )
+      const json = await res.json()
 
-    const detailsSelect = type === "revetement"
-      ? "id, nom, marques(nom), revetements(type_revetement, epaisseur_max, poids)"
-      : "id, nom, marques(nom), bois(style, nb_plis, poids_g, composition)"
-
-    const [{ data: notesRows }, { data: detailsData }] = await Promise.all([
-      supabase.from(table).select(selectCols).in("produit_id", ids),
-      supabase.from("produits").select(detailsSelect).in("id", ids),
-    ])
-
-    // Regrouper les notes par produit_id
-    const map: Record<string, any[]> = {}
-    ids.forEach(id => { map[id] = [] })
-    notesRows?.forEach((r: any) => {
-      if (map[r.produit_id]) map[r.produit_id].push(r)
-    })
-    setNotesMap(map)
-    setDetails(detailsData || [])
+      // Regrouper les notes par produit_id
+      const map: Record<string, any[]> = {}
+      ids.forEach(id => { map[id] = [] })
+      json.notes?.forEach((r: any) => {
+        if (map[r.produit_id]) map[r.produit_id].push(r)
+      })
+      setNotesMap(map)
+      setDetails(json.details || [])
+    } catch (e) {
+      console.error("Erreur chargement notes comparaison", e)
+    }
     setLoading(false)
   }
 
