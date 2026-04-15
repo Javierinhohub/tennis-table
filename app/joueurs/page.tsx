@@ -63,6 +63,14 @@ export default async function JoueursPage() {
         <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Joueurs professionnels</h1>
         <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Classement mondial ITTF avril 2026</p>
       </div>
+
+      <div style={{ background: "#fff", border: "1px solid var(--border)", borderLeft: "3px solid #D97757", borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: "2rem", maxWidth: "720px" }}>
+        <p style={{ fontSize: "14px", color: "var(--text)", lineHeight: 1.7 }}>
+          Retrouvez sur cette page le matériel utilisé par les meilleurs joueurs mondiaux : bois, revêtements coup droit et revers.
+          À noter que les professionnels jouent avec des versions spéciales de certains produits — boostés, personnalisés ou non disponibles à la vente — qui ne correspondent pas toujours aux gammes accessibles au grand public.
+        </p>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}>
         <Colonne titre="Hommes" liste={hommes} />
         <Colonne titre="Femmes" liste={femmes} />
