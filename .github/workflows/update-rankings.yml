@@ -1,12 +1,12 @@
 name: Mise à jour classement ITTF/WTT
 
 on:
-  # Chaque mardi à 12h00 heure de Paris (10h00 UTC en été, 11h00 en hiver)
   schedule:
-    - cron: '0 10 * * 2'   # Mardi 12h heure d'été (CEST = UTC+2)
-
-  # Possibilité de lancer manuellement depuis l'onglet Actions sur GitHub
+    - cron: '0 10 * * 2'  # Mardi 12h Paris (été = UTC+2)
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   update-rankings:
@@ -14,13 +14,16 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout du code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configuration Python
+      - name: Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Installer les dépendances
+        run: pip install supabase requests beautifulsoup4
 
       - name: Mise à jour du classement
         env:

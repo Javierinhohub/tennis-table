@@ -4,21 +4,17 @@ update_rankings.py — Mise à jour automatique du classement mondial ITTF/WTT
 Met à jour UNIQUEMENT le champ classement_mondial dans joueurs_pro.
 Ne touche pas au matériel, style, âge ou tout autre donnée.
 
-Stratégie :
-  1. Tente de récupérer les classements depuis l'API WTT
-  2. Fallback sur le scraping de la page ITTF
-  3. Met à jour la base par correspondance de nom (insensible à la casse)
+Dépendances : pip install supabase requests beautifulsoup4
 
 Lancement manuel :
     SUPABASE_URL=... SUPABASE_KEY=... python3 update_rankings.py
 
-En production : exécuté automatiquement chaque mardi à 12h via GitHub Actions.
+Automatique : chaque mardi à 12h via GitHub Actions.
 """
 
 import os, sys, re, time
-import urllib.request
-import urllib.error
-import json
+import requests
+from supabase import create_client
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
@@ -27,222 +23,173 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     print("❌  Définissez SUPABASE_URL et SUPABASE_KEY.")
     sys.exit(1)
 
-# ─── Helpers HTTP (sans dépendances externes) ─────────────────────────────────
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def http_get(url, headers=None):
-    req = urllib.request.Request(url, headers=headers or {})
-    req.add_header("User-Agent", "TT-Kip Rankings Bot/1.0")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.read().decode("utf-8")
-    except Exception as e:
-        return None
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; TT-Kip Rankings Bot/1.0)",
+    "Accept": "application/json, text/html, */*",
+}
 
-def supabase_select(table, select="*", filters=None):
-    url = f"{SUPABASE_URL}/rest/v1/{table}?select={select}"
-    if filters:
-        url += "&" + "&".join(f"{k}=eq.{v}" for k, v in filters.items())
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-    }
-    data = http_get(url, headers)
-    return json.loads(data) if data else []
+# ─── Récupération du classement ───────────────────────────────────────────────
 
-def supabase_update(table, row_id, payload):
-    url = f"{SUPABASE_URL}/rest/v1/{table}?id=eq.{row_id}"
-    data = json.dumps(payload).encode()
-    req = urllib.request.Request(url, data=data, method="PATCH")
-    req.add_header("apikey", SUPABASE_KEY)
-    req.add_header("Authorization", f"Bearer {SUPABASE_KEY}")
-    req.add_header("Content-Type", "application/json")
-    req.add_header("Prefer", "return=minimal")
-    try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            return r.status in (200, 204)
-    except Exception as e:
-        print(f"    Erreur update: {e}")
-        return False
-
-# ─── Récupération du classement WTT ──────────────────────────────────────────
-
-def fetch_wtt_rankings(genre="H"):
-    """
-    Essaie de récupérer le classement WTT via leur API publique.
-    Retourne une liste de dict {rang, nom, pays}
-    """
-    tab = "MEN'S SINGLES" if genre == "H" else "WOMEN'S SINGLES"
-    tab_encoded = tab.replace("'", "%27").replace(" ", "+")
-
-    # Tentative 1 : API JSON WTT
-    endpoints = [
-        f"https://www.worldtabletennis.com/api/v1/rankings?ageGroup=SENIOR&tab={tab_encoded}",
-        f"https://ranking.ittf.com/api/rankings?category=MS" if genre == "H" else
-        f"https://ranking.ittf.com/api/rankings?category=WS",
+def fetch_rankings_wtt(genre="H"):
+    """Tente l'API WTT (JSON)."""
+    tab = "MEN'S+SINGLES" if genre == "H" else "WOMEN'S+SINGLES"
+    urls = [
+        f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}",
+        f"https://ranking.ittf.com/api/v1/ranking?type={'ms' if genre == 'H' else 'ws'}&limit=200",
     ]
-
-    for endpoint in endpoints:
-        raw = http_get(endpoint)
-        if raw:
-            try:
-                data = json.loads(raw)
-                # Normaliser selon la structure retournée
-                if isinstance(data, list) and len(data) > 0:
-                    result = []
-                    for item in data[:100]:
-                        rang = item.get("rank") or item.get("position") or item.get("ranking")
-                        nom = item.get("name") or item.get("playerName") or item.get("fullName")
-                        pays = item.get("country") or item.get("nationality") or item.get("association")
-                        if rang and nom:
-                            result.append({"rang": int(rang), "nom": nom, "pays": pays or ""})
-                    if result:
-                        print(f"  ✅ API WTT/ITTF : {len(result)} joueurs récupérés")
-                        return result
-            except Exception:
-                pass
-
-    # Tentative 2 : scraping page HTML ITTF
-    pages = [
-        ("https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles" if genre == "H"
-         else "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles"),
-    ]
-    for page_url in pages:
-        html = http_get(page_url)
-        if html:
-            # Chercher pattern : rang + nom dans le HTML
-            # Pattern typique : <td>1</td><td>WANG Chuqin</td><td>CHN</td>
-            rows = re.findall(r'<tr[^>]*>.*?</tr>', html, re.DOTALL)
-            result = []
-            for row in rows:
-                cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
-                cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells]
-                cells = [c for c in cells if c]
-                if len(cells) >= 2:
-                    try:
-                        rang = int(cells[0])
-                        nom = cells[1] if len(cells) > 1 else ""
-                        pays = cells[2] if len(cells) > 2 else ""
-                        if 1 <= rang <= 200 and nom:
-                            result.append({"rang": rang, "nom": nom, "pays": pays})
-                    except ValueError:
-                        pass
-            if result:
-                print(f"  ✅ Scraping HTML : {len(result)} joueurs récupérés")
-                return result
-
-    print("  ⚠️  Impossible de récupérer le classement en ligne.")
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            if r.status_code == 200:
+                data = r.json()
+                result = parse_json_rankings(data)
+                if result:
+                    print(f"  ✅ API JSON ({url[:50]}…) : {len(result)} joueurs")
+                    return result
+        except Exception:
+            pass
     return []
 
-# ─── Normalisation des noms ───────────────────────────────────────────────────
+def parse_json_rankings(data):
+    """Normalise différentes structures JSON de classement."""
+    result = []
+    items = data if isinstance(data, list) else data.get("data") or data.get("results") or data.get("rankings") or []
+    for item in items[:200]:
+        rang = (item.get("rank") or item.get("position") or item.get("ranking") or
+                item.get("worldRanking") or item.get("world_ranking"))
+        nom  = (item.get("name") or item.get("playerName") or item.get("fullName") or
+                item.get("player_name") or
+                f"{item.get('lastName', '')} {item.get('firstName', '')}".strip())
+        pays = (item.get("country") or item.get("nationality") or item.get("association") or
+                item.get("countryCode") or "")
+        if rang and nom and str(rang).isdigit():
+            result.append({"rang": int(rang), "nom": nom.strip(), "pays": pays.strip()})
+    return sorted(result, key=lambda x: x["rang"])
 
-def normalize_name(name):
-    """Normalise un nom pour la comparaison."""
+def fetch_rankings_html(genre="H"):
+    """Scrape la page ITTF en HTML."""
+    url = (
+        "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles"
+        if genre == "H" else
+        "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles"
+    )
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=30)
+        if r.status_code != 200:
+            return []
+        html = r.text
+        # Chercher les lignes de tableau
+        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
+        result = []
+        for row in rows:
+            cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells if c.strip()]
+            if len(cells) >= 2:
+                try:
+                    rang = int(cells[0])
+                    nom  = cells[1]
+                    pays = cells[2] if len(cells) > 2 else ""
+                    if 1 <= rang <= 500 and nom:
+                        result.append({"rang": rang, "nom": nom, "pays": pays})
+                except ValueError:
+                    pass
+        if result:
+            print(f"  ✅ Scraping HTML ITTF : {len(result)} joueurs")
+        return result
+    except Exception as e:
+        print(f"  ⚠️  Scraping HTML échoué : {e}")
+        return []
+
+def fetch_rankings(genre="H"):
+    """Essaie WTT API, puis scraping HTML."""
+    r = fetch_rankings_wtt(genre)
+    if r:
+        return r
+    r = fetch_rankings_html(genre)
+    if r:
+        return r
+    print(f"  ⚠️  Aucune source disponible pour les {'hommes' if genre == 'H' else 'femmes'}.")
+    return []
+
+# ─── Correspondance de noms ───────────────────────────────────────────────────
+
+def normalize(name):
     name = name.upper().strip()
-    # Supprimer les caractères spéciaux
-    name = re.sub(r'[^\w\s]', '', name)
-    # Normaliser les espaces multiples
-    name = re.sub(r'\s+', ' ', name)
-    return name
+    name = re.sub(r"[ÀÁÂÃÄ]", "A", name)
+    name = re.sub(r"[ÈÉÊË]", "E", name)
+    name = re.sub(r"[ÌÍÎÏ]", "I", name)
+    name = re.sub(r"[ÒÓÔÕÖ]", "O", name)
+    name = re.sub(r"[ÙÚÛÜ]", "U", name)
+    name = re.sub(r"[^A-Z0-9 ]", "", name)
+    return re.sub(r"\s+", " ", name).strip()
 
-def find_joueur(joueurs_db, nom_ranking):
-    """
-    Trouve le joueur en DB correspondant au nom du classement.
-    Stratégies :
-      1. Correspondance exacte normalisée
-      2. Tous les tokens du nom ranking sont dans le nom DB
-      3. Correspondance partielle (au moins 80% des tokens)
-    """
-    nom_norm = normalize_name(nom_ranking)
-    tokens_ranking = set(nom_norm.split())
-
-    best_match = None
-    best_score = 0
-
+def match_joueur(joueurs_db, nom_ranking):
+    nom_n = normalize(nom_ranking)
+    tokens = set(nom_n.split())
+    best, best_score = None, 0
     for j in joueurs_db:
-        j_norm = normalize_name(j["nom"])
-        tokens_db = set(j_norm.split())
-
-        # Correspondance exacte
-        if nom_norm == j_norm:
+        j_n = normalize(j["nom"])
+        if nom_n == j_n:
             return j
-
-        # Tokens communs
-        commun = tokens_ranking & tokens_db
+        j_tokens = set(j_n.split())
+        commun = tokens & j_tokens
         if not commun:
             continue
-
-        score = len(commun) / max(len(tokens_ranking), len(tokens_db))
+        score = len(commun) / max(len(tokens), len(j_tokens))
         if score > best_score and score >= 0.6:
             best_score = score
-            best_match = j
+            best = j
+    return best
 
-    return best_match
+# ─── Mise à jour ──────────────────────────────────────────────────────────────
 
-# ─── Mise à jour principale ───────────────────────────────────────────────────
-
-def update_rankings():
+def run():
     print("\n" + "=" * 60)
     print("  Mise à jour classement ITTF/WTT — TT-Kip")
     print("=" * 60)
 
-    # Récupérer tous les joueurs en DB (actifs)
-    joueurs_db = supabase_select("joueurs_pro", "id,nom,genre,classement_mondial", {"actif": "true"})
-    if not joueurs_db:
-        print("❌  Impossible de charger les joueurs depuis la DB.")
-        sys.exit(1)
-    print(f"\n  {len(joueurs_db)} joueurs actifs en base")
+    res = sb.table("joueurs_pro").select("id, nom, genre, classement_mondial").eq("actif", True).execute()
+    joueurs_db = res.data or []
 
-    hommes_db = [j for j in joueurs_db if j.get("genre") == "H"]
-    femmes_db = [j for j in joueurs_db if j.get("genre") == "F"]
+    if not joueurs_db:
+        print("❌  Aucun joueur trouvé en base.")
+        sys.exit(1)
+
+    print(f"\n  {len(joueurs_db)} joueurs actifs en base")
+    hommes = [j for j in joueurs_db if j.get("genre") == "H"]
+    femmes = [j for j in joueurs_db if j.get("genre") == "F"]
 
     total_updated = 0
-    total_not_found = 0
 
-    for genre, label, joueurs_genre in [("H", "Hommes", hommes_db), ("F", "Femmes", femmes_db)]:
-        print(f"\n  ── Classement {label} ──")
-        rankings = fetch_wtt_rankings(genre)
-
+    for genre, label, pool in [("H", "Hommes", hommes), ("F", "Femmes", femmes)]:
+        print(f"\n  ── {label} ({len(pool)} en base) ──")
+        rankings = fetch_rankings(genre)
         if not rankings:
-            print(f"  ⚠️  Pas de données pour {label}, on passe.")
             continue
 
         updated = 0
-        not_found = 0
-
         for entry in rankings:
-            rang = entry["rang"]
-            nom = entry["nom"]
-
-            joueur = find_joueur(joueurs_genre, nom)
+            rang, nom = entry["rang"], entry["nom"]
+            joueur = match_joueur(pool, nom)
             if not joueur:
-                print(f"  ? Non trouvé : #{rang} {nom}")
-                not_found += 1
+                continue
+            if joueur.get("classement_mondial") == rang:
                 continue
 
-            ancien = joueur.get("classement_mondial")
-            if ancien == rang:
-                continue  # Pas de changement
+            ancien = joueur.get("classement_mondial") or "—"
+            sb.table("joueurs_pro").update({"classement_mondial": rang}).eq("id", joueur["id"]).execute()
+            diff = (joueur.get("classement_mondial") or rang) - rang
+            evo = f" (+{diff})" if diff > 0 else (f" ({diff})" if diff < 0 else "")
+            print(f"  ✅  #{rang} {joueur['nom']}{evo}  (était {ancien})")
+            updated += 1
+            time.sleep(0.03)
 
-            ok = supabase_update("joueurs_pro", joueur["id"], {"classement_mondial": rang})
-            if ok:
-                evolution = ""
-                if ancien:
-                    diff = ancien - rang
-                    evolution = f" ({"+" if diff > 0 else ""}{diff})" if diff != 0 else " (=)"
-                print(f"  ✅ #{rang} {joueur['nom']}{evolution}")
-                updated += 1
-            else:
-                print(f"  ❌ Erreur update : {joueur['nom']}")
-
-            time.sleep(0.05)  # éviter le rate limiting
-
-        print(f"     {updated} mis à jour, {not_found} non trouvés")
+        print(f"     {updated} classements mis à jour")
         total_updated += updated
-        total_not_found += not_found
 
-    print(f"\n{'=' * 60}")
-    print(f"  Total : {total_updated} classements mis à jour, {total_not_found} joueurs non trouvés")
-    print(f"{'=' * 60}\n")
+    print(f"\n  Total : {total_updated} mis à jour\n")
 
 if __name__ == "__main__":
-    update_rankings()
+    run()
