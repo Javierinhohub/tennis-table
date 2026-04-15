@@ -55,7 +55,7 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
         const scoreA = (notesCount[a.id] || 0) * 2 + (avisCount[a.id] || 0)
         return scoreB - scoreA
       })
-  }, [produits, search, marqueFilter, styleFilter, avisCount])
+  }, [produits, search, marqueFilter, styleFilter, avisCount, notesCount])
 
   const hasFilter = !!(search || marqueFilter || styleFilter)
 
