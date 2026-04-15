@@ -7,9 +7,9 @@ import ComparaisonModal from "@/app/components/ComparaisonModal"
 import { supabase } from "@/lib/supabase"
 
 const TYPE_LABELS: Record<string, string> = {
-  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
-const ALL_TYPES = ["In", "Out", "Long", "Anti"]
+const ALL_TYPES = ["In", "Out", "Mid", "Long", "Anti"]
 const PAGE_SIZE = 50
 
 export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount, notesCount }: {
@@ -276,9 +276,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                       <span style={{
                         fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "10px",
                         background: p.revetements.type_revetement === "In" ? "#EBF5FF"
-                          : p.revetements.type_revetement === "Long" ? "#F0FDF4" : "#FFF7ED",
+                          : p.revetements.type_revetement === "Long" ? "#F0FDF4"
+                          : p.revetements.type_revetement === "Mid" ? "#F5F0FF" : "#FFF7ED",
                         color: p.revetements.type_revetement === "In" ? "#1A56DB"
-                          : p.revetements.type_revetement === "Long" ? "#0E7F4F" : "#D97757",
+                          : p.revetements.type_revetement === "Long" ? "#0E7F4F"
+                          : p.revetements.type_revetement === "Mid" ? "#7C3AED" : "#D97757",
                       }}>
                         {TYPE_LABELS[p.revetements.type_revetement]}
                       </span>

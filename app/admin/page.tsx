@@ -195,7 +195,7 @@ export default function AdminPage() {
 
   function displayRevetement(item: any) {
     const marque = (item.marques as any)?.nom || ""
-    const TYPE: Record<string, string> = { In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
+    const TYPE: Record<string, string> = { In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin" }
     const type = TYPE[(item.revetements as any)?.type_revetement] || ""
     return `${marque} ${item.nom}${type ? ` — ${type}` : ""}`
   }
@@ -465,7 +465,7 @@ export default function AdminPage() {
             <div><label style={labelStyle}>Nom du revêtement</label><input type="text" value={nom} onChange={e => setNom(e.target.value)} required style={inputStyle} placeholder="Ex: Tenergy 05" /></div>
             <div><label style={labelStyle}>Sous-catégorie</label><select value={subcatId} onChange={e => setSubcatId(e.target.value)} required style={inputStyle}><option value="">Choisir...</option>{subcats.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}</select></div>
             <div><label style={labelStyle}>Numéro LARC</label><input type="text" value={numeroLarc} onChange={e => setNumeroLarc(e.target.value)} style={inputStyle} placeholder="Ex: 012-345" /></div>
-            <div><label style={labelStyle}>Type</label><select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}><option value="In">Backside</option><option value="Out">Picots courts</option><option value="Long">Picots longs</option><option value="Anti">Anti-spin</option></select></div>
+            <div><label style={labelStyle}>Type</label><select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}><option value="In">Backside</option><option value="Out">Picots courts</option><option value="Mid">Picots mi-longs</option><option value="Long">Picots longs</option><option value="Anti">Anti-spin</option></select></div>
             <div><label style={labelStyle}>Couleurs</label><input type="text" value={couleurs} onChange={e => setCouleurs(e.target.value)} style={inputStyle} placeholder="Ex: Black, Red" /></div>
             <div><label style={labelStyle}>Poids</label><input type="text" value={poids} onChange={e => setPoids(e.target.value)} style={inputStyle} placeholder="Ex: 45g" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>

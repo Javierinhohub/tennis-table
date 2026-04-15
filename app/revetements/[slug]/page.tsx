@@ -6,7 +6,7 @@ import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"
 
 const TYPE_LABELS: Record<string, string> = {
-  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
 
 // ── Métadonnées dynamiques ────────────────────────────────────────────────────

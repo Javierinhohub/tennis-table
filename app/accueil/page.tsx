@@ -59,7 +59,7 @@ export default function AccueilPage() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const TYPE_LABELS: Record<string, string> = { In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
+  const TYPE_LABELS: Record<string, string> = { In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin" }
 
   return (
     <main>

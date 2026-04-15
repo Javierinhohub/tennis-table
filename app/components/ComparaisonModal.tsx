@@ -175,7 +175,7 @@ export default function ComparaisonModal({
   const hasAnyData = datasets.some(ds => ds.values.some(v => v !== null))
 
   const TYPE_LABELS: Record<string, string> = {
-    In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+    In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
   }
 
   return (

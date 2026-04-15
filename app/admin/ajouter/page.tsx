@@ -233,7 +233,7 @@ export default function AjouterPage() {
             <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Détails du revêtement</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div><label style={labelStyle}>Numéro LARC</label><input type="text" value={numeroLarc} onChange={e => setNumeroLarc(e.target.value)} style={inputStyle} placeholder="Ex: 012-345" /></div>
-              <div><label style={labelStyle}>Type</label><select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}><option value="In">Backside</option><option value="Out">Picots courts</option><option value="Long">Picots longs</option><option value="Anti">Anti-spin</option></select></div>
+              <div><label style={labelStyle}>Type</label><select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}><option value="In">Backside</option><option value="Out">Picots courts</option><option value="Mid">Picots mi-longs</option><option value="Long">Picots longs</option><option value="Anti">Anti-spin</option></select></div>
               <div><label style={labelStyle}>Couleurs disponibles</label><input type="text" value={couleurs} onChange={e => setCouleurs(e.target.value)} style={inputStyle} placeholder="Ex: Black, Red" /></div>
               <div><label style={labelStyle}>Poids</label><input type="text" value={poids} onChange={e => setPoids(e.target.value)} style={inputStyle} placeholder="Ex: 45g" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>

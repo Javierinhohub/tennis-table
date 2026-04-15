@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 const PAGE_SIZE = 50
 
 const TYPE_REV: Record<string, string> = {
-  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
 const STYLES_BOIS = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
 
@@ -282,7 +282,7 @@ export default function AdminProduitsPage() {
                           <td style={{ padding: "9px 12px", fontSize: "12px", color: "var(--text-muted)" }}>{p.marques?.nom}</td>
                           <td style={{ padding: "9px 12px", fontSize: "12px" }}>
                             {r?.type_revetement && (
-                              <span style={{ background: r.type_revetement === "In" ? "#EBF5FF" : "#FFF7ED", color: r.type_revetement === "In" ? "#1A56DB" : "#D97757", padding: "1px 6px", borderRadius: "6px", fontWeight: 600, fontSize: "11px" }}>
+                              <span style={{ background: r.type_revetement === "In" ? "#EBF5FF" : r.type_revetement === "Mid" ? "#F5F0FF" : r.type_revetement === "Long" ? "#F0FDF4" : "#FFF7ED", color: r.type_revetement === "In" ? "#1A56DB" : r.type_revetement === "Mid" ? "#7C3AED" : r.type_revetement === "Long" ? "#0E7F4F" : "#D97757", padding: "1px 6px", borderRadius: "6px", fontWeight: 600, fontSize: "11px" }}>
                                 {TYPE_REV[r.type_revetement] || r.type_revetement}
                               </span>
                             )}

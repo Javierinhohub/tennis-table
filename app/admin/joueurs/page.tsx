@@ -178,7 +178,7 @@ export default function AdminJoueursPage() {
 
   function displayRevetement(item: any) {
     const marque = (item.marques as any)?.nom || ""
-    const TYPE: Record<string, string> = { In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin" }
+    const TYPE: Record<string, string> = { In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin" }
     const type = TYPE[(item.revetements as any)?.type_revetement] || ""
     return `${marque} ${item.nom}${type ? ` — ${type}` : ""}`
   }

@@ -14,7 +14,7 @@ const TYPE_COLORS: Record<string, string> = {
   "Joueur": "#EF4444",
 }
 const TYPE_LABELS: Record<string, string> = {
-  In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+  In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
 
 export default function AccueilHero() {
