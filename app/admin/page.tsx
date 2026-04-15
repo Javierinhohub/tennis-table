@@ -279,9 +279,14 @@ export default function AdminPage() {
     e.preventDefault()
     setMessage("")
     const marqueNom = marques.find(m => m.id === bMarqueId)?.nom || ""
-    const slug = (marqueNom + "-" + bNom).toLowerCase()
+    const baseSlug = (marqueNom + "-" + bNom).toLowerCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80)
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 75)
+
+    // Si le slug existe déjà, ajouter un suffixe unique
+    const { data: existing } = await supabase.from("produits").select("id").eq("slug", baseSlug).maybeSingle()
+    const slug = existing ? baseSlug + "-" + Date.now().toString().slice(-4) : baseSlug
+
     const { data: prod, error } = await supabase
       .from("produits")
       .insert({ marque_id: bMarqueId, subcategory_id: bSubcatId || null, nom: bNom, slug, actif: true })
