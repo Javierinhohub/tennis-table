@@ -60,7 +60,7 @@ export default function Home() {
 const CATEGORIES = [
   { href: "/revetements", label: "Revêtements", description: "1 690 revêtements LARC 2026", icon: "R" },
   { href: "/bois", label: "Bois", description: "Lames et bois de compétition", icon: "B" },
-  { href: "/autre-materiel", label: "Autre matériel", description: "Balles, colles et chaussures", icon: "+" },
+  { href: "/autre-materiel", label: "Autre matériel", description: "Tables, balles, colles et chaussures", icon: "+" },
   { href: "/joueurs", label: "Joueurs pro", description: "Classement et matériel", icon: "J" },
   { href: "/articles", label: "Articles & Tests", description: "Tests et conseils", icon: "A" },
   { href: "/forum", label: "Forum", description: "Discussions et conseils", icon: "F" },
