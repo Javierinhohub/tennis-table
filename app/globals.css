@@ -64,8 +64,10 @@ a { color: inherit; }
 @media (max-width: 768px) {
   body { font-size: 13px; }
 
+  /* Décaler le contenu pour que le bouton menu ne couvre pas les titres */
   main {
     padding: 1.5rem 1rem !important;
+    padding-top: 4.5rem !important; /* espace sous le bouton hamburger */
   }
 
   h1 { font-size: 18px !important; }

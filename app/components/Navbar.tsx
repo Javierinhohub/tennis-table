@@ -59,9 +59,9 @@ export default function Navbar() {
 
   return (
     <>
-      <div style={{ position: "fixed", top: "16px", left: "16px", zIndex: 200 }}>
+      <div style={{ position: "fixed", top: "12px", left: "12px", zIndex: 200 }}>
         <button onClick={() => setOpen(!open)}
-          style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#D97757", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", boxShadow: "0 2px 12px rgba(217,119,87,0.4)" }}>
+          style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#D97757", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", boxShadow: "0 2px 8px rgba(217,119,87,0.35)", opacity: open ? 1 : 0.85 }}>
           <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s", transform: open ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
           <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "opacity 0.2s", opacity: open ? 0 : 1 }} />
           <span style={{ display: "block", width: "18px", height: "2px", background: "#fff", borderRadius: "2px", transition: "transform 0.2s", transform: open ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
