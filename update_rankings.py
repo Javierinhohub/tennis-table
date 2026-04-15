@@ -181,8 +181,9 @@ def run():
             ancien = joueur.get("classement_mondial") or "—"
             sb.table("joueurs_pro").update({"classement_mondial": rang}).eq("id", joueur["id"]).execute()
             diff = (joueur.get("classement_mondial") or rang) - rang
-            evo = f" (+{diff})" if diff > 0 else (f" ({diff})" if diff < 0 else "")
-            print(f"  ✅  #{rang} {joueur['nom']}{evo}  (était {ancien})")
+            sign = "+" if diff > 0 else ""
+            evo = f" ({sign}{diff})" if diff != 0 else " (=)"
+            print(f"  OK  #{rang} {joueur['nom']}{evo}  (etait {ancien})")
             updated += 1
             time.sleep(0.03)
 
