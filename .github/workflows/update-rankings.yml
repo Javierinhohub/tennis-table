@@ -1,0 +1,29 @@
+name: Mise à jour classement ITTF/WTT
+
+on:
+  # Chaque mardi à 12h00 heure de Paris (10h00 UTC en été, 11h00 en hiver)
+  schedule:
+    - cron: '0 10 * * 2'   # Mardi 12h heure d'été (CEST = UTC+2)
+
+  # Possibilité de lancer manuellement depuis l'onglet Actions sur GitHub
+  workflow_dispatch:
+
+jobs:
+  update-rankings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Mise à jour du classement
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python3 update_rankings.py
