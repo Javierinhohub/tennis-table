@@ -84,17 +84,20 @@ def fetch_rankings_html(genre="H"):
         rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
         result = []
         for row in rows:
-            cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
-            cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells if c.strip()]
-            if len(cells) >= 2:
-                try:
-                    rang = int(cells[0])
-                    nom  = cells[1]
-                    pays = cells[2] if len(cells) > 2 else ""
-                    if 1 <= rang <= 500 and nom:
-                        result.append({"rang": rang, "nom": nom, "pays": pays})
-                except ValueError:
-                    pass
+            # Extraire toutes les cellules (y compris vides)
+            cells_raw = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells_raw]
+            if len(cells) < 5:
+                continue
+            try:
+                rang = int(cells[0])
+                # Structure ITTF : [rang, rang, mouvement, points, nom, '', pays, ...]
+                nom  = cells[4]
+                pays = cells[6] if len(cells) > 6 else ""
+                if 1 <= rang <= 500 and nom:
+                    result.append({"rang": rang, "nom": nom, "pays": pays})
+            except (ValueError, IndexError):
+                pass
         if result:
             print(f"  ✅ Scraping HTML ITTF : {len(result)} joueurs")
         return result
@@ -178,12 +181,12 @@ def run():
             if joueur.get("classement_mondial") == rang:
                 continue
 
-            ancien = joueur.get("classement_mondial") or "—"
+            ancien = joueur.get("classement_mondial") or "N/A"
             sb.table("joueurs_pro").update({"classement_mondial": rang}).eq("id", joueur["id"]).execute()
             diff = (joueur.get("classement_mondial") or rang) - rang
             sign = "+" if diff > 0 else ""
-            evo = f" ({sign}{diff})" if diff != 0 else " (=)"
-            print(f"  OK  #{rang} {joueur['nom']}{evo}  (etait {ancien})")
+            evo = " (" + sign + str(diff) + ")" if diff != 0 else " (=)"
+            print("  OK  #" + str(rang) + " " + joueur["nom"] + evo + "  (etait " + str(ancien) + ")")
             updated += 1
             time.sleep(0.03)
 
