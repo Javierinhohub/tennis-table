@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
-export const revalidate = 3600
+export const revalidate = 60
 
 const DRAPEAUX: Record<string, string> = {
   "Chine":"🇨🇳","France":"🇫🇷","Allemagne":"🇩🇪","Suède":"🇸🇪","Japon":"🇯🇵",
