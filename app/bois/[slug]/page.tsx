@@ -1,7 +1,44 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
+import { Metadata } from "next"
 import AvisSectionBois from "./AvisSectionBois"
 import NotesBoisChart from "./NotesBoisChart"
+
+// ── Métadonnées dynamiques ────────────────────────────────────────────────────
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const { data: produit } = await supabase
+    .from("produits")
+    .select("nom, marques(nom), bois(style, nb_plis, composition)")
+    .eq("slug", slug)
+    .single()
+
+  if (!produit) return { title: "Bois introuvable" }
+
+  const marque = (produit.marques as any)?.nom || ""
+  const b = produit.bois as any
+  const nom = produit.nom
+
+  const title = `${marque} ${nom} — Test, avis et caractéristiques`
+  const desc = [
+    b?.style ? `Style ${b.style}` : "",
+    b?.nb_plis ? `${b.nb_plis} plis` : "",
+    b?.composition || "",
+  ].filter(Boolean).join(", ")
+  const description = `Découvrez le bois de tennis de table ${marque} ${nom}${desc ? ` (${desc})` : ""}. Avis des joueurs, notes et caractéristiques sur TT-Kip.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.tt-kip.com/bois/${slug}`,
+      type: "website",
+    },
+    alternates: { canonical: `https://www.tt-kip.com/bois/${slug}` },
+  }
+}
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -66,7 +103,19 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     </div>
   )
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": `${marque?.nom} ${produit.nom}`,
+    "brand": { "@type": "Brand", "name": marque?.nom },
+    "category": "Bois de tennis de table",
+    "description": `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
+    ...(b?.prix ? { "offers": { "@type": "Offer", "price": b.prix, "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+  }
+
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/bois" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
         ← Retour aux bois
@@ -224,5 +273,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </div>
       </div>
     </main>
+    </>
   )
 }

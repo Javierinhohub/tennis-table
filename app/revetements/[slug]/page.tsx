@@ -1,11 +1,44 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
+import { Metadata } from "next"
 import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Long: "Picots longs", Anti: "Anti-spin"
+}
+
+// ── Métadonnées dynamiques ────────────────────────────────────────────────────
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const { data: produit } = await supabase
+    .from("produits")
+    .select("nom, marques(nom), revetements(type_revetement, vitesse_note, effet_note, controle_note)")
+    .eq("slug", slug)
+    .single()
+
+  if (!produit) return { title: "Revêtement introuvable" }
+
+  const marque = (produit.marques as any)?.nom || ""
+  const rev = produit.revetements as any
+  const type = TYPE_LABELS[rev?.type_revetement] || rev?.type_revetement || "Revêtement"
+  const nom = produit.nom
+
+  const title = `${marque} ${nom} — Test, avis et caractéristiques`
+  const description = `Découvrez le ${marque} ${nom}, revêtement ${type.toLowerCase()} de tennis de table. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10. Avis et notes des joueurs sur TT-Kip.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.tt-kip.com/revetements/${slug}`,
+      type: "website",
+    },
+    alternates: { canonical: `https://www.tt-kip.com/revetements/${slug}` },
+  }
 }
 
 export default async function RevetementPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -35,7 +68,21 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     { label: "Contrôle", value: rev?.controle_note, color: "#B45309" },
   ]
 
+  // JSON-LD pour Google (données structurées produit)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": `${marque?.nom} ${produit.nom}`,
+    "brand": { "@type": "Brand", "name": marque?.nom },
+    "category": "Revêtement de tennis de table",
+    "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
+    ...(rev?.prix ? { "offers": { "@type": "Offer", "price": rev.prix, "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+    "aggregateRating": undefined as any,
+  }
+
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
       <a href="/" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "1.5rem" }}>
@@ -127,5 +174,6 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
 
       </div>
     </main>
+    </>
   )
 }
