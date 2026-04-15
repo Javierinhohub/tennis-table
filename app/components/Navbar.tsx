@@ -10,6 +10,7 @@ const CATEGORIES = [
   { href: "/", label: "Accueil", icon: "⌂" },
   { href: "/revetements", label: "Revêtements", icon: "R" },
   { href: "/bois", label: "Bois", icon: "B" },
+  { href: "/tables", label: "Tables", icon: "T" },
   { href: "/autre-materiel", label: "Autre matériel", icon: "+" },
   { href: "/joueurs", label: "Joueurs pro", icon: "J" },
   { href: "/articles", label: "Articles & Tests", icon: "A" },
