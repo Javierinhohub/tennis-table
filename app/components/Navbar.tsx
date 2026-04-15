@@ -85,7 +85,6 @@ export default function Navbar() {
           <svg width="32" height="32" viewBox="0 0 200 200"><rect width="200" height="200" rx="14" fill="#D97757"/><text x="100" y="148" textAnchor="middle" fontFamily="Poppins, sans-serif" fontWeight="700" fontSize="82" fill="#ffffff" letterSpacing="-3">TTK</text></svg>
           <div>
             <p style={{ fontWeight: 700, fontSize: "15px", color: "var(--text)", letterSpacing: "-0.3px", lineHeight: 1.2 }}>TT-Kip</p>
-            <p style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 500 }}>LARC 2026</p>
           </div>
         </div>
 
