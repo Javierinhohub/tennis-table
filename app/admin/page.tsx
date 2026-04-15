@@ -90,6 +90,21 @@ export default function AdminPage() {
   const [controle, setControle] = useState("")
   const [poids, setPoids] = useState("")
 
+  // Nouveau bois
+  const [bNom, setBNom] = useState("")
+  const [bMarqueId, setBMarqueId] = useState("")
+  const [bSubcatId, setBSubcatId] = useState("")
+  const [bStyle, setBStyle] = useState("OFF")
+  const [bPlis, setBPlis] = useState("")
+  const [bPoids, setBPoids] = useState("")
+  const [bCompo, setBCompo] = useState("")
+  const [bPrix, setBPrix] = useState("")
+  const [bVitesse, setBVitesse] = useState("")
+  const [bControle, setBControle] = useState("")
+  const [bFlexibilite, setBFlexibilite] = useState("")
+  const [bDurete, setBDurete] = useState("")
+  const [bQP, setBQP] = useState("")
+
   // Nouveau joueur
   const [joueurNom, setJoueurNom] = useState("")
   const [joueurPays, setJoueurPays] = useState("")
@@ -260,6 +275,39 @@ export default function AdminPage() {
     await fetchProduits()
   }
 
+  async function ajouterBois(e: React.FormEvent) {
+    e.preventDefault()
+    setMessage("")
+    const marqueNom = marques.find(m => m.id === bMarqueId)?.nom || ""
+    const slug = (marqueNom + "-" + bNom).toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80)
+    const { data: prod, error } = await supabase
+      .from("produits")
+      .insert({ marque_id: bMarqueId, subcategory_id: bSubcatId || null, nom: bNom, slug, actif: true })
+      .select("id").single()
+    if (error) { setMessage("Erreur : " + error.message); return }
+    const { error: e2 } = await supabase.from("bois").insert({
+      produit_id: prod.id,
+      style: bStyle || null,
+      nb_plis: bPlis ? parseInt(bPlis) : null,
+      poids_g: bPoids ? parseFloat(bPoids) : null,
+      composition: bCompo || null,
+      prix: bPrix ? parseFloat(bPrix) : null,
+      note_vitesse: bVitesse ? parseFloat(bVitesse) : null,
+      note_controle: bControle ? parseFloat(bControle) : null,
+      note_flexibilite: bFlexibilite ? parseFloat(bFlexibilite) : null,
+      note_durete: bDurete ? parseFloat(bDurete) : null,
+      note_qualite_prix: bQP ? parseFloat(bQP) : null,
+    })
+    if (e2) { setMessage("Erreur bois : " + e2.message); return }
+    setMessage("Bois ajouté avec succès !")
+    setBNom(""); setBMarqueId(""); setBStyle("OFF"); setBPlis(""); setBPoids("")
+    setBCompo(""); setBPrix(""); setBVitesse(""); setBControle("")
+    setBFlexibilite(""); setBDurete(""); setBQP("")
+    await fetchProduits()
+  }
+
   async function ajouterJoueur(e: React.FormEvent) {
     e.preventDefault()
     setMessage("")
@@ -304,8 +352,8 @@ export default function AdminPage() {
 
   const onglets = [
     { id: "avis", label: "Avis", count: avisEnAttente.length },
-    { id: "produits", label: "Produits", count: produits.length },
     { id: "ajouter", label: "Ajouter un revêtement" },
+    { id: "ajouter-bois", label: "Ajouter un bois" },
     { id: "joueurs", label: "Joueurs pro", count: joueurs.length },
     { id: "modifier-joueur", label: "Modifier un joueur" },
     { id: "articles", label: "Articles & Tests", href: "/admin/articles" },
@@ -403,43 +451,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── PRODUITS ── */}
-      {onglet === "produits" && (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-            <h2 style={{ fontSize: "14px", fontWeight: 600 }}>Tous les produits ({produits.length})</h2>
-            <input type="text" placeholder="Rechercher..." value={searchProduits} onChange={e => setSearchProduits(e.target.value)}
-              style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "7px 12px", fontSize: "13px", outline: "none", color: "var(--text)", fontFamily: "Poppins, sans-serif", width: "220px" }} />
-          </div>
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                  {["Nom", "Marque", "Catégorie", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {produits.filter(p => !searchProduits || p.nom.toLowerCase().includes(searchProduits.toLowerCase()) || (p.marques?.nom || "").toLowerCase().includes(searchProduits.toLowerCase())).map((p, i) => (
-                  <tr key={p.id} style={{ borderBottom: i < produits.length - 1 ? "1px solid var(--border)" : "none", opacity: p.actif ? 1 : 0.5 }}>
-                    <td style={{ padding: "10px 16px", fontWeight: 500, fontSize: "13px" }}>{p.nom}</td>
-                    <td style={{ padding: "10px 16px", color: "var(--text-muted)", fontSize: "13px" }}>{p.marques?.nom}</td>
-                    <td style={{ padding: "10px 16px", color: "var(--text-muted)", fontSize: "13px" }}>{p.sous_categories?.nom}</td>
-                    <td style={{ padding: "10px 16px" }}>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button onClick={() => toggleProduit(p.id, p.actif)} style={{ ...btnSuccess, background: p.actif ? "var(--bg)" : "var(--success-light)", color: p.actif ? "var(--text-muted)" : "var(--success)" }}>{p.actif ? "Désactiver" : "Activer"}</button>
-                        <button onClick={() => supprimerProduit(p.id)} style={btnDanger}>Supprimer</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* ── AJOUTER REVÊTEMENT ── */}
       {onglet === "ajouter" && (
         <div style={{ maxWidth: "560px" }}>
@@ -458,6 +469,41 @@ export default function AdminPage() {
               <div><label style={labelStyle}>Contrôle /10</label><input type="number" min="1" max="10" value={controle} onChange={e => setControle(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
             </div>
             <button type="submit" style={btnPrimary}>Ajouter le revêtement</button>
+          </form>
+        </div>
+      )}
+
+      {/* ── AJOUTER BOIS ── */}
+      {onglet === "ajouter-bois" && (
+        <div style={{ maxWidth: "560px" }}>
+          <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "1.5rem" }}>Ajouter un bois</h2>
+          <form onSubmit={ajouterBois} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div><label style={labelStyle}>Marque *</label><select value={bMarqueId} onChange={e => setBMarqueId(e.target.value)} required style={inputStyle}><option value="">Choisir...</option>{marques.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}</select></div>
+            <div><label style={labelStyle}>Nom du bois *</label><input type="text" value={bNom} onChange={e => setBNom(e.target.value)} required style={inputStyle} placeholder="Ex: Viscaria" /></div>
+            <div><label style={labelStyle}>Sous-catégorie</label><select value={bSubcatId} onChange={e => setBSubcatId(e.target.value)} style={inputStyle}><option value="">Choisir...</option>{subcats.filter(s => s.slug?.startsWith("bois")).map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}</select></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={labelStyle}>Style</label>
+                <select value={bStyle} onChange={e => setBStyle(e.target.value)} style={inputStyle}>
+                  {["OFF+","OFF","OFF-","ALL+","ALL","ALL-","DEF+","DEF","DEF-"].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div><label style={labelStyle}>Nombre de plis</label><input type="number" value={bPlis} onChange={e => setBPlis(e.target.value)} style={inputStyle} placeholder="Ex: 7" /></div>
+              <div><label style={labelStyle}>Poids (g)</label><input type="number" step="0.1" value={bPoids} onChange={e => setBPoids(e.target.value)} style={inputStyle} placeholder="Ex: 88" /></div>
+              <div><label style={labelStyle}>Prix (€)</label><input type="number" step="0.01" value={bPrix} onChange={e => setBPrix(e.target.value)} style={inputStyle} placeholder="Ex: 135" /></div>
+            </div>
+            <div><label style={labelStyle}>Composition</label><input type="text" value={bCompo} onChange={e => setBCompo(e.target.value)} style={inputStyle} placeholder="Ex: Arylate Carbon" /></div>
+            <div>
+              <label style={labelStyle}>Notes TT-Kip (/10) — optionnelles</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "6px" }}>
+                <div><label style={{ ...labelStyle, fontSize: "10px" }}>Vitesse</label><input type="number" min="1" max="10" step="0.1" value={bVitesse} onChange={e => setBVitesse(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
+                <div><label style={{ ...labelStyle, fontSize: "10px" }}>Contrôle</label><input type="number" min="1" max="10" step="0.1" value={bControle} onChange={e => setBControle(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
+                <div><label style={{ ...labelStyle, fontSize: "10px" }}>Flexibilité</label><input type="number" min="1" max="10" step="0.1" value={bFlexibilite} onChange={e => setBFlexibilite(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
+                <div><label style={{ ...labelStyle, fontSize: "10px" }}>Dureté</label><input type="number" min="1" max="10" step="0.1" value={bDurete} onChange={e => setBDurete(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
+                <div><label style={{ ...labelStyle, fontSize: "10px" }}>Qualité/Prix</label><input type="number" min="1" max="10" step="0.1" value={bQP} onChange={e => setBQP(e.target.value)} style={inputStyle} placeholder="1-10" /></div>
+              </div>
+            </div>
+            <button type="submit" style={btnPrimary}>Ajouter le bois</button>
           </form>
         </div>
       )}
