@@ -47,7 +47,10 @@ export const metadata: Metadata = {
     description: 'Tests, avis et base de données de revêtements et bois de tennis de table.',
     images: ['/og-image.jpg'],
   },
-  metadataBase: new URL('https://tt-kip.com'),
+  metadataBase: new URL('https://www.tt-kip.com'),
+  other: {
+    'x-fb-no-webview': '1',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -81,6 +84,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Copyright TT-Kip 2026 — Tous droits réservés
           </p>
         </footer>
+        {/* Redirection hors WebView Facebook/Instagram → ouvre dans le vrai navigateur */}
+        <Script id="fb-webview-fix" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var ua = navigator.userAgent || '';
+            var isFBWebView = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1
+              || ua.indexOf('Instagram') > -1 || ua.indexOf('FB_IAB') > -1;
+            if (isFBWebView) {
+              // Neutralise document.write pour bloquer les textes injectés
+              document.write = function() {};
+              // Redirige vers le vrai navigateur sur iOS
+              if (/iPhone|iPad|iPod/.test(ua)) {
+                window.location.href = 'x-safari-' + window.location.href;
+              }
+            }
+          })();
+        `}} />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-XGYJKVTVY5" strategy="afterInteractive" />
         <Script id="ga4" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
           window.dataLayer = window.dataLayer || [];
