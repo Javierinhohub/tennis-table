@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import BoisClient from "./BoisClient"
 
-export const revalidate = 300
+export const revalidate = 60
 
 export default async function BoisPage() {
   const [{ data: produits }, { data: avisData }, { data: notesData }] = await Promise.all([
