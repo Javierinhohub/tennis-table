@@ -11,6 +11,29 @@ const TYPE_REV: Record<string, string> = {
 }
 const STYLES_BOIS = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
 
+const inp: React.CSSProperties = {
+  background: "#fff", border: "1px solid var(--border)", borderRadius: "8px",
+  padding: "9px 12px", fontSize: "14px", width: "100%",
+  fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box",
+}
+const lbl: React.CSSProperties = {
+  display: "block", fontSize: "11px", fontWeight: 600,
+  color: "var(--text-muted)", marginBottom: "4px",
+  textTransform: "uppercase", letterSpacing: "0.4px",
+}
+
+// Défini HORS du composant pour éviter la perte de focus à chaque frappe
+function Field({ label, value, onChange, type = "text", step }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; step?: string
+}) {
+  return (
+    <div>
+      <label style={lbl}>{label}</label>
+      <input type={type} step={step} value={value} onChange={e => onChange(e.target.value)} style={inp} placeholder="—" />
+    </div>
+  )
+}
+
 export default function AdminProduitsPage() {
   const router = useRouter()
 
@@ -169,26 +192,6 @@ export default function AdminProduitsPage() {
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
-
-  const inp: React.CSSProperties = {
-    background: "#fff", border: "1px solid var(--border)", borderRadius: "8px",
-    padding: "9px 12px", fontSize: "14px", width: "100%",
-    fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box",
-  }
-  const lbl: React.CSSProperties = {
-    display: "block", fontSize: "11px", fontWeight: 600,
-    color: "var(--text-muted)", marginBottom: "4px",
-    textTransform: "uppercase", letterSpacing: "0.4px",
-  }
-
-  function Field({ label, value, onChange, type = "text", step }: { label: string, value: string, onChange: (v: string) => void, type?: string, step?: string }) {
-    return (
-      <div>
-        <label style={lbl}>{label}</label>
-        <input type={type} step={step} value={value} onChange={e => onChange(e.target.value)} style={inp} placeholder="—" />
-      </div>
-    )
-  }
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
