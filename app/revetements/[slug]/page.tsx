@@ -68,16 +68,27 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     { label: "Contrôle", value: rev?.controle_note, color: "#B45309" },
   ]
 
+  // Avis : moyenne et nombre pour aggregateRating Google
+  const { data: avisData } = await supabase
+    .from("avis")
+    .select("note")
+    .eq("produit_id", produit.id)
+    .eq("valide", true)
+  const avisCount = avisData?.length ?? 0
+  const avgNote = avisCount > 0
+    ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
+    : null
+
   // JSON-LD pour Google (données structurées produit)
-  const jsonLd = {
+  const jsonLd: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Revêtement de tennis de table",
     "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
-    ...(rev?.prix ? { "offers": { "@type": "Offer", "price": rev.prix, "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
-    "aggregateRating": undefined as any,
+    ...(rev?.prix ? { "offers": { "@type": "Offer", "price": parseFloat(rev.prix), "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
   }
 
   return (

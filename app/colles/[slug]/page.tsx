@@ -16,6 +16,27 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const detail = produit.colles as any
   const marque = produit.marques as any
 
+  // Avis : moyenne et nombre pour aggregateRating Google
+  const { data: avisData } = await supabase
+    .from("avis")
+    .select("note")
+    .eq("produit_id", produit.id)
+    .eq("valide", true)
+  const avisCount = avisData?.length ?? 0
+  const avgNote = avisCount > 0
+    ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
+    : null
+
+  const jsonLd: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": `${marque?.nom} ${produit.nom}`,
+    "brand": { "@type": "Brand", "name": marque?.nom },
+    "category": "Colle de tennis de table",
+    "description": `Colle de tennis de table ${marque?.nom} ${produit.nom}${detail?.type_colle ? `, ${detail.type_colle}` : ""}.`,
+    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
+  }
+
   const infos = [
                 { label: "Type de colle", value: detail?.type_colle },
                 { label: "Volume (ml)", value: detail?.volume_ml },
@@ -25,6 +46,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   ].filter(i => i.value)
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/colles" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "1.5rem" }}>
         Retour aux colles
@@ -53,5 +76,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </div>
       </div>
     </main>
+    </>
   )
 }

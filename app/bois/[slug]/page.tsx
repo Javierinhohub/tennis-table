@@ -103,14 +103,26 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     </div>
   )
 
-  const jsonLd = {
+  // Avis : moyenne et nombre pour aggregateRating Google
+  const { data: avisData } = await supabase
+    .from("avis")
+    .select("note")
+    .eq("produit_id", produit.id)
+    .eq("valide", true)
+  const avisCount = avisData?.length ?? 0
+  const avgNote = avisCount > 0
+    ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
+    : null
+
+  const jsonLd: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Bois de tennis de table",
     "description": `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
-    ...(b?.prix ? { "offers": { "@type": "Offer", "price": b.prix, "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+    ...(b?.prix ? { "offers": { "@type": "Offer", "price": parseFloat(b.prix), "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
   }
 
   return (

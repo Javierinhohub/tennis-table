@@ -16,6 +16,28 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const detail = produit.chaussures as any
   const marque = produit.marques as any
 
+  // Avis : moyenne et nombre pour aggregateRating Google
+  const { data: avisData } = await supabase
+    .from("avis")
+    .select("note")
+    .eq("produit_id", produit.id)
+    .eq("valide", true)
+  const avisCount = avisData?.length ?? 0
+  const avgNote = avisCount > 0
+    ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
+    : null
+
+  const jsonLd: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": `${marque?.nom} ${produit.nom}`,
+    "brand": { "@type": "Brand", "name": marque?.nom },
+    "category": "Chaussure de tennis de table",
+    "description": `Chaussure de tennis de table ${marque?.nom} ${produit.nom}${detail?.genre ? `, ${detail.genre}` : ""}${detail?.type_semelle ? `, semelle ${detail.type_semelle}` : ""}.`,
+    ...(detail?.prix_indicatif ? { "offers": { "@type": "Offer", "price": parseFloat(detail.prix_indicatif), "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
+    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
+  }
+
   const infos = [
                 { label: "Genre", value: detail?.genre },
                 { label: "Type de semelle", value: detail?.type_semelle },
@@ -25,6 +47,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   ].filter(i => i.value)
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/chaussures" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "1.5rem" }}>
         Retour aux chaussures
@@ -53,5 +77,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </div>
       </div>
     </main>
+    </>
   )
 }
