@@ -79,17 +79,34 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
     : null
 
-  // JSON-LD pour Google (données structurées produit)
-  const jsonLd: Record<string, any> = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": `${marque?.nom} ${produit.nom}`,
-    "brand": { "@type": "Brand", "name": marque?.nom },
-    "category": "Revêtement de tennis de table",
-    "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
-    ...(rev?.prix ? { "offers": { "@type": "Offer", "price": parseFloat(rev.prix), "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
-    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
-  }
+// APRÈS
+const jsonLd: Record<string, any> = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": `${marque?.nom} ${produit.nom}`,
+  "brand": { "@type": "Brand", "name": marque?.nom },
+  "category": "Revêtement de tennis de table",
+  "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "EUR",
+    "availability": "https://schema.org/InStock",
+    "url": `https://www.tt-kip.com/revetements/${slug}`,
+    ...(rev?.prix
+      ? { "price": parseFloat(rev.prix) }
+      : { "price": "0" }
+    ),
+  },
+  ...(avgNote ? {
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": avgNote,
+      "reviewCount": avisCount,
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  } : {}),
+}
 
   return (
     <>
