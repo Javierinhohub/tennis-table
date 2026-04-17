@@ -191,11 +191,10 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     if (noteRapide === 0) { setError("Veuillez sélectionner une note globale (étoiles)."); return }
     setLoading(true)
     try {
-      // On n'envoie que les colonnes qui existent dans notes_bois
-      // note_globale est stocké via la table avis ; ici on stocke les critères détaillés
       const payload: Record<string, any> = {
         produit_id: produitId,
         user_id: user.id,
+        note_globale: noteRapide,
         note_vitesse: noteVitesse,
         note_controle: noteControle,
         note_flexibilite: noteFlexibilite,
