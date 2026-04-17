@@ -116,6 +116,21 @@ export default function AdminPage() {
   const [liaisonProduitId, setLiaisonProduitId] = useState("")
   const [produitsFiltres, setProduitsFiltres] = useState<any[]>([])
 
+  // ── Tables TT ──
+  const [tables, setTables] = useState<any[]>([])
+  const [filtreTable, setFiltreTable] = useState("")
+  const [tableSelectionnee, setTableSelectionnee] = useState<any>(null)
+  const [savingTable, setSavingTable] = useState(false)
+  const [messageTable, setMessageTable] = useState("")
+  const [editTableNom, setEditTableNom] = useState("")
+  const [editTableMarque, setEditTableMarque] = useState("")
+  const [editTableType, setEditTableType] = useState("")
+  const [editTableNiveau, setEditTableNiveau] = useState("")
+  const [editTablePrix, setEditTablePrix] = useState("")
+  const [editTableDescription, setEditTableDescription] = useState("")
+  const [editTableEpaisseur, setEditTableEpaisseur] = useState("")
+  const [editTableActif, setEditTableActif] = useState(true)
+
   // ── Modification joueur pro ──
   const [joueurSelectionne, setJoueurSelectionne] = useState<any>(null)
   const [filtreJoueur, setFiltreJoueur] = useState("")
@@ -136,7 +151,7 @@ export default function AdminPage() {
     if (!user) { router.push("/auth/login"); return }
     const { data: profil } = await supabase.from("utilisateurs").select("role").eq("id", user.id).single()
     if (!profil || profil.role !== "admin") { router.push("/"); return }
-    await Promise.all([fetchAvis(), fetchProduits(), fetchMarques(), fetchSubcats(), fetchJoueurs(), fetchLiaisons()])
+    await Promise.all([fetchAvis(), fetchProduits(), fetchMarques(), fetchSubcats(), fetchJoueurs(), fetchLiaisons(), fetchTables()])
     setLoading(false)
   }
 
@@ -168,6 +183,47 @@ export default function AdminPage() {
   async function fetchLiaisons() {
     const { data } = await supabase.from("joueurs_pro_produits").select("id, joueurs_pro(nom), produits(nom)").order("id")
     setLiaisons(data || [])
+  }
+
+  async function fetchTables() {
+    const { data } = await supabase.from("tables_tt").select("*").order("marque").order("nom")
+    setTables(data || [])
+  }
+
+  function selectionnerTable(t: any) {
+    setMessageTable("")
+    setTableSelectionnee(t)
+    setEditTableNom(t.nom || "")
+    setEditTableMarque(t.marque || "")
+    setEditTableType(t.type || "intérieur")
+    setEditTableNiveau(t.niveau || "loisir")
+    setEditTablePrix(t.prix != null ? String(t.prix) : "")
+    setEditTableDescription(t.description || "")
+    setEditTableEpaisseur(t.epaisseur_plateau != null ? String(t.epaisseur_plateau) : "")
+    setEditTableActif(t.actif !== false)
+  }
+
+  async function handleSaveTable(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingTable(true)
+    setMessageTable("")
+    const { error } = await supabase.from("tables_tt").update({
+      nom: editTableNom || null,
+      marque: editTableMarque || null,
+      type: editTableType || null,
+      niveau: editTableNiveau || null,
+      prix: editTablePrix ? parseFloat(editTablePrix) : null,
+      description: editTableDescription || null,
+      epaisseur_plateau: editTableEpaisseur ? parseFloat(editTableEpaisseur) : null,
+      actif: editTableActif,
+    }).eq("id", tableSelectionnee.id)
+    setSavingTable(false)
+    if (error) {
+      setMessageTable("❌ Erreur : " + error.message)
+    } else {
+      setMessageTable("✅ Table mise à jour !")
+      await fetchTables()
+    }
   }
 
   useEffect(() => {
@@ -355,8 +411,14 @@ export default function AdminPage() {
   const avisValides = avis.filter(a => a.valide)
   const joueursFiltres = joueurs.filter(j => j.nom.toLowerCase().includes(filtreJoueur.toLowerCase()))
 
+  const tablesFiltrees = tables.filter(t =>
+    (t.nom || "").toLowerCase().includes(filtreTable.toLowerCase()) ||
+    (t.marque || "").toLowerCase().includes(filtreTable.toLowerCase())
+  )
+
   const onglets = [
     { id: "avis", label: "Avis", count: avisEnAttente.length },
+    { id: "tables-tt", label: "Tables TT", count: tables.length },
     { id: "ajouter", label: "Ajouter un revêtement" },
     { id: "ajouter-bois", label: "Ajouter un bois" },
     { id: "joueurs", label: "Joueurs pro", count: joueurs.length },
@@ -453,6 +515,122 @@ export default function AdminPage() {
             </div>
           )}
           {avis.length === 0 && <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "3rem" }}>Aucun avis pour le moment.</p>}
+        </div>
+      )}
+
+      {/* ── TABLES TT ── */}
+      {onglet === "tables-tt" && (
+        <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1.5rem", alignItems: "start" }}>
+
+          {/* Liste tables */}
+          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
+            <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--border)" }}>
+              <input type="text" placeholder="Rechercher une table..." value={filtreTable}
+                onChange={e => setFiltreTable(e.target.value)}
+                style={{ ...inputStyleAC, padding: "7px 10px", fontSize: "13px" }} />
+            </div>
+            <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+              {tablesFiltrees.map(t => (
+                <button key={t.id} type="button" onClick={() => selectionnerTable(t)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", textAlign: "left",
+                    background: tableSelectionnee?.id === t.id ? "#FFF0EB" : "none",
+                    border: "none", borderBottom: "1px solid var(--border)", cursor: "pointer",
+                    fontFamily: "Poppins, sans-serif",
+                    borderLeft: tableSelectionnee?.id === t.id ? "3px solid #D97757" : "3px solid transparent" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.nom}</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t.marque} · {t.niveau}</p>
+                  </div>
+                  {!t.actif && <span style={{ fontSize: "10px", background: "#FEF2F2", color: "#DC2626", padding: "2px 6px", borderRadius: "4px", fontWeight: 600, flexShrink: 0 }}>inactif</span>}
+                </button>
+              ))}
+              {tablesFiltrees.length === 0 && <p style={{ padding: "1.5rem", color: "var(--text-muted)", fontSize: "13px", textAlign: "center" }}>Aucune table trouvée.</p>}
+            </div>
+          </div>
+
+          {/* Formulaire édition */}
+          {!tableSelectionnee ? (
+            <div style={{ background: "#fff", border: "1px dashed var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+              <p style={{ fontSize: "28px", marginBottom: "10px" }}>👈</p>
+              <p style={{ fontSize: "14px" }}>Sélectionnez une table dans la liste</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveTable} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {messageTable && (
+                <div style={{ background: messageTable.startsWith("✅") ? "#ECFDF5" : "#FEF2F2", border: `1px solid ${messageTable.startsWith("✅") ? "#A7F3D0" : "#FECACA"}`, color: messageTable.startsWith("✅") ? "#065F46" : "#DC2626", borderRadius: "8px", padding: "12px 16px", fontSize: "14px", fontWeight: 500 }}>
+                  {messageTable}
+                </div>
+              )}
+
+              {/* En-tête */}
+              <div style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", borderRadius: "10px", padding: "14px 18px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: "17px" }}>{tableSelectionnee.marque} {tableSelectionnee.nom}</p>
+                  <p style={{ fontSize: "13px", opacity: 0.85 }}>{tableSelectionnee.type} · {tableSelectionnee.niveau}</p>
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}>
+                  <input type="checkbox" checked={editTableActif} onChange={e => setEditTableActif(e.target.checked)} style={{ width: "16px", height: "16px" }} />
+                  Active
+                </label>
+              </div>
+
+              {/* Identité */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>📋 Informations générales</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Marque</label>
+                    <input value={editTableMarque} onChange={e => setEditTableMarque(e.target.value)} style={inputStyleAC} placeholder="Ex: Cornilleau" />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Nom du modèle</label>
+                    <input value={editTableNom} onChange={e => setEditTableNom(e.target.value)} style={inputStyleAC} placeholder="Ex: 500 Indoor" />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Type</label>
+                    <select value={editTableType} onChange={e => setEditTableType(e.target.value)} style={inputStyleAC}>
+                      <option value="intérieur">Intérieur</option>
+                      <option value="extérieur">Extérieur</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Niveau</label>
+                    <select value={editTableNiveau} onChange={e => setEditTableNiveau(e.target.value)} style={inputStyleAC}>
+                      <option value="loisir">Loisir</option>
+                      <option value="club">Club</option>
+                      <option value="compétition">Compétition</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Caractéristiques techniques */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>🔧 Caractéristiques techniques</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Prix indicatif (€)</label>
+                    <input type="number" step="0.01" value={editTablePrix} onChange={e => setEditTablePrix(e.target.value)} style={inputStyleAC} placeholder="Ex: 349.90" />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Épaisseur plateau (mm)</label>
+                    <input type="number" step="0.1" value={editTableEpaisseur} onChange={e => setEditTableEpaisseur(e.target.value)} style={inputStyleAC} placeholder="Ex: 25" />
+                  </div>
+                </div>
+                <div style={{ marginTop: "12px" }}>
+                  <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Description</label>
+                  <textarea value={editTableDescription} onChange={e => setEditTableDescription(e.target.value)} rows={3}
+                    style={{ ...inputStyleAC, resize: "vertical", lineHeight: 1.6 }}
+                    placeholder="Description de la table..." />
+                </div>
+              </div>
+
+              <button type="submit" disabled={savingTable}
+                style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%", opacity: savingTable ? 0.7 : 1, fontFamily: "Poppins, sans-serif" }}>
+                {savingTable ? "Enregistrement..." : "Enregistrer les modifications"}
+              </button>
+            </form>
+          )}
         </div>
       )}
 
