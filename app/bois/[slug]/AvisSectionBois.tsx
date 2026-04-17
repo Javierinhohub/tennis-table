@@ -188,13 +188,13 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
   async function handleNoteSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (noteRapide === 0) { setError("Veuillez sélectionner une note globale (étoiles)."); return }
+    if (!noteRapide || noteRapide < 1) { setError("Veuillez sélectionner une note globale (étoiles)."); return }
     setLoading(true)
     try {
       const payload: Record<string, any> = {
         produit_id: produitId,
         user_id: user.id,
-        note_globale: noteRapide,
+        note_globale: noteRapide ?? 0,
         note_vitesse: noteVitesse,
         note_controle: noteControle,
         note_flexibilite: noteFlexibilite,
@@ -303,8 +303,8 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
                 style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
                 Annuler
               </button>
-              <button type="submit" disabled={loading || noteRapide === 0}
-                style={{ flex: 2, background: noteRapide === 0 ? "var(--border)" : "#D97757", color: noteRapide === 0 ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: noteRapide === 0 ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
+              <button type="submit" disabled={loading || !noteRapide || noteRapide < 1}
+                style={{ flex: 2, background: (!noteRapide || noteRapide < 1) ? "var(--border)" : "#D97757", color: (!noteRapide || noteRapide < 1) ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: (!noteRapide || noteRapide < 1) ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
                 {loading ? "Enregistrement..." : "Enregistrer ma note"}
               </button>
             </div>
