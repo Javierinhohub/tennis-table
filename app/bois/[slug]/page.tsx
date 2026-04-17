@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import AvisSectionBois from "./AvisSectionBois"
-import NotesBoisChart from "./NotesBoisChart"
+import NotesSectionBois from "./NotesSectionBois"
 
 // ── Métadonnées dynamiques ────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -88,20 +88,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   }
 
   const plis = [b?.pli1, b?.pli2, b?.pli3, b?.pli4, b?.pli5, b?.pli6, b?.pli7].filter(Boolean)
-
-  const NoteBar = ({ label, value, color = "#D97757" }: { label: string, value: number | null, color?: string }) => (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-        <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>{label}</span>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>
-          {value ? `${value}/10` : "Non renseigné"}
-        </span>
-      </div>
-      <div style={{ background: "var(--bg)", borderRadius: "6px", height: "6px", overflow: "hidden" }}>
-        {value && <div style={{ width: `${(value / 10) * 100}%`, height: "100%", background: color, borderRadius: "6px" }} />}
-      </div>
-    </div>
-  )
 
   // Avis : moyenne et nombre pour aggregateRating Google
   const { data: avisData } = await supabase
@@ -196,28 +182,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             </div>
           )}
 
-          {/* Polar chart (TTK + utilisateurs) */}
-          <NotesBoisChart
-            produitId={produit.id}
-            ttkVitesse={b?.note_vitesse}
-            ttkControle={b?.note_controle}
-            ttkFlexibilite={b?.note_flexibilite}
-            ttkDurete={b?.note_durete}
-            ttkQualitePrix={b?.note_qualite_prix}
-          />
-
-          {/* Notes barres TT-Kip */}
-          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>Notes TT-Kip</h2>
-            <div style={{ display: "flex", flexDirection: "column" as const, gap: "14px" }}>
-              <NoteBar label="Vitesse" value={b?.note_vitesse} color="#1A56DB" />
-              <NoteBar label="Contrôle" value={b?.note_controle} color="#0E7F4F" />
-              <NoteBar label="Flexibilité" value={b?.note_flexibilite} color="#D97757" />
-              <NoteBar label="Dureté" value={b?.note_durete} color="#7C3AED" />
-              <NoteBar label="Rapport qualité/prix" value={b?.note_qualite_prix} color="#EF4444" />
-            </div>
-          </div>
-
           {/* Joueurs pro */}
           {joueursPro && joueursPro.length > 0 && (
             <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
@@ -264,6 +228,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
         {/* Sidebar */}
         <div style={{ position: "sticky" as const, top: "80px" }}>
+          {/* Section notes TT-Kip + utilisateurs */}
+          <NotesSectionBois produitId={produit.id} bois={b} />
+
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1rem" }}>
             <div style={{ fontSize: "28px", fontWeight: 800, color: "#D97757", marginBottom: "4px" }}>
               {b?.prix ? b.prix + " €" : "Prix non renseigné"}
