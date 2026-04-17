@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+// ── Composant étoiles ─────────────────────────────────────────────────────────
 function Etoiles({
   note, onChange, readonly = false,
 }: { note: number; onChange?: (n: number) => void; readonly?: boolean }) {
@@ -48,23 +49,33 @@ function Etoiles({
   )
 }
 
+// ── Slider pour critères détaillés ────────────────────────────────────────────
+// Utilise number | null pour éviter le bug React range input + string vide
 function SliderNote({ label, value, onChange, color = "#D97757" }: {
-  label: string; value: string; onChange: (v: string) => void; color?: string
+  label: string
+  value: number | null
+  onChange: (v: number) => void
+  color?: string
 }) {
+  // Valeur affichée : 5 par défaut si pas encore touchée
+  const displayValue = value ?? 5
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
         <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>
           {label}
         </label>
-        <span style={{ fontSize: "12px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>
-          {value ? value + "/10" : "—"}
+        <span style={{ fontSize: "12px", fontWeight: 700, color: value !== null ? color : "var(--text-muted)" }}>
+          {value !== null ? `${value}/10` : "—"}
         </span>
       </div>
       <input
-        type="range" min="1" max="10" value={value || "5"}
-        onChange={(e) => onChange(e.target.value)}
-        onMouseDown={() => !value && onChange("5")}
+        type="range"
+        min={1}
+        max={10}
+        value={displayValue}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
         style={{ width: "100%", accentColor: color, cursor: "pointer", height: "4px" }}
       />
     </div>
@@ -85,6 +96,7 @@ const labelStyle: React.CSSProperties = {
   textTransform: "uppercase", letterSpacing: "0.4px",
 }
 
+// ── Composant principal ───────────────────────────────────────────────────────
 export default function AvisSectionBois({ produitId }: { produitId: string }) {
   const pathname = usePathname()
   const [avis, setAvis] = useState<any[]>([])
@@ -100,13 +112,13 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
   const [contenu, setContenu] = useState("")
   const [styleJeu, setStyleJeu] = useState("")
 
-  // Formulaire note rapide — critères bois
+  // Formulaire note rapide — critères bois (number | null évite le bug slider)
   const [noteRapide, setNoteRapide] = useState(0)
-  const [noteVitesse, setNoteVitesse] = useState("")
-  const [noteControle, setNoteControle] = useState("")
-  const [noteFlexibilite, setNoteFlexibilite] = useState("")
-  const [noteDurete, setNoteDurete] = useState("")
-  const [noteQP, setNoteQP] = useState("")
+  const [noteVitesse, setNoteVitesse] = useState<number | null>(null)
+  const [noteControle, setNoteControle] = useState<number | null>(null)
+  const [noteFlexibilite, setNoteFlexibilite] = useState<number | null>(null)
+  const [noteDurete, setNoteDurete] = useState<number | null>(null)
+  const [noteQP, setNoteQP] = useState<number | null>(null)
 
   const moyenneNote =
     avis.length > 0
@@ -132,6 +144,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     setAvis(data || [])
   }
 
+  // ── Soumission avis écrit ─────────────────────────────────────────────────
   async function handleAvisSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
@@ -144,7 +157,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
         note, titre, contenu, style_jeu: styleJeu,
       })
       if (err) {
-        if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
+        if (err.code === "23505") {
           setError("Vous avez déjà soumis un avis pour ce bois.")
         } else {
           setError("Erreur : " + err.message)
@@ -160,31 +173,36 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     }
   }
 
+  // ── Soumission note rapide ────────────────────────────────────────────────
   async function handleNoteSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (noteRapide === 0) { setError("Veuillez sélectionner une note globale."); return }
+    if (noteRapide === 0) { setError("Veuillez sélectionner une note globale (étoiles)."); return }
     setLoading(true)
     try {
-      const payload = {
+      // On n'envoie que les colonnes qui existent dans notes_bois
+      // note_globale est stocké via la table avis ; ici on stocke les critères détaillés
+      const payload: Record<string, any> = {
         produit_id: produitId,
         user_id: user.id,
-        note_globale: noteRapide,
-        note_vitesse: noteVitesse ? parseInt(noteVitesse) : null,
-        note_controle: noteControle ? parseInt(noteControle) : null,
-        note_flexibilite: noteFlexibilite ? parseInt(noteFlexibilite) : null,
-        note_durete: noteDurete ? parseInt(noteDurete) : null,
-        note_qualite_prix: noteQP ? parseInt(noteQP) : null,
+        note_vitesse: noteVitesse,
+        note_controle: noteControle,
+        note_flexibilite: noteFlexibilite,
+        note_durete: noteDurete,
+        note_qualite_prix: noteQP,
       }
       const { error: err } = await supabase
         .from("notes_bois")
         .upsert(payload, { onConflict: "produit_id,user_id" })
       if (err) {
-        setError("Erreur : " + err.message)
+        setError("Erreur lors de l'enregistrement : " + err.message)
       } else {
         setMessage("Votre note a été enregistrée !")
-        setNoteRapide(0); setNoteVitesse(""); setNoteControle("")
-        setNoteFlexibilite(""); setNoteDurete(""); setNoteQP(""); setMode("")
+        setNoteRapide(0)
+        setNoteVitesse(null); setNoteControle(null)
+        setNoteFlexibilite(null); setNoteDurete(null); setNoteQP(null)
+        setMode("")
+        // Rafraîchit le graphique radar
         window.dispatchEvent(new Event("notes_bois_updated"))
       }
     } catch (ex: any) {
@@ -194,9 +212,11 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     }
   }
 
+  // ── Rendu ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ marginTop: "2rem" }}>
-      {/* En-tête */}
+
+      {/* En-tête + résumé notes */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>Avis ({avis.length})</h2>
@@ -217,11 +237,11 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
 
         {user && mode === "" && (
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => setMode("note")}
+            <button onClick={() => { setMode("note"); setError(""); setMessage("") }}
               style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
               Noter
             </button>
-            <button onClick={() => setMode("avis")}
+            <button onClick={() => { setMode("avis"); setError(""); setMessage("") }}
               style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
               Laisser un avis
             </button>
@@ -236,7 +256,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
         </div>
       )}
 
-      {/* FORMULAIRE NOTE RAPIDE */}
+      {/* ── FORMULAIRE NOTE RAPIDE ─────────────────────────────────────── */}
       {mode === "note" && user && (
         <div style={{ background: "#fff", border: "2px solid #D97757", borderRadius: "12px", padding: "24px", marginBottom: "1.5rem" }}>
           <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "20px" }}>Votre note</h3>
@@ -246,20 +266,28 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
             </div>
           )}
           <form onSubmit={handleNoteSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Étoiles obligatoires */}
             <div>
               <label style={labelStyle}>Note globale *</label>
               <Etoiles note={noteRapide} onChange={setNoteRapide} />
             </div>
+
+            {/* Critères détaillés */}
             <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "16px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>
-                Critères détaillés — optionnels
+                Critères détaillés — glissez pour noter (optionnel)
               </p>
-              <SliderNote label="Vitesse" value={noteVitesse} onChange={setNoteVitesse} color="#1A56DB" />
-              <SliderNote label="Contrôle" value={noteControle} onChange={setNoteControle} color="#0E7F4F" />
-              <SliderNote label="Flexibilité" value={noteFlexibilite} onChange={setNoteFlexibilite} color="#D97757" />
-              <SliderNote label="Dureté" value={noteDurete} onChange={setNoteDurete} color="#7C3AED" />
-              <SliderNote label="Qualité / Prix" value={noteQP} onChange={setNoteQP} color="#10B981" />
+              <SliderNote label="Vitesse"          value={noteVitesse}      onChange={setNoteVitesse}      color="#1A56DB" />
+              <SliderNote label="Contrôle"         value={noteControle}     onChange={setNoteControle}     color="#0E7F4F" />
+              <SliderNote label="Flexibilité"      value={noteFlexibilite}  onChange={setNoteFlexibilite}  color="#D97757" />
+              <SliderNote label="Dureté"           value={noteDurete}       onChange={setNoteDurete}       color="#7C3AED" />
+              <SliderNote label="Qualité / Prix"   value={noteQP}           onChange={setNoteQP}           color="#10B981" />
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "-4px" }}>
+                Glissez un curseur pour l'activer. Les critères non touchés ne seront pas enregistrés.
+              </p>
             </div>
+
             <div style={{ display: "flex", gap: "8px" }}>
               <button type="button" onClick={() => { setMode(""); setError("") }}
                 style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
@@ -274,7 +302,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
         </div>
       )}
 
-      {/* FORMULAIRE AVIS ÉCRIT */}
+      {/* ── FORMULAIRE AVIS ÉCRIT ──────────────────────────────────────── */}
       {mode === "avis" && user && (
         <div style={{ background: "#fff", border: "2px solid #D97757", borderRadius: "12px", padding: "24px", marginBottom: "1.5rem" }}>
           <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "20px" }}>Votre avis</h3>
