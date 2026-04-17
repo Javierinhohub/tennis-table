@@ -159,9 +159,8 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
           <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>{label}</label>
           <span style={{ fontSize: "12px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>{value ? value + "/10" : "—"}</span>
         </div>
-        <input type="range" min="1" max="10" value={value || "5"}
+        <input type="range" min="1" max="10" value={value || "1"}
           onChange={e => onChange(e.target.value)}
-          onMouseDown={() => !value && onChange("5")}
           style={{ width: "100%", accentColor: color, cursor: "pointer", height: "4px" }} />
       </div>
     )

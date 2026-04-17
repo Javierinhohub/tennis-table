@@ -57,8 +57,8 @@ function SliderNote({ label, value, onChange, color = "#D97757" }: {
   onChange: (v: number) => void
   color?: string
 }) {
-  // Valeur affichée : 5 par défaut si pas encore touchée
-  const displayValue = value ?? 5
+  // Valeur affichée : 1 (min) si pas encore touchée, pour indiquer qu'il faut glisser
+  const displayValue = value ?? 1
 
   return (
     <div>
