@@ -137,11 +137,22 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
   async function fetchAvis() {
     const { data } = await supabase
       .from("avis")
-      .select("*, utilisateurs:user_id(pseudo)")
+      .select("*")
       .eq("produit_id", produitId)
       .eq("valide", true)
       .order("cree_le", { ascending: false })
-    setAvis(data || [])
+
+    if (!data || data.length === 0) { setAvis([]); return }
+
+    // Récupère pseudo + classement séparément pour éviter les problèmes de join PostgREST
+    const userIds = [...new Set(data.map((a: any) => a.user_id))]
+    const { data: users } = await supabase
+      .from("utilisateurs")
+      .select("id, pseudo, classement")
+      .in("id", userIds)
+
+    const userMap = Object.fromEntries((users || []).map((u: any) => [u.id, u]))
+    setAvis(data.map((a: any) => ({ ...a, utilisateurs: userMap[a.user_id] || null })))
   }
 
   // ── Soumission avis écrit ─────────────────────────────────────────────────
@@ -388,7 +399,14 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
                   {a.utilisateurs?.pseudo?.[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <p style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>{a.utilisateurs?.pseudo}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <p style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>{a.utilisateurs?.pseudo}</p>
+                    {a.utilisateurs?.classement && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, background: "var(--bg)", color: "var(--accent)", border: "1px solid var(--border)", borderRadius: "4px", padding: "1px 6px" }}>
+                        {a.utilisateurs.classement} pts
+                      </span>
+                    )}
+                  </div>
                   <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                     {new Date(a.cree_le).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
