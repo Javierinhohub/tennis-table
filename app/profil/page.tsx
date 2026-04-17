@@ -6,6 +6,50 @@ import { useRouter } from "next/navigation"
 
 const REGIONS = ["Auvergne-Rhône-Alpes","Bourgogne-Franche-Comté","Bretagne","Centre-Val de Loire","Corse","Grand Est","Hauts-de-France","Île-de-France","Normandie","Nouvelle-Aquitaine","Occitanie","Pays de la Loire","Provence-Alpes-Côte d'Azur","Guadeloupe","Martinique","Guyane","La Réunion","Mayotte","Autre"]
 
+// ✅ HORS du composant — évite la perte de focus à chaque frappe
+const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" as const }
+const labelStyle = { display: "block" as const, fontSize: "12px", fontWeight: 600 as const, color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" as const, letterSpacing: "0.4px" }
+
+// ✅ HORS du composant — React ne recrée plus ce composant à chaque render
+function SearchInput({ label, value, onChange, results, onSelect, selected }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  results: any[]
+  onSelect: (p: any) => void
+  selected: string | null
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <label style={labelStyle}>{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={inputStyle}
+        placeholder={"Rechercher " + label.toLowerCase() + "..."}
+        autoComplete="off"
+      />
+      {selected && <p style={{ fontSize: "12px", color: "var(--success)", marginTop: "4px", fontWeight: 500 }}>Sélectionné : {selected}</p>}
+      {results.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", marginTop: "4px", zIndex: 10, overflow: "hidden" }}>
+          {results.map((p: any, i: number) => (
+            <div key={p.id}
+              onClick={() => onSelect(p)}
+              style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < results.length - 1 ? "1px solid var(--border)" : "none", fontSize: "13px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
+              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+            >
+              <span style={{ fontWeight: 500 }}>{p.nom}</span>
+              <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>{p.marques?.nom}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProfilPage() {
   const [user, setUser] = useState<any>(null)
   const [profil, setProfil] = useState<any>(null)
@@ -119,10 +163,8 @@ export default function ProfilPage() {
     }
     setDeleteLoading(true)
     try {
-      // Appel de la fonction PostgreSQL qui supprime le compte auth
       const { error } = await supabase.rpc("delete_user_account")
       if (error) throw error
-      // Déconnexion locale
       await supabase.auth.signOut()
       router.push("/?compte_supprime=1")
     } catch (err: any) {
@@ -132,32 +174,6 @@ export default function ProfilPage() {
   }
 
   if (loading) return <div style={{ textAlign: "center", padding: "5rem", color: "var(--text-muted)" }}>Chargement...</div>
-
-  const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)", boxSizing: "border-box" as const }
-  const labelStyle = { display: "block" as const, fontSize: "12px", fontWeight: 600 as const, color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" as const, letterSpacing: "0.4px" }
-
-  const SearchInput = ({ label, value, onChange, results, onSelect, selected }: any) => (
-    <div style={{ position: "relative" }}>
-      <label style={labelStyle}>{label}</label>
-      <input type="text" value={value} onChange={e => onChange(e.target.value)} style={inputStyle} placeholder={"Rechercher " + label.toLowerCase() + "..."} />
-      {selected && <p style={{ fontSize: "12px", color: "var(--success)", marginTop: "4px", fontWeight: 500 }}>Sélectionné : {selected}</p>}
-      {results.length > 0 && (
-        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", marginTop: "4px", zIndex: 10, overflow: "hidden" }}>
-          {results.map((p: any, i: number) => (
-            <div key={p.id}
-              onClick={() => onSelect(p)}
-              style={{ padding: "10px 14px", cursor: "pointer", borderBottom: i < results.length - 1 ? "1px solid var(--border)" : "none", fontSize: "13px" }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
-              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
-            >
-              <span style={{ fontWeight: 500 }}>{p.nom}</span>
-              <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>{p.marques?.nom}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
 
   const onglets = [
     { id: "materiel", label: "Mon matériel" },
@@ -179,43 +195,27 @@ export default function ProfilPage() {
                 Cette action est <strong>irréversible</strong>. Votre profil, vos avis et tout votre historique seront définitivement supprimés.
               </p>
             </div>
-
             <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", padding: "12px 14px", marginBottom: "1.5rem" }}>
-              <p style={{ fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>
-                Compte : <strong>{user?.email}</strong>
-              </p>
+              <p style={{ fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>Compte : <strong>{user?.email}</strong></p>
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
-              <label style={{ ...labelStyle, color: "#DC2626" }}>
-                Tapez <strong>SUPPRIMER</strong> pour confirmer
-              </label>
-              <input
-                type="text"
-                value={deleteConfirm}
+              <label style={{ ...labelStyle, color: "#DC2626" }}>Tapez <strong>SUPPRIMER</strong> pour confirmer</label>
+              <input type="text" value={deleteConfirm}
                 onChange={e => { setDeleteConfirm(e.target.value); setDeleteError("") }}
                 placeholder="SUPPRIMER"
-                style={{ ...inputStyle, border: "1px solid #FECACA", outline: "none" }}
-                autoFocus
-              />
-              {deleteError && (
-                <p style={{ fontSize: "12px", color: "#DC2626", marginTop: "6px", fontWeight: 500 }}>{deleteError}</p>
-              )}
+                style={{ ...inputStyle, border: "1px solid #FECACA" }}
+                autoFocus />
+              {deleteError && <p style={{ fontSize: "12px", color: "#DC2626", marginTop: "6px", fontWeight: 500 }}>{deleteError}</p>}
             </div>
-
             <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); setDeleteError("") }}
+              <button onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); setDeleteError("") }}
                 disabled={deleteLoading}
-                style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}
-              >
+                style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
                 Annuler
               </button>
-              <button
-                onClick={handleDeleteAccount}
+              <button onClick={handleDeleteAccount}
                 disabled={deleteLoading || deleteConfirm !== "SUPPRIMER"}
-                style={{ flex: 1, background: deleteConfirm === "SUPPRIMER" ? "#DC2626" : "#FCA5A5", color: "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: deleteConfirm === "SUPPRIMER" ? "pointer" : "not-allowed", fontFamily: "Poppins, sans-serif", transition: "background 0.15s" }}
-              >
+                style={{ flex: 1, background: deleteConfirm === "SUPPRIMER" ? "#DC2626" : "#FCA5A5", color: "#fff", border: "none", borderRadius: "8px", padding: "11px", fontSize: "14px", fontWeight: 600, cursor: deleteConfirm === "SUPPRIMER" ? "pointer" : "not-allowed", fontFamily: "Poppins, sans-serif" }}>
                 {deleteLoading ? "Suppression..." : "Supprimer définitivement"}
               </button>
             </div>
@@ -294,7 +294,7 @@ export default function ProfilPage() {
                     </div>
                   </div>
                   <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "8px" }}>{a.contenu}</p>
-                  <p style={{ color: "var(--text-light)", fontSize: "12px" }}>{new Date(a.cree_le).toLocaleDateString("fr-FR")}</p>
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>{new Date(a.cree_le).toLocaleDateString("fr-FR")}</p>
                 </div>
               ))}
             </div>
@@ -330,16 +330,13 @@ export default function ProfilPage() {
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Membre depuis : {new Date(profil?.cree_le).toLocaleDateString("fr-FR")}</p>
             </div>
 
-            {/* ── Zone danger : suppression de compte ── */}
             <div style={{ border: "1px solid #FECACA", borderRadius: "10px", padding: "20px", background: "#FFF5F5" }}>
               <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#DC2626", marginBottom: "8px" }}>Zone de danger</h2>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.5 }}>
                 La suppression de votre compte est définitive. Toutes vos données (profil, avis, matériel) seront effacées.
               </p>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                style={{ background: "none", border: "1px solid #DC2626", color: "#DC2626", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", width: "100%" }}
-              >
+              <button onClick={() => setShowDeleteModal(true)}
+                style={{ background: "none", border: "1px solid #DC2626", color: "#DC2626", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", width: "100%" }}>
                 🗑️ Je veux supprimer mon compte
               </button>
             </div>
@@ -373,7 +370,8 @@ export default function ProfilPage() {
                 onSelect={(p: any) => { setRvId(p.id); setRvNom(p.nom + " — " + p.marques?.nom); setSearchRV(""); setResultsRV([]) }}
                 selected={rvId ? rvNom : null}
               />
-              <button onClick={updateProfil as any} style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+              <button onClick={updateProfil as any}
+                style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
                 Sauvegarder l'équipement
               </button>
             </div>
