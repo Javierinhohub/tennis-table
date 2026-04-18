@@ -141,7 +141,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "1.5rem", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "2rem", alignItems: "start" }}>
         <div>
 
           {/* Caractéristiques */}
@@ -221,15 +221,16 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             </div>
           )}
 
-          {/* ✅ Section avis bois */}
+          {/* Section Caractéristiques & Notes (TT-Kip + Utilisateurs) */}
+          <NotesSectionBois produitId={produit.id} bois={b} />
+
+          {/* Section avis écrits */}
           <AvisSectionBois produitId={produit.id} />
 
         </div>
 
         {/* Sidebar */}
         <div style={{ position: "sticky" as const, top: "80px" }}>
-          {/* Section notes TT-Kip + utilisateurs */}
-          <NotesSectionBois produitId={produit.id} bois={b} />
 
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1rem" }}>
             <div style={{ fontSize: "28px", fontWeight: 800, color: "#D97757", marginBottom: "4px" }}>

@@ -187,11 +187,13 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
       <div style={{ padding: "20px" }}>
         {/* Polar chart */}
         {(hasTTK || hasStats) && (
-          <div style={{ display: "flex", flexDirection: "column" as const, alignItems: "center", marginBottom: "20px", paddingBottom: "20px", borderBottom: "1px solid var(--border)" }}>
-            <PolarChart axes={polarAxes} size={260} showMarque={false} />
-            <div style={{ display: "flex", gap: "16px", marginTop: "10px", fontSize: "11px", fontWeight: 600 }}>
-              {hasTTK   && <span style={{ color: "#1A56DB", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#1A56DB", borderRadius: "2px", display: "inline-block" }} />TT-Kip</span>}
-              {hasStats && <span style={{ color: "#0E7F4F", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#0E7F4F", borderRadius: "2px", display: "inline-block" }} />Utilisateurs</span>}
+          <div style={{ marginBottom: "20px", paddingBottom: "20px", borderBottom: "1px solid var(--border)", textAlign: "center" as const }}>
+            <div style={{ display: "inline-flex", flexDirection: "column" as const, alignItems: "center" }}>
+              <PolarChart axes={polarAxes} size={300} showMarque={false} />
+              <div style={{ display: "flex", gap: "16px", marginTop: "10px", fontSize: "11px", fontWeight: 600 }}>
+                {hasTTK   && <span style={{ color: "#1A56DB", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#1A56DB", borderRadius: "2px", display: "inline-block" }} />TT-Kip</span>}
+                {hasStats && <span style={{ color: "#0E7F4F", display: "flex", alignItems: "center", gap: "5px" }}><span style={{ width: "10px", height: "3px", background: "#0E7F4F", borderRadius: "2px", display: "inline-block" }} />Utilisateurs</span>}
+              </div>
             </div>
           </div>
         )}
