@@ -1,5 +1,6 @@
 import ConversationClient from "./ConversationClient"
 
-export default function ConversationPage({ params }: { params: { id: string } }) {
-  return <ConversationClient conversationId={params.id} />
+export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  return <ConversationClient conversationId={id} />
 }
