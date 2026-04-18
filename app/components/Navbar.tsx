@@ -19,10 +19,11 @@ const CATEGORIES = [
 ]
 
 export default function Navbar() {
-  const { user } = useSession()           // ← source unique pour l'état auth
+  const { user } = useSession()
   const [pseudo, setPseudo] = useState("")
   const [role, setRole] = useState("")
   const [open, setOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -31,7 +32,7 @@ export default function Navbar() {
     setOpen(false)
   }, [pathname])
 
-  // Charger le pseudo et le rôle quand user change
+  // Charger le pseudo, le rôle et les messages non lus quand user change
   useEffect(() => {
     if (user) {
       supabase
@@ -43,11 +44,29 @@ export default function Navbar() {
           setPseudo(profil?.pseudo || "")
           setRole(profil?.role || "")
         })
+      fetchUnread(user.id)
     } else {
       setPseudo("")
       setRole("")
+      setUnreadCount(0)
     }
   }, [user])
+
+  async function fetchUnread(userId: string) {
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .eq("lu", false)
+      .neq("sender_id", userId)
+      .in("conversation_id",
+        (await supabase
+          .from("conversations")
+          .select("id")
+          .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
+        ).data?.map((c: any) => c.id) || []
+      )
+    setUnreadCount(count || 0)
+  }
 
   function handleLogout() {
     setPseudo("")
@@ -107,6 +126,31 @@ export default function Navbar() {
               </Link>
             )
           })}
+
+          {user && (
+            <Link href="/messages"
+              style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", textDecoration: "none", marginBottom: "2px", marginTop: "4px",
+                background: pathname.startsWith("/messages") ? "#FFF0EB" : "transparent",
+                color: pathname.startsWith("/messages") ? "#D97757" : "var(--text-muted)",
+                fontWeight: pathname.startsWith("/messages") ? 600 : 400,
+                fontSize: "14px",
+              }}>
+              <span style={{ position: "relative", width: "28px", height: "28px", borderRadius: "6px", background: pathname.startsWith("/messages") ? "#D97757" : "var(--bg)", color: pathname.startsWith("/messages") ? "#fff" : "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>
+                💬
+                {unreadCount > 0 && (
+                  <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#EF4444", color: "#fff", borderRadius: "50%", width: "16px", height: "16px", fontSize: "9px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
+              Messages
+              {unreadCount > 0 && (
+                <span style={{ marginLeft: "auto", background: "#EF4444", color: "#fff", borderRadius: "10px", padding: "1px 6px", fontSize: "10px", fontWeight: 700 }}>
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           {role === "admin" && (
             <Link href="/admin"
