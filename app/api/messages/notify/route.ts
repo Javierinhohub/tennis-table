@@ -14,28 +14,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
     }
 
-    // Récupérer l'email du destinataire via le client admin (contourne RLS)
-    const { data: recipient } = await supabaseAdmin
-      .from("utilisateurs")
-      .select("email, pseudo")
-      .eq("id", recipientId)
-      .single()
-
-    if (!recipient?.email) {
+    // Récupérer l'email depuis auth.users (source fiable, contourne RLS)
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(recipientId)
+    if (authError || !authUser?.user?.email) {
       return NextResponse.json({ ok: true, skipped: true })
     }
+    const recipientEmail = authUser.user.email
+
+    // Récupérer le pseudo du destinataire depuis utilisateurs
+    const { data: recipientProfile } = await supabaseAdmin
+      .from("utilisateurs")
+      .select("pseudo")
+      .eq("id", recipientId)
+      .single()
+    const recipientPseudo = recipientProfile?.pseudo || "cher utilisateur"
 
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: recipient.email,
-      subject: `💬 Nouveau message de ${senderPseudo} sur TT-Kip`,
+      to: recipientEmail,
+      subject: `Nouveau message de ${senderPseudo} sur TT-Kip`,
       html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #E5E7EB;">
           <div style="background: #D97757; padding: 24px 28px;">
             <p style="color: #fff; font-size: 20px; font-weight: 700; margin: 0;">TT-Kip</p>
           </div>
           <div style="padding: 28px;">
-            <p style="font-size: 16px; color: #111827; margin: 0 0 8px;">Bonjour ${recipient.pseudo} 👋</p>
+            <p style="font-size: 16px; color: #111827; margin: 0 0 8px;">Bonjour ${recipientPseudo},</p>
             <p style="font-size: 14px; color: #6B7280; margin: 0 0 20px;">
               <strong style="color: #D97757">${senderPseudo}</strong> vous a envoyé un message sur TT-Kip.
             </p>

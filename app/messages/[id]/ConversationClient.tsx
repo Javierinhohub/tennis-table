@@ -10,6 +10,7 @@ export default function ConversationClient({ conversationId }: { conversationId:
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const [user, setUser] = useState<any>(null)
+  const [pseudo, setPseudo] = useState("")
   const [conversation, setConversation] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,6 +45,10 @@ export default function ConversationClient({ conversationId }: { conversationId:
 
     const participantMap: Record<string, { id: string; pseudo: string }> = {}
     participants?.forEach((p: any) => { participantMap[p.id] = p })
+
+    // Stocker le pseudo de l'utilisateur connecté pour les notifications
+    const myPseudo = participantMap[userId]?.pseudo || ""
+    setPseudo(myPseudo)
 
     setConversation({
       ...conv,
@@ -89,7 +94,12 @@ export default function ConversationClient({ conversationId }: { conversationId:
         table: "messages",
         filter: "conversation_id=eq." + conversationId,
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new])
+        setMessages(prev => {
+          // Éviter le doublon si on est l'expéditeur (optimistic update déjà présent)
+          const alreadyExists = prev.some(m => m.id === payload.new.id)
+          if (alreadyExists) return prev
+          return [...prev, payload.new]
+        })
         if (payload.new.sender_id !== user.id) {
           supabase.from("messages").update({ lu: true }).eq("id", payload.new.id)
         }
@@ -105,28 +115,46 @@ export default function ConversationClient({ conversationId }: { conversationId:
     setSending(true)
     setTexte("")
 
+    // Optimistic update : afficher le message immédiatement sans attendre Supabase
+    const tempId = "temp-" + Date.now()
+    const optimisticMsg = {
+      id: tempId,
+      sender_id: user.id,
+      contenu: content,
+      lu: false,
+      created_at: new Date().toISOString(),
+      _pending: true,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+
     const { data: msg } = await supabase
       .from("messages")
       .insert({ conversation_id: conversationId, sender_id: user.id, contenu: content })
-      .select("id")
+      .select("id, sender_id, contenu, lu, created_at")
       .single()
 
     if (msg) {
-      // Notification email au destinataire (en arrière-plan, sans bloquer l'UI)
+      // Remplacer le message optimiste par la vraie réponse Supabase
+      setMessages(prev => prev.map(m => m.id === tempId ? msg : m))
+
+      // Notification email au destinataire (fire-and-forget)
       const other = getInterlocutor()
-      const { data: senderData } = await supabase.from("utilisateurs").select("pseudo").eq("id", user.id).single()
       if (other?.id) {
         fetch("/api/messages/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             recipientId: other.id,
-            senderPseudo: senderData?.pseudo || "Un utilisateur",
+            senderPseudo: pseudo,
             conversationId,
             preview: content,
           }),
-        }).catch(() => {}) // silencieux si échec
+        }).catch(() => {})
       }
+    } else {
+      // Échec : retirer le message optimiste et restaurer le texte
+      setMessages(prev => prev.filter(m => m.id !== tempId))
+      setTexte(content)
     }
 
     setSending(false)
