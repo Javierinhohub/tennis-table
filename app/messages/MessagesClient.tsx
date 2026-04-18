@@ -86,13 +86,35 @@ export default function MessagesClient() {
     if (!user || creating) return
     setCreating(true)
     const [p1, p2] = [user.id, otherId].sort()
-    const { data: conv, error } = await supabase
+
+    // 1. Chercher si la conversation existe déjà
+    const { data: existing } = await supabase
       .from("conversations")
-      .upsert({ participant_1: p1, participant_2: p2 }, { onConflict: "participant_1,participant_2" })
+      .select("id")
+      .eq("participant_1", p1)
+      .eq("participant_2", p2)
+      .maybeSingle()
+
+    if (existing?.id) {
+      setCreating(false)
+      router.push("/messages/" + existing.id)
+      return
+    }
+
+    // 2. Sinon la créer
+    const { data: created, error } = await supabase
+      .from("conversations")
+      .insert({ participant_1: p1, participant_2: p2 })
       .select("id")
       .single()
+
     setCreating(false)
-    if (conv?.id) router.push("/messages/" + conv.id)
+    if (created?.id) {
+      router.push("/messages/" + created.id)
+    } else {
+      console.error("Impossible de créer la conversation :", error)
+      alert("Erreur lors de la création de la conversation. Veuillez réessayer.")
+    }
   }
 
   function unread(conv: any) {
