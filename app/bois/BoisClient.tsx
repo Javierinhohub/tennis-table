@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import ComparaisonModal from "@/app/components/ComparaisonModal"
 
 const STYLE_LABELS: Record<string, string> = {
@@ -15,13 +16,78 @@ const STYLE_LABELS: Record<string, string> = {
   "DEF-":  "Défensif-",
 }
 const STYLE_ORDER = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
+const PAGE_SIZE = 50
 
-export default function BoisClient({ produits, marques, avisCount, notesCount }: { produits: any[], marques: any[], avisCount: Record<string, number>, notesCount: Record<string, number> }) {
+export default function BoisClient({
+  initialProduits,
+  initialTotal,
+  toutesMarques,
+  avisCount,
+  notesCount,
+}: {
+  initialProduits: any[]
+  initialTotal: number
+  toutesMarques: { id: string; nom: string }[]
+  avisCount: Record<string, number>
+  notesCount: Record<string, number>
+}) {
+  const [produits, setProduits] = useState(initialProduits)
+  const [total, setTotal] = useState(initialTotal)
+  const [page, setPage] = useState(0)
+  const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [styleFilter, setStyleFilter] = useState("")
+  const [loading, setLoading] = useState(false)
   const [selection, setSelection] = useState<any[]>([])
   const [showComparaison, setShowComparaison] = useState(false)
+
+  const isFiltered = !!(search || marqueFilter || styleFilter || page > 0)
+
+  // Debounce recherche
+  useEffect(() => {
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(0) }, 350)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  // Fetch serveur à chaque changement de filtre / page
+  useEffect(() => {
+    if (!isFiltered) {
+      setProduits(initialProduits)
+      setTotal(initialTotal)
+      return
+    }
+    fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, marqueFilter, styleFilter])
+
+  async function fetchData() {
+    setLoading(true)
+    const from = page * PAGE_SIZE
+    let query = supabase
+      .from("produits")
+      .select(
+        "id, nom, slug, marques(id, nom), bois!inner(nb_plis, poids_g, epaisseur_mm, style, composition)",
+        { count: "exact" }
+      )
+      .eq("actif", true)
+      .order("nom")
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (search)       query = query.ilike("nom", "%" + search + "%")
+    if (marqueFilter) query = query.eq("marque_id", marqueFilter)
+    if (styleFilter)  query = (query as any).eq("bois.style", styleFilter)
+
+    const { data, count } = await query
+    setProduits(data || [])
+    setTotal(count || 0)
+    setLoading(false)
+  }
+
+  const reset = () => {
+    setSearchInput(""); setSearch(""); setMarqueFilter(""); setStyleFilter(""); setPage(0)
+    setProduits(initialProduits); setTotal(initialTotal)
+  }
 
   const toggleSelection = (p: any) => {
     setSelection(prev => {
@@ -31,35 +97,8 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
     })
   }
 
-  // Styles disponibles parmi les produits chargés
-  const stylesDisponibles = useMemo(() => {
-    const set = new Set<string>()
-    produits.forEach(p => { if (p.bois?.style) set.add(p.bois.style) })
-    return STYLE_ORDER.filter(s => set.has(s))
-  }, [produits])
-
-  const resultats = useMemo(() => {
-    const s = search.toLowerCase().trim()
-    return produits
-      .filter(p => {
-        const nomOk = !s
-          || p.nom.toLowerCase().includes(s)
-          || (p.marques?.nom || "").toLowerCase().includes(s)
-          || (p.bois?.composition || "").toLowerCase().includes(s)
-        const marqueOk = !marqueFilter || p.marques?.id === marqueFilter
-        const styleOk = !styleFilter || p.bois?.style === styleFilter
-        return nomOk && marqueOk && styleOk
-      })
-      .sort((a: any, b: any) => {
-        const scoreB = (notesCount[b.id] || 0) * 2 + (avisCount[b.id] || 0)
-        const scoreA = (notesCount[a.id] || 0) * 2 + (avisCount[a.id] || 0)
-        return scoreB - scoreA
-      })
-  }, [produits, search, marqueFilter, styleFilter, avisCount, notesCount])
-
-  const hasFilter = !!(search || marqueFilter || styleFilter)
-
-  const reset = () => { setSearch(""); setMarqueFilter(""); setStyleFilter("") }
+  const hasFilter = !!(searchInput || marqueFilter || styleFilter)
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const inputStyle: React.CSSProperties = {
     padding: "10px 14px", fontSize: "14px", border: "1px solid var(--border)",
@@ -94,20 +133,18 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
 
       {/* Barre de filtres */}
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" as const }}>
-
-        {/* Champ texte avec bouton clear */}
         <div style={{ position: "relative", flex: 2, minWidth: "200px" }}>
           <input
             type="text"
             placeholder="Rechercher un bois..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-            style={{ ...inputStyle, width: "100%", paddingRight: search ? "36px" : "14px", boxSizing: "border-box" as const }}
+            style={{ ...inputStyle, width: "100%", paddingRight: searchInput ? "36px" : "14px", boxSizing: "border-box" as const }}
           />
-          {search && (
+          {searchInput && (
             <button
-              onClick={() => setSearch("")}
+              onClick={() => { setSearchInput(""); setSearch(""); setPage(0) }}
               style={{
                 position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
                 background: "none", border: "none", cursor: "pointer", color: "#aaa",
@@ -117,29 +154,25 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
           )}
         </div>
 
-        {/* Filtre marque */}
         <select
           value={marqueFilter}
-          onChange={e => setMarqueFilter(e.target.value)}
+          onChange={e => { setMarqueFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}
         >
           <option value="">Toutes les marques</option>
-          {marques.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+          {toutesMarques.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
         </select>
 
-        {/* Filtre style de jeu */}
-        {stylesDisponibles.length > 0 && (
-          <select
-            value={styleFilter}
-            onChange={e => setStyleFilter(e.target.value)}
-            style={{ ...inputStyle, flex: 1, minWidth: "150px" }}
-          >
-            <option value="">Tous les styles</option>
-            {stylesDisponibles.map(s => (
-              <option key={s} value={s}>{STYLE_LABELS[s] || s}</option>
-            ))}
-          </select>
-        )}
+        <select
+          value={styleFilter}
+          onChange={e => { setStyleFilter(e.target.value); setPage(0) }}
+          style={{ ...inputStyle, flex: 1, minWidth: "150px" }}
+        >
+          <option value="">Tous les styles</option>
+          {STYLE_ORDER.map(s => (
+            <option key={s} value={s}>{STYLE_LABELS[s]}</option>
+          ))}
+        </select>
 
         {hasFilter && (
           <button
@@ -152,11 +185,18 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
       </div>
 
       <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "1rem" }}>
-        {resultats.length} résultat{resultats.length > 1 ? "s" : ""}
-        {hasFilter && produits.length !== resultats.length && ` sur ${produits.length}`}
+        {loading
+          ? "Recherche en cours..."
+          : `${produits.length} résultat${produits.length > 1 ? "s" : ""} sur ${total.toLocaleString("fr-FR")}`}
       </p>
 
-      {resultats.length === 0 && (
+      {loading && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+          Chargement...
+        </div>
+      )}
+
+      {!loading && produits.length === 0 && (
         <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", background: "#fff", borderRadius: "10px", border: "1px solid var(--border)" }}>
           Aucun bois trouvé.
           {hasFilter && (
@@ -167,7 +207,7 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
         </div>
       )}
 
-      {resultats.length > 0 && (
+      {!loading && produits.length > 0 && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
             <thead>
@@ -179,11 +219,11 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
               </tr>
             </thead>
             <tbody>
-              {resultats.map((p: any, i: number) => (
+              {produits.map((p: any, i: number) => (
                 <tr
                   key={p.id}
                   onClick={() => window.location.href = "/bois/" + p.slug}
-                  style={{ borderBottom: i < resultats.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
+                  style={{ borderBottom: i < produits.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                 >
@@ -203,7 +243,7 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
                     </div>
                   </td>
                   <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "14px" }}>
-                    {highlightMatch(p.nom, search)}
+                    {highlightMatch(p.nom, searchInput)}
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: "13px" }}>
                     {p.marques?.nom}
@@ -253,6 +293,30 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
           </table>
         </div>
       )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginTop: "1.5rem", flexWrap: "wrap" as const }}>
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page === 0 ? "var(--bg)" : "#fff", cursor: page === 0 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif", color: page === 0 ? "var(--text-muted)" : "var(--text)" }}
+          >
+            ← Précédent
+          </button>
+          <span style={{ padding: "8px 16px", fontSize: "13px", color: "var(--text-muted)" }}>
+            Page {page + 1} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page >= totalPages - 1 ? "var(--bg)" : "#fff", cursor: page >= totalPages - 1 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif", color: page >= totalPages - 1 ? "var(--text-muted)" : "var(--text)" }}
+          >
+            Suivant →
+          </button>
+        </div>
+      )}
+
       {showComparaison && selection.length >= 2 && (
         <ComparaisonModal
           produits={selection}
@@ -304,7 +368,6 @@ export default function BoisClient({ produits, marques, avisCount, notesCount }:
   )
 }
 
-/** Met en gras la portion recherchée dans le texte */
 function highlightMatch(text: string, query: string) {
   if (!query.trim()) return <>{text}</>
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
