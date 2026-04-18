@@ -6,41 +6,55 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import PolarChart, { PolarAxis } from "@/app/components/PolarChart"
 
+// Tooltips par caractéristique
+const TOOLTIPS: Record<string, string> = {
+  vitesse:      "Rapidité avec laquelle la balle repart après l'impact. 1 = très lent (idéal défense), 10 = très rapide (idéal attaque pure).",
+  effet:        "Capacité du revêtement à générer des rotations sur la balle. 1 = quasi aucune rotation possible, 10 = rotation maximale.",
+  controle:     "Facilité à diriger et placer la balle avec précision. 1 = très difficile à contrôler, 10 = contrôle maximal.",
+  durabilite:   "Longévité du revêtement avec un usage régulier. 1 = s'use très rapidement (quelques semaines), 10 = dure très longtemps (plus d'un an).",
+  durete:       "Rigidité de l'éponge sous le caoutchouc. 1 = éponge très souple (sensation molle, amorti), 10 = éponge très dure (sensation ferme, puissance).",
+  rejet:        "Capacité à bloquer ou contre-attaquer avec peu d'élan. 1 = aucune propriété de rejet, 10 = rejet excellent, rapide et précis.",
+  qualite_prix: "Rapport entre la qualité du revêtement et son prix de vente. 1 = mauvais rapport (cher pour ce que c'est), 10 = excellent rapport qualité/prix.",
+  adherence:    "Capacité du caoutchouc à accrocher la balle pour générer de l'effet. 1 = très glissant (peu d'accroche), 10 = très adhérent (forte accroche).",
+  gene:         "Capacité à perturber l'adversaire avec des balles déstabilisantes. 1 = peu gênant pour l'adversaire, 10 = très difficile à jouer pour l'adversaire.",
+  inversion:    "Capacité à inverser la rotation de la balle adverse et la retourner. 1 = aucune inversion de l'effet, 10 = inversion totale de la rotation adverse.",
+}
+
 // Caractéristiques selon type de revêtement
 const CRITERES: Record<string, { key: string, label: string, color: string }[]> = {
   In: [
-    { key: "vitesse", label: "Vitesse", color: "#1A56DB" },
-    { key: "effet", label: "Effet / Spin", color: "#7C3AED" },
-    { key: "controle", label: "Contrôle", color: "#0E7F4F" },
-    { key: "durabilite", label: "Durabilité", color: "#D97757" },
-    { key: "durete", label: "Dureté mousse", color: "#EF4444" },
-    { key: "rejet", label: "Rejet", color: "#F59E0B" },
-    { key: "qualite_prix", label: "Qualité / Prix", color: "#10B981" },
+    { key: "vitesse",      label: "Vitesse",          color: "#1A56DB" },
+    { key: "effet",        label: "Effet / Spin",      color: "#7C3AED" },
+    { key: "controle",     label: "Contrôle",          color: "#0E7F4F" },
+    { key: "durabilite",   label: "Durabilité",        color: "#D97757" },
+    { key: "durete",       label: "Dureté mousse",     color: "#EF4444" },
+    { key: "rejet",        label: "Rejet",             color: "#F59E0B" },
+    { key: "qualite_prix", label: "Qualité / Prix",    color: "#10B981" },
   ],
   Out: [
-    { key: "vitesse", label: "Vitesse", color: "#1A56DB" },
-    { key: "effet", label: "Effet / Spin", color: "#7C3AED" },
-    { key: "controle", label: "Contrôle", color: "#0E7F4F" },
-    { key: "gene", label: "Gêne", color: "#EF4444" },
-    { key: "durabilite", label: "Durabilité", color: "#D97757" },
-    { key: "qualite_prix", label: "Qualité / Prix", color: "#10B981" },
+    { key: "vitesse",      label: "Vitesse",           color: "#1A56DB" },
+    { key: "effet",        label: "Effet / Spin",       color: "#7C3AED" },
+    { key: "controle",     label: "Contrôle",           color: "#0E7F4F" },
+    { key: "gene",         label: "Gêne",               color: "#EF4444" },
+    { key: "durabilite",   label: "Durabilité",         color: "#D97757" },
+    { key: "qualite_prix", label: "Qualité / Prix",     color: "#10B981" },
   ],
   Long: [
-    { key: "vitesse", label: "Vitesse", color: "#1A56DB" },
-    { key: "adherence", label: "Adhérence", color: "#7C3AED" },
-    { key: "controle", label: "Contrôle", color: "#0E7F4F" },
-    { key: "gene", label: "Gêne", color: "#EF4444" },
-    { key: "inversion", label: "Inversion", color: "#F59E0B" },
-    { key: "durabilite", label: "Durabilité", color: "#D97757" },
-    { key: "qualite_prix", label: "Qualité / Prix", color: "#10B981" },
+    { key: "vitesse",      label: "Vitesse",            color: "#1A56DB" },
+    { key: "adherence",    label: "Adhérence",          color: "#7C3AED" },
+    { key: "controle",     label: "Contrôle",           color: "#0E7F4F" },
+    { key: "gene",         label: "Gêne",               color: "#EF4444" },
+    { key: "inversion",    label: "Inversion",          color: "#F59E0B" },
+    { key: "durabilite",   label: "Durabilité",         color: "#D97757" },
+    { key: "qualite_prix", label: "Qualité / Prix",     color: "#10B981" },
   ],
   Anti: [
-    { key: "vitesse", label: "Vitesse", color: "#1A56DB" },
-    { key: "controle", label: "Contrôle", color: "#0E7F4F" },
-    { key: "gene", label: "Gêne", color: "#EF4444" },
-    { key: "inversion", label: "Inversion", color: "#F59E0B" },
-    { key: "durabilite", label: "Durabilité", color: "#D97757" },
-    { key: "qualite_prix", label: "Qualité / Prix", color: "#10B981" },
+    { key: "vitesse",      label: "Vitesse",            color: "#1A56DB" },
+    { key: "controle",     label: "Contrôle",           color: "#0E7F4F" },
+    { key: "gene",         label: "Gêne",               color: "#EF4444" },
+    { key: "inversion",    label: "Inversion",          color: "#F59E0B" },
+    { key: "durabilite",   label: "Durabilité",         color: "#D97757" },
+    { key: "qualite_prix", label: "Qualité / Prix",     color: "#10B981" },
   ],
 }
 
@@ -67,11 +81,59 @@ const KEY_TO_MARQUE: Record<string, string> = {
   qualite_prix: "note_marque_qualite_prix",
 }
 
-function BarreComparative({ label, ttk, marque, users, color }: any) {
+function InfoTooltip({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", marginLeft: "4px", verticalAlign: "middle" }}>
+      <button
+        type="button"
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        style={{
+          width: "14px", height: "14px", borderRadius: "50%",
+          background: "#E5E7EB", border: "none", cursor: "pointer",
+          fontSize: "9px", fontWeight: 700, color: "#6B7280",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          lineHeight: 1, padding: 0, flexShrink: 0,
+        }}
+      >?</button>
+      {visible && (
+        <div style={{
+          position: "absolute", bottom: "calc(100% + 6px)", left: "50%",
+          transform: "translateX(-50%)",
+          background: "#1F2937", color: "#F9FAFB",
+          borderRadius: "8px", padding: "8px 12px",
+          fontSize: "11px", lineHeight: 1.5,
+          width: "220px", zIndex: 50,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          whiteSpace: "normal" as const,
+          pointerEvents: "none",
+        }}>
+          {text}
+          <div style={{
+            position: "absolute", top: "100%", left: "50%",
+            transform: "translateX(-50%)",
+            width: 0, height: 0,
+            borderLeft: "5px solid transparent",
+            borderRight: "5px solid transparent",
+            borderTop: "5px solid #1F2937",
+          }} />
+        </div>
+      )}
+    </span>
+  )
+}
+
+function BarreComparative({ label, ttk, marque, users, color, tooltipKey }: any) {
   if (!ttk && !marque && !users) return null
   return (
     <div style={{ marginBottom: "14px" }}>
-      <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)", textTransform: "uppercase" as const, letterSpacing: "0.3px", marginBottom: "6px" }}>{label}</p>
+      <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)", textTransform: "uppercase" as const, letterSpacing: "0.3px", marginBottom: "6px", display: "flex", alignItems: "center" }}>
+        {label}
+        {tooltipKey && TOOLTIPS[tooltipKey] && <InfoTooltip text={TOOLTIPS[tooltipKey]} />}
+      </p>
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         {ttk && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -105,11 +167,14 @@ function BarreComparative({ label, ttk, marque, users, color }: any) {
   )
 }
 
-function Slider({ label, value, onChange, color }: any) {
+function Slider({ label, value, onChange, color, tooltipKey }: any) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.3px" }}>{label}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px", alignItems: "center" }}>
+        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.3px", display: "flex", alignItems: "center" }}>
+          {label}
+          {tooltipKey && TOOLTIPS[tooltipKey] && <InfoTooltip text={TOOLTIPS[tooltipKey]} />}
+        </span>
         <span style={{ fontSize: "12px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>{value ? value + "/10" : "—"}</span>
       </div>
       <input type="range" min="1" max="10" value={value || "5"}
@@ -140,13 +205,11 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
 
   useEffect(() => {
     fetchData()
-    // Chargement initial de la session
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
       if (u) fetchMaNote(u.id)
     })
-    // Écoute les changements d'état d'auth (login, logout, refresh token...)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null
       setUser(u)
@@ -191,7 +254,6 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
         ? await supabase.from("notes_revetements").update(payload).eq("id", maNote.id)
         : await supabase.from("notes_revetements").insert(payload)
       if (err) {
-        // Affiche l'erreur dans la console pour debug, mais ne bloque pas l'UX
         console.error("notes_revetements error:", err.message)
       } else {
         setSaved(true); setShowForm(false)
@@ -209,7 +271,6 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
   const hasMarque = criteres.some(c => KEY_TO_MARQUE[c.key] && revetement?.[KEY_TO_MARQUE[c.key]])
   const hasTTK = criteres.some(c => KEY_TO_TTK[c.key] && revetement?.[KEY_TO_TTK[c.key]])
 
-  // Données pour le polar chart
   const polarAxes: PolarAxis[] = criteres.map(c => ({
     label: c.label.replace(" / ", "/").replace(" mousse", ""),
     ttk:    KEY_TO_TTK[c.key]    ? (revetement?.[KEY_TO_TTK[c.key]]    ?? null) : null,
@@ -252,7 +313,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
         )}
 
         {(hasStats || hasMarque || hasTTK) && criteres.map(c => (
-          <BarreComparative key={c.key} label={c.label} color={c.color}
+          <BarreComparative key={c.key} label={c.label} color={c.color} tooltipKey={c.key}
             ttk={KEY_TO_TTK[c.key] ? revetement?.[KEY_TO_TTK[c.key]] || null : null}
             marque={KEY_TO_MARQUE[c.key] ? revetement?.[KEY_TO_MARQUE[c.key]] || null : null}
             users={stats[c.key]}
@@ -291,7 +352,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
                 <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "12px" }}>
                   <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>Critères — optionnels</p>
                   {criteres.map(c => (
-                    <Slider key={c.key} label={c.label} color={c.color}
+                    <Slider key={c.key} label={c.label} color={c.color} tooltipKey={c.key}
                       value={notesCriteres[c.key] || ""}
                       onChange={(v: string) => setNotesCriteres(prev => ({ ...prev, [c.key]: v }))}
                     />

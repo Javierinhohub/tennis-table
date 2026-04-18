@@ -7,18 +7,81 @@ import { usePathname } from "next/navigation"
 import PolarChart, { PolarAxis } from "@/app/components/PolarChart"
 
 const CRITERES = [
-  { key: "vitesse",      label: "Vitesse",       dbKey: "note_vitesse",      ttkKey: "note_vitesse",      color: "#1A56DB" },
-  { key: "controle",     label: "Contrôle",      dbKey: "note_controle",     ttkKey: "note_controle",     color: "#0E7F4F" },
-  { key: "flexibilite",  label: "Flexibilité",   dbKey: "note_flexibilite",  ttkKey: "note_flexibilite",  color: "#D97757" },
-  { key: "durete",       label: "Dureté",         dbKey: "note_durete",       ttkKey: "note_durete",       color: "#7C3AED" },
-  { key: "qualite_prix", label: "Qualité / Prix", dbKey: "note_qualite_prix", ttkKey: "note_qualite_prix", color: "#10B981" },
+  {
+    key: "vitesse", label: "Vitesse", dbKey: "note_vitesse", ttkKey: "note_vitesse", color: "#1A56DB",
+    tooltip: "Rapidité avec laquelle la balle repart après l'impact. 1 = très lent (bois défensif pur), 10 = très rapide (bois offensif pur).",
+  },
+  {
+    key: "controle", label: "Contrôle", dbKey: "note_controle", ttkKey: "note_controle", color: "#0E7F4F",
+    tooltip: "Facilité à diriger et placer la balle avec précision. 1 = très difficile à contrôler, 10 = contrôle maximal.",
+  },
+  {
+    key: "flexibilite", label: "Flexibilité", dbKey: "note_flexibilite", ttkKey: "note_flexibilite", color: "#D97757",
+    tooltip: "Capacité du bois à se déformer légèrement à l'impact, amortissant la balle. 1 = très rigide (sensation ferme), 10 = très souple et flexible.",
+  },
+  {
+    key: "durete", label: "Dureté", dbKey: "note_durete", ttkKey: "note_durete", color: "#7C3AED",
+    tooltip: "Rigidité du bois au toucher et à l'impact. 1 = très souple et moelleux, 10 = très dur et rigide.",
+  },
+  {
+    key: "qualite_prix", label: "Qualité / Prix", dbKey: "note_qualite_prix", ttkKey: "note_qualite_prix", color: "#10B981",
+    tooltip: "Rapport entre la qualité du bois et son prix de vente. 1 = mauvais rapport (cher pour ce que c'est), 10 = excellent rapport qualité/prix.",
+  },
 ]
 
-function BarreComparative({ label, ttk, users }: { label: string; ttk: number | null; users: number | null }) {
+function InfoTooltip({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", marginLeft: "4px", verticalAlign: "middle" }}>
+      <button
+        type="button"
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        style={{
+          width: "14px", height: "14px", borderRadius: "50%",
+          background: "#E5E7EB", border: "none", cursor: "pointer",
+          fontSize: "9px", fontWeight: 700, color: "#6B7280",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          lineHeight: 1, padding: 0, flexShrink: 0,
+        }}
+      >?</button>
+      {visible && (
+        <div style={{
+          position: "absolute", bottom: "calc(100% + 6px)", left: "50%",
+          transform: "translateX(-50%)",
+          background: "#1F2937", color: "#F9FAFB",
+          borderRadius: "8px", padding: "8px 12px",
+          fontSize: "11px", lineHeight: 1.5,
+          width: "220px", zIndex: 50,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          whiteSpace: "normal" as const,
+          pointerEvents: "none",
+        }}>
+          {text}
+          <div style={{
+            position: "absolute", top: "100%", left: "50%",
+            transform: "translateX(-50%)",
+            width: 0, height: 0,
+            borderLeft: "5px solid transparent",
+            borderRight: "5px solid transparent",
+            borderTop: "5px solid #1F2937",
+          }} />
+        </div>
+      )}
+    </span>
+  )
+}
+
+function BarreComparative({ label, ttk, users, tooltip }: { label: string; ttk: number | null; users: number | null; tooltip?: string }) {
   if (!ttk && !users) return null
   return (
     <div style={{ marginBottom: "14px" }}>
-      <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)", textTransform: "uppercase" as const, letterSpacing: "0.3px", marginBottom: "6px" }}>{label}</p>
+      <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)", textTransform: "uppercase" as const, letterSpacing: "0.3px", marginBottom: "6px", display: "flex", alignItems: "center" }}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </p>
       <div style={{ display: "flex", flexDirection: "column" as const, gap: "4px" }}>
         {ttk != null && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -43,13 +106,16 @@ function BarreComparative({ label, ttk, users }: { label: string; ttk: number | 
   )
 }
 
-function SliderNote({ label, value, onChange, color = "#D97757" }: {
-  label: string; value: string; onChange: (v: string) => void; color?: string
+function SliderNote({ label, value, onChange, color = "#D97757", tooltip }: {
+  label: string; value: string; onChange: (v: string) => void; color?: string; tooltip?: string
 }) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.3px" }}>{label}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px", alignItems: "center" }}>
+        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.3px", display: "flex", alignItems: "center" }}>
+          {label}
+          {tooltip && <InfoTooltip text={tooltip} />}
+        </span>
         <span style={{ fontSize: "12px", fontWeight: 700, color: value ? color : "var(--text-muted)" }}>{value ? value + "/10" : "—"}</span>
       </div>
       <input type="range" min="1" max="10" value={value || "1"}
@@ -200,7 +266,7 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
 
         {/* Barres comparatives */}
         {(hasStats || hasTTK) && CRITERES.map(c => (
-          <BarreComparative key={c.key} label={c.label}
+          <BarreComparative key={c.key} label={c.label} tooltip={c.tooltip}
             ttk={bois?.[c.ttkKey] ?? null}
             users={stats[c.key] ?? null}
           />
@@ -230,7 +296,7 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
                 <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column" as const, gap: "12px" }}>
                   <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>Critères — optionnels</p>
                   {CRITERES.map(c => (
-                    <SliderNote key={c.key} label={c.label} color={c.color}
+                    <SliderNote key={c.key} label={c.label} color={c.color} tooltip={c.tooltip}
                       value={notesCriteres[c.key] || ""}
                       onChange={(v: string) => setNotesCriteres(prev => ({ ...prev, [c.key]: v }))}
                     />
