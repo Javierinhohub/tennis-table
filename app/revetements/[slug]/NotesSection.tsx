@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import PolarChart, { PolarAxis } from "@/app/components/PolarChart"
+import InfoTooltip from "@/app/components/InfoTooltip"
 
 // Tooltips par caractéristique
 const TOOLTIPS: Record<string, string> = {
@@ -81,50 +82,6 @@ const KEY_TO_MARQUE: Record<string, string> = {
   qualite_prix: "note_marque_qualite_prix",
 }
 
-function InfoTooltip({ text }: { text: string }) {
-  const [visible, setVisible] = useState(false)
-  return (
-    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", marginLeft: "4px", verticalAlign: "middle" }}>
-      <button
-        type="button"
-        onMouseEnter={() => setVisible(true)}
-        onMouseLeave={() => setVisible(false)}
-        onFocus={() => setVisible(true)}
-        onBlur={() => setVisible(false)}
-        style={{
-          width: "14px", height: "14px", borderRadius: "50%",
-          background: "#E5E7EB", border: "none", cursor: "pointer",
-          fontSize: "9px", fontWeight: 700, color: "#6B7280",
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          lineHeight: 1, padding: 0, flexShrink: 0,
-        }}
-      >?</button>
-      {visible && (
-        <div style={{
-          position: "absolute", bottom: "calc(100% + 6px)", left: "50%",
-          transform: "translateX(-50%)",
-          background: "#1F2937", color: "#F9FAFB",
-          borderRadius: "8px", padding: "8px 12px",
-          fontSize: "11px", lineHeight: 1.5,
-          width: "220px", zIndex: 50,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-          whiteSpace: "normal" as const,
-          pointerEvents: "none",
-        }}>
-          {text}
-          <div style={{
-            position: "absolute", top: "100%", left: "50%",
-            transform: "translateX(-50%)",
-            width: 0, height: 0,
-            borderLeft: "5px solid transparent",
-            borderRight: "5px solid transparent",
-            borderTop: "5px solid #1F2937",
-          }} />
-        </div>
-      )}
-    </span>
-  )
-}
 
 function BarreComparative({ label, ttk, marque, users, color, tooltipKey }: any) {
   if (!ttk && !marque && !users) return null
