@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
@@ -23,14 +23,28 @@ export default function Navbar() {
   const [pseudo, setPseudo] = useState("")
   const [role, setRole] = useState("")
   const [open, setOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
-  // Fermer le menu au changement de page
+  // Fermer les menus au changement de page
   useEffect(() => {
     setOpen(false)
+    setUserMenuOpen(false)
   }, [pathname])
+
+  // Fermer le menu utilisateur si clic en dehors
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    if (userMenuOpen) document.addEventListener("mousedown", handleOutside)
+    return () => document.removeEventListener("mousedown", handleOutside)
+  }, [userMenuOpen])
 
   // Charger le pseudo, le rôle et les messages non lus quand user change
   useEffect(() => {
@@ -72,12 +86,119 @@ export default function Navbar() {
     setPseudo("")
     setRole("")
     setOpen(false)
+    setUserMenuOpen(false)
     supabase.auth.signOut()
     router.push("/")
   }
 
   return (
     <>
+      {/* ── Avatar utilisateur en haut à droite ─────────────────────── */}
+      <div ref={userMenuRef} style={{ position: "fixed", top: "12px", right: "12px", zIndex: 200 }}>
+        {user ? (
+          <button
+            onClick={() => setUserMenuOpen(v => !v)}
+            style={{
+              width: "40px", height: "40px", borderRadius: "50%",
+              background: "#D97757", border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "15px", fontWeight: 700, color: "#fff",
+              boxShadow: "0 2px 8px rgba(217,119,87,0.35)",
+              position: "relative", fontFamily: "Poppins, sans-serif",
+            }}
+            aria-label="Menu utilisateur"
+          >
+            {pseudo?.[0]?.toUpperCase() || "?"}
+            {unreadCount > 0 && (
+              <span style={{
+                position: "absolute", top: "-2px", right: "-2px",
+                background: "#EF4444", color: "#fff", borderRadius: "50%",
+                width: "16px", height: "16px", fontSize: "9px", fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "2px solid #fff",
+              }}>
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        ) : (
+          <Link href="/auth/login" style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "40px", height: "40px", borderRadius: "50%",
+            background: "var(--bg)", border: "1px solid var(--border)",
+            color: "var(--text-muted)", textDecoration: "none",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          }} aria-label="Se connecter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </Link>
+        )}
+
+        {/* Dropdown */}
+        {userMenuOpen && user && (
+          <div style={{
+            position: "absolute", top: "calc(100% + 8px)", right: 0,
+            background: "#fff", border: "1px solid var(--border)",
+            borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            minWidth: "200px", overflow: "hidden", zIndex: 210,
+          }}>
+            {/* En-tête pseudo */}
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#D97757", flexShrink: 0 }}>
+                {pseudo?.[0]?.toUpperCase()}
+              </div>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)", margin: 0 }}>{pseudo}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Connecté</p>
+              </div>
+            </div>
+
+            {/* Liens */}
+            <div style={{ padding: "6px" }}>
+              <Link href="/messages" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", color: "var(--text)", fontSize: "13px", fontWeight: 500 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
+                <span style={{ fontSize: "15px" }}>💬</span>
+                Messages
+                {unreadCount > 0 && (
+                  <span style={{ marginLeft: "auto", background: "#EF4444", color: "#fff", borderRadius: "10px", padding: "1px 7px", fontSize: "10px", fontWeight: 700 }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+
+              <Link href="/profil" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", color: "var(--text)", fontSize: "13px", fontWeight: 500 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
+                <span style={{ fontSize: "15px" }}>⚙️</span>
+                Paramètres
+              </Link>
+
+              {role === "admin" && (
+                <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", color: "#D97757", fontSize: "13px", fontWeight: 600 }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#FFF0EB"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
+                  <span style={{ fontSize: "15px" }}>🛠️</span>
+                  Administration
+                </Link>
+              )}
+            </div>
+
+            {/* Déconnexion */}
+            <div style={{ padding: "6px", borderTop: "1px solid var(--border)" }}>
+              <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif", textAlign: "left" as const }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
+                <span style={{ fontSize: "15px" }}>↩</span>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Hamburger en haut à gauche ──────────────────────────────── */}
       <div style={{ position: "fixed", top: "12px", left: "12px", zIndex: 200 }}>
         <button onClick={() => setOpen(!open)}
           style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#D97757", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", boxShadow: "0 2px 8px rgba(217,119,87,0.35)", opacity: open ? 1 : 0.85 }}>
