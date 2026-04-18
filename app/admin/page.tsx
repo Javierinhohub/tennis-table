@@ -127,7 +127,7 @@ export default function AdminPage() {
   const [editTableType, setEditTableType] = useState("")
   const [editTableNiveau, setEditTableNiveau] = useState("")
   const [editTablePrix, setEditTablePrix] = useState("")
-  const [editTableDescription, setEditTableDescription] = useState("")
+
   const [editTableEpaisseur, setEditTableEpaisseur] = useState("")
   const [editTableActif, setEditTableActif] = useState(true)
 
@@ -198,7 +198,7 @@ export default function AdminPage() {
     setEditTableType(t.type || "intérieur")
     setEditTableNiveau(t.niveau || "loisir")
     setEditTablePrix(t.prix != null ? String(t.prix) : "")
-    setEditTableDescription(t.description || "")
+
     setEditTableEpaisseur(t.epaisseur_plateau != null ? String(t.epaisseur_plateau) : "")
     setEditTableActif(t.actif !== false)
   }
@@ -213,7 +213,7 @@ export default function AdminPage() {
       type: editTableType || null,
       niveau: editTableNiveau || null,
       prix: editTablePrix ? parseFloat(editTablePrix) : null,
-      description: editTableDescription || null,
+
       epaisseur_plateau: editTableEpaisseur ? parseFloat(editTableEpaisseur) : null,
       actif: editTableActif,
     }).eq("id", tableSelectionnee.id)
@@ -616,12 +616,6 @@ export default function AdminPage() {
                     <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Épaisseur plateau (mm)</label>
                     <input type="number" step="0.1" value={editTableEpaisseur} onChange={e => setEditTableEpaisseur(e.target.value)} style={inputStyleAC} placeholder="Ex: 25" />
                   </div>
-                </div>
-                <div style={{ marginTop: "12px" }}>
-                  <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Description</label>
-                  <textarea value={editTableDescription} onChange={e => setEditTableDescription(e.target.value)} rows={3}
-                    style={{ ...inputStyleAC, resize: "vertical", lineHeight: 1.6 }}
-                    placeholder="Description de la table..." />
                 </div>
               </div>
 
