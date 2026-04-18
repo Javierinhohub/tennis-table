@@ -14,7 +14,7 @@ const TOOLTIPS: Record<string, string> = {
   controle:     "Facilité à diriger et placer la balle avec précision. 1 = très difficile à contrôler, 10 = contrôle maximal.",
   durabilite:   "Longévité du revêtement avec un usage régulier. 1 = s'use très rapidement (quelques semaines), 10 = dure très longtemps (plus d'un an).",
   durete:       "Rigidité de l'éponge sous le caoutchouc. 1 = éponge très souple (sensation molle, amorti), 10 = éponge très dure (sensation ferme, puissance).",
-  rejet:        "Capacité à bloquer ou contre-attaquer avec peu d'élan. 1 = aucune propriété de rejet, 10 = rejet excellent, rapide et précis.",
+  rejet:        "Angle de trajectoire de la balle après frappe. 1 = rejet bas, balle tendue et directe (rapide, risque de filet). 10 = rejet haut, balle en cloche (idéal topspin, plus facile à contrer).",
   qualite_prix: "Rapport entre la qualité du revêtement et son prix de vente. 1 = mauvais rapport (cher pour ce que c'est), 10 = excellent rapport qualité/prix.",
   adherence:    "Capacité du caoutchouc à accrocher la balle pour générer de l'effet. 1 = très glissant (peu d'accroche), 10 = très adhérent (forte accroche).",
   gene:         "Capacité à perturber l'adversaire avec des balles déstabilisantes. 1 = peu gênant pour l'adversaire, 10 = très difficile à jouer pour l'adversaire.",
