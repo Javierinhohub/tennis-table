@@ -189,7 +189,6 @@ export default function ProfilPage() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
           <div style={{ background: "#fff", borderRadius: "14px", padding: "2rem", maxWidth: "440px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "40px", marginBottom: "12px" }}>⚠️</div>
               <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px", color: "#DC2626" }}>Supprimer mon compte</h2>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
                 Cette action est <strong>irréversible</strong>. Votre profil, vos avis et tout votre historique seront définitivement supprimés.
@@ -331,13 +330,13 @@ export default function ProfilPage() {
             </div>
 
             <div style={{ border: "1px solid #FECACA", borderRadius: "10px", padding: "20px", background: "#FFF5F5" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#DC2626", marginBottom: "8px" }}>Zone de danger</h2>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#DC2626", marginBottom: "8px" }}>Suppression du compte</h2>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.5 }}>
                 La suppression de votre compte est définitive. Toutes vos données (profil, avis, matériel) seront effacées.
               </p>
               <button onClick={() => setShowDeleteModal(true)}
                 style={{ background: "none", border: "1px solid #DC2626", color: "#DC2626", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", width: "100%" }}>
-                🗑️ Je veux supprimer mon compte
+                Je veux supprimer mon compte
               </button>
             </div>
           </div>
