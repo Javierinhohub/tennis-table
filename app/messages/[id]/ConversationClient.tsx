@@ -29,17 +29,27 @@ export default function ConversationClient({ conversationId }: { conversationId:
     // Charger la conversation + vérifier que l'utilisateur en fait partie
     const { data: conv } = await supabase
       .from("conversations")
-      .select(`
-        id, participant_1, participant_2,
-        p1:utilisateurs!conversations_participant_1_fkey(id, pseudo),
-        p2:utilisateurs!conversations_participant_2_fkey(id, pseudo)
-      `)
+      .select("id, participant_1, participant_2")
       .eq("id", conversationId)
       .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .single()
 
     if (!conv) { router.push("/messages"); return }
-    setConversation(conv)
+
+    // Récupérer les pseudos des deux participants séparément
+    const { data: participants } = await supabase
+      .from("utilisateurs")
+      .select("id, pseudo")
+      .in("id", [conv.participant_1, conv.participant_2])
+
+    const participantMap: Record<string, { id: string; pseudo: string }> = {}
+    participants?.forEach((p: any) => { participantMap[p.id] = p })
+
+    setConversation({
+      ...conv,
+      p1: participantMap[conv.participant_1] || { id: conv.participant_1, pseudo: "Utilisateur" },
+      p2: participantMap[conv.participant_2] || { id: conv.participant_2, pseudo: "Utilisateur" },
+    })
     await fetchMessages()
     await markAsRead(userId)
     setLoading(false)
