@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
+import ArticleComments from "./ArticleComments"
 
 const CAT_LABELS: Record<string, string> = {
   test: "Test", conseil: "Conseil", actualite: "Actualité", comparatif: "Comparatif"
@@ -96,6 +97,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           En discuter sur le forum
         </a>
       </div>
+
+      <ArticleComments articleId={article.id} />
     </main>
   )
 }

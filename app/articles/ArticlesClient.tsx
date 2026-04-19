@@ -48,12 +48,9 @@ export default function ArticlesClient({ articles, catColors, catLabels }: { art
               </div>
               <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text)", marginBottom: "8px", letterSpacing: "-0.3px" }}>{a.titre}</h2>
               {a.extrait && <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.6, marginBottom: "14px" }}>{a.extrait}</p>}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "var(--text-muted)" }}>
-                  <span>Par <strong>{a.utilisateurs?.pseudo || "TT-Kip"}</strong></span>
-                  <span>{new Date(a.cree_le).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>
-                </div>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{a.vues || 0} vue{a.vues !== 1 ? "s" : ""}</span>
+              <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "var(--text-muted)" }}>
+                <span>Par <strong>{a.utilisateurs?.pseudo || "TT-Kip"}</strong></span>
+                <span>{new Date(a.cree_le).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>
               </div>
             </div>
           </a>
