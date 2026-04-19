@@ -89,31 +89,63 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   const plis = [b?.pli1, b?.pli2, b?.pli3, b?.pli4, b?.pli5, b?.pli6, b?.pli7].filter(Boolean)
 
-  // Avis : moyenne et nombre pour aggregateRating Google
+  // Avis : moyenne, nombre et contenu pour aggregateRating + review Google
   const { data: avisData } = await supabase
     .from("avis")
-    .select("note")
+    .select("note, titre, contenu")
     .eq("produit_id", produit.id)
     .eq("valide", true)
+    .order("cree_le", { ascending: false })
   const avisCount = avisData?.length ?? 0
   const avgNote = avisCount > 0
     ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
     : null
 
-  const jsonLd: Record<string, any> = {
+  // Seulement si au moins 1 avis : évite le schema Product invalide sans reviews
+  const jsonLd: Record<string, any> | null = avisCount > 0 ? {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Bois de tennis de table",
     "description": `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
-    ...(b?.prix ? { "offers": { "@type": "Offer", "price": parseFloat(b.prix), "priceCurrency": "EUR", "availability": "https://schema.org/InStock" } } : {}),
-    ...(avgNote ? { "aggregateRating": { "@type": "AggregateRating", "ratingValue": avgNote, "reviewCount": avisCount, "bestRating": "5", "worstRating": "1" } } : {}),
-  }
+    "url": `https://www.tt-kip.com/bois/${slug}`,
+    ...(b?.prix ? {
+      "offers": {
+        "@type": "Offer",
+        "price": parseFloat(b.prix),
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock",
+        "url": `https://www.tt-kip.com/bois/${slug}`,
+      }
+    } : {}),
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": avgNote,
+      "reviewCount": avisCount,
+      "bestRating": "5",
+      "worstRating": "1",
+    },
+    "review": avisData!
+      .filter(a => a.contenu)
+      .slice(0, 3)
+      .map(a => ({
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Membre TT-Kip" },
+        ...(a.titre ? { "name": a.titre } : {}),
+        "reviewBody": a.contenu.slice(0, 500),
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": String(a.note),
+          "bestRating": "5",
+          "worstRating": "1",
+        },
+      })),
+  } : null
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
     <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/bois" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
         ← Retour aux bois

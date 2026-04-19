@@ -68,49 +68,63 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     { label: "Contrôle", value: rev?.controle_note, color: "#B45309" },
   ]
 
-  // Avis : moyenne et nombre pour aggregateRating Google
+  // Avis : moyenne, nombre et contenu pour aggregateRating + review Google
   const { data: avisData } = await supabase
     .from("avis")
-    .select("note")
+    .select("note, titre, contenu")
     .eq("produit_id", produit.id)
     .eq("valide", true)
+    .order("cree_le", { ascending: false })
   const avisCount = avisData?.length ?? 0
   const avgNote = avisCount > 0
     ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
     : null
 
-// APRÈS
-const jsonLd: Record<string, any> = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": `${marque?.nom} ${produit.nom}`,
-  "brand": { "@type": "Brand", "name": marque?.nom },
-  "category": "Revêtement de tennis de table",
-  "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
-  "offers": {
-    "@type": "Offer",
-    "priceCurrency": "EUR",
-    "availability": "https://schema.org/InStock",
+  // Seulement si au moins 1 avis : évite le schema Product invalide sans reviews
+  const jsonLd: Record<string, any> | null = avisCount > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": `${marque?.nom} ${produit.nom}`,
+    "brand": { "@type": "Brand", "name": marque?.nom },
+    "category": "Revêtement de tennis de table",
+    "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
     "url": `https://www.tt-kip.com/revetements/${slug}`,
-    ...(rev?.prix
-      ? { "price": parseFloat(rev.prix) }
-      : { "price": "0" }
-    ),
-  },
-  ...(avgNote ? {
+    ...(rev?.prix ? {
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "EUR",
+        "price": parseFloat(rev.prix),
+        "availability": "https://schema.org/InStock",
+        "url": `https://www.tt-kip.com/revetements/${slug}`,
+      }
+    } : {}),
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": avgNote,
       "reviewCount": avisCount,
       "bestRating": "5",
-      "worstRating": "1"
-    }
-  } : {}),
-}
+      "worstRating": "1",
+    },
+    "review": avisData!
+      .filter(a => a.contenu)
+      .slice(0, 3)
+      .map(a => ({
+        "@type": "Review",
+        "author": { "@type": "Person", "name": "Membre TT-Kip" },
+        ...(a.titre ? { "name": a.titre } : {}),
+        "reviewBody": a.contenu.slice(0, 500),
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": String(a.note),
+          "bestRating": "5",
+          "worstRating": "1",
+        },
+      })),
+  } : null
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
       <a href="/" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "1.5rem" }}>
