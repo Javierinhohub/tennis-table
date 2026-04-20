@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"
+import BackButton from "@/app/components/BackButton"
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
@@ -127,9 +128,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
-      <a href="/" style={{ color: "var(--accent)", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "1.5rem" }}>
-        Retour à la liste
-      </a>
+      <BackButton fallback="/revetements" label="Retour à la liste" />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "2rem", alignItems: "start" }}>
 

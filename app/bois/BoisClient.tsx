@@ -79,7 +79,16 @@ export default function BoisClient({
     if (styleFilter)  query = (query as any).eq("bois.style", styleFilter)
 
     const { data, count } = await query
-    setProduits(data || [])
+
+    // Tri : bois avec notes/avis en premier dans la page courante
+    const sorted = [...(data || [])].sort((a, b) => {
+      const scoreA = (avisCount[a.id] || 0) + (notesCount[a.id] || 0)
+      const scoreB = (avisCount[b.id] || 0) + (notesCount[b.id] || 0)
+      if (scoreB !== scoreA) return scoreB - scoreA
+      return a.nom.localeCompare(b.nom, "fr")
+    })
+
+    setProduits(sorted)
     setTotal(count || 0)
     setLoading(false)
   }

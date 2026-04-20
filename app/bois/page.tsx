@@ -35,6 +35,14 @@ export default async function BoisPage() {
     notesCount[n.produit_id] = (notesCount[n.produit_id] || 0) + 1
   })
 
+  // Tri : bois avec notes/avis en premier, puis alphabétique
+  const produitsTriés = [...(produits || [])].sort((a, b) => {
+    const scoreA = (avisCount[a.id] || 0) + (notesCount[a.id] || 0)
+    const scoreB = (avisCount[b.id] || 0) + (notesCount[b.id] || 0)
+    if (scoreB !== scoreA) return scoreB - scoreA
+    return a.nom.localeCompare(b.nom, "fr")
+  })
+
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <div style={{ marginBottom: "2rem" }}>
@@ -42,7 +50,7 @@ export default async function BoisPage() {
         <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{(total || 0).toLocaleString("fr-FR")} bois disponibles</p>
       </div>
       <BoisClient
-        initialProduits={produits || []}
+        initialProduits={produitsTriés}
         initialTotal={total || 0}
         toutesMarques={toutesMarques || []}
         avisCount={avisCount}

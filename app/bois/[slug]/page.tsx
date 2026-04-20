@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import AvisSectionBois from "./AvisSectionBois"
 import NotesSectionBois from "./NotesSectionBois"
+import BackButton from "@/app/components/BackButton"
 
 // ── Métadonnées dynamiques ────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -147,9 +148,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     <>
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
     <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <a href="/bois" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
-        ← Retour aux bois
-      </a>
+      <BackButton fallback="/bois" label="Retour aux bois" />
 
       {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
