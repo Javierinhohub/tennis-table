@@ -219,7 +219,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           {joueursPro && joueursPro.length > 0 && (
             <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
               <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "1.2rem" }}>
-                Joueurs pro qui utilisent ce bois
+                Joueurs pro — matériel actuel
               </h2>
               <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px" }}>
                 {joueursPro.map((j: any) => (

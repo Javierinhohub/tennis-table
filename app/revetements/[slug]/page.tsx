@@ -189,7 +189,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
 
           {joueursPro && joueursPro.length > 0 && (
             <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Joueurs professionnels</h2>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Joueurs professionnels — matériel actuel</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {joueursPro.map((jp: any) => (
                   <a key={jp.id} href={"/joueurs/" + jp.id}
