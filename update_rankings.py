@@ -1,7 +1,9 @@
 """
 update_rankings.py — Mise à jour automatique du classement mondial ITTF/WTT
 ===========================================================================
-Met à jour UNIQUEMENT le champ classement_mondial dans joueurs_pro.
+- Met à jour classement_mondial pour les joueurs existants
+- Insère les nouveaux entrants dans le top 100
+- Archive (actif=False) les joueurs sortis du top 100
 Ne touche pas au matériel, style, âge ou tout autre donnée.
 
 Dépendances : pip install supabase requests beautifulsoup4
@@ -15,6 +17,46 @@ Automatique : chaque mardi à 12h via GitHub Actions.
 import os, sys, re, time
 import requests
 from supabase import create_client
+
+# ─── Traduction pays (codes/noms WTT → français) ──────────────────────────────
+PAYS_FR = {
+    # Codes ISO 3 lettres
+    "CHN": "Chine", "JPN": "Japon", "KOR": "Corée du Sud", "GER": "Allemagne",
+    "FRA": "France", "SWE": "Suède", "BRA": "Brésil", "EGY": "Égypte",
+    "IND": "Inde",  "USA": "États-Unis", "AUS": "Australie", "TPE": "Taipei",
+    "HKG": "Hong Kong", "SGP": "Singapour", "POR": "Portugal", "POL": "Pologne",
+    "ROU": "Roumanie", "SVN": "Slovénie", "DEN": "Danemark", "HRV": "Croatie",
+    "CZE": "Tchéquie", "KAZ": "Kazakhstan", "NGA": "Nigeria", "BEL": "Belgique",
+    "ARG": "Argentine", "CHL": "Chili", "MDA": "Moldavie", "HUN": "Hongrie",
+    "LUX": "Luxembourg", "CMR": "Cameroun", "BEN": "Bénin", "IRN": "Iran",
+    "RUS": "Russie", "UKR": "Ukraine", "AUT": "Autriche", "ESP": "Espagne",
+    "GBR": "Angleterre", "ENG": "Angleterre", "WLS": "Pays de Galles",
+    "PRI": "Porto Rico", "MAC": "Macao", "NED": "Pays-Bas", "SRB": "Serbie",
+    "THA": "Thaïlande", "ITA": "Italie", "TUR": "Turquie", "CAN": "Canada",
+    "ALG": "Algérie", "DZA": "Algérie",
+    # Noms anglais complets
+    "China": "Chine", "Japan": "Japon", "Korea Republic": "Corée du Sud",
+    "Germany": "Allemagne", "France": "France", "Sweden": "Suède",
+    "Brazil": "Brésil", "Egypt": "Égypte", "India": "Inde",
+    "United States": "États-Unis", "USA": "États-Unis", "Australia": "Australie",
+    "Chinese Taipei": "Taipei", "Hong Kong, China": "Hong Kong",
+    "Singapore": "Singapour", "Portugal": "Portugal", "Poland": "Pologne",
+    "Romania": "Roumanie", "Slovenia": "Slovénie", "Denmark": "Danemark",
+    "Croatia": "Croatie", "Czech Republic": "Tchéquie", "Czechia": "Tchéquie",
+    "Kazakhstan": "Kazakhstan", "Nigeria": "Nigeria", "Belgium": "Belgique",
+    "Argentina": "Argentine", "Chile": "Chili", "Moldova": "Moldavie",
+    "Hungary": "Hongrie", "Luxembourg": "Luxembourg", "Cameroon": "Cameroun",
+    "Benin": "Bénin", "Iran": "Iran", "Russia": "Russie", "Ukraine": "Ukraine",
+    "Austria": "Autriche", "Spain": "Espagne", "England": "Angleterre",
+    "Puerto Rico": "Porto Rico", "Macao": "Macao", "Netherlands": "Pays-Bas",
+    "Serbia": "Serbie", "Thailand": "Thaïlande", "Italy": "Italie",
+    "Turkey": "Turquie", "Canada": "Canada", "Algeria": "Algérie",
+}
+
+def translate_country(pays_raw):
+    if not pays_raw:
+        return ""
+    return PAYS_FR.get(pays_raw.strip(), pays_raw.strip())
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
@@ -164,36 +206,71 @@ def run():
     hommes = [j for j in joueurs_db if j.get("genre") == "H"]
     femmes = [j for j in joueurs_db if j.get("genre") == "F"]
 
-    total_updated = 0
+    total_updated = total_inserted = total_archived = 0
 
     for genre, label, pool in [("H", "Hommes", hommes), ("F", "Femmes", femmes)]:
         print(f"\n  ── {label} ({len(pool)} en base) ──")
         rankings = fetch_rankings(genre)
         if not rankings:
+            print(f"  ⚠️  Pas de données WTT — {label} ignorés pour cette semaine.")
             continue
 
-        updated = 0
-        for entry in rankings:
-            rang, nom = entry["rang"], entry["nom"]
+        # Limiter au top 100
+        top100 = [r for r in rankings if r["rang"] <= 100]
+
+        matched_db_ids = set()   # IDs de joueurs DB matchés cette semaine
+        updated = inserted = archived = 0
+
+        # 1. Mettre à jour les joueurs existants / insérer les nouveaux
+        for entry in top100:
+            rang = entry["rang"]
+            nom  = entry["nom"]
+            pays = translate_country(entry.get("pays", ""))
+
             joueur = match_joueur(pool, nom)
-            if not joueur:
-                continue
-            if joueur.get("classement_mondial") == rang:
-                continue
 
-            ancien = joueur.get("classement_mondial") or "N/A"
-            sb.table("joueurs_pro").update({"classement_mondial": rang}).eq("id", joueur["id"]).execute()
-            diff = (joueur.get("classement_mondial") or rang) - rang
-            sign = "+" if diff > 0 else ""
-            evo = " (" + sign + str(diff) + ")" if diff != 0 else " (=)"
-            print("  OK  #" + str(rang) + " " + joueur["nom"] + evo + "  (etait " + str(ancien) + ")")
-            updated += 1
-            time.sleep(0.03)
+            if joueur:
+                # Joueur existant — mettre à jour le rang si nécessaire
+                matched_db_ids.add(joueur["id"])
+                if joueur.get("classement_mondial") != rang:
+                    ancien = joueur.get("classement_mondial") or "N/A"
+                    sb.table("joueurs_pro").update({"classement_mondial": rang}).eq("id", joueur["id"]).execute()
+                    diff = (joueur.get("classement_mondial") or rang) - rang
+                    sign = "+" if diff > 0 else ""
+                    evo  = f" ({sign}{diff})" if diff != 0 else " (=)"
+                    print(f"  ↕️   #{rang} {joueur['nom']}{evo}  (était {ancien})")
+                    updated += 1
+                    time.sleep(0.03)
+            else:
+                # Nouveau joueur dans le top 100 — l'insérer
+                sb.table("joueurs_pro").insert({
+                    "nom": nom,
+                    "pays": pays,
+                    "classement_mondial": rang,
+                    "genre": genre,
+                    "actif": True,
+                }).execute()
+                print(f"  ➕  Nouveau #{rang} : {nom} ({pays})")
+                inserted += 1
+                time.sleep(0.05)
 
-        print(f"     {updated} classements mis à jour")
-        total_updated += updated
+        # 2. Archiver les joueurs sortis du top 100
+        for joueur in pool:
+            if joueur["id"] not in matched_db_ids:
+                sb.table("joueurs_pro").update({
+                    "actif": False,
+                    "classement_mondial": None,
+                }).eq("id", joueur["id"]).execute()
+                print(f"  📦  Archivé (sorti top 100) : {joueur['nom']}")
+                archived += 1
+                time.sleep(0.03)
 
-    print(f"\n  Total : {total_updated} mis à jour\n")
+        print(f"     {updated} mis à jour · {inserted} insérés · {archived} archivés")
+        total_updated  += updated
+        total_inserted += inserted
+        total_archived += archived
+
+    print(f"\n  Total : {total_updated} mis à jour · {total_inserted} insérés · {total_archived} archivés\n")
 
 if __name__ == "__main__":
     run()
