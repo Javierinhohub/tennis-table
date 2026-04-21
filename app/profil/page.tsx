@@ -80,6 +80,9 @@ export default function ProfilPage() {
   const [cdNom, setCdNom] = useState("")
   const [rvNom, setRvNom] = useState("")
 
+  // Newsletter
+  const [newsletterOk, setNewsletterOk] = useState(false)
+
   // Suppression de compte
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState("")
@@ -102,6 +105,7 @@ export default function ProfilPage() {
     setClassement(profilData?.classement || "")
     setRegion(profilData?.region || "")
     setClub(profilData?.club || "")
+    setNewsletterOk(profilData?.newsletter_ok || false)
     setBoisId(profilData?.bois_id || null)
     setCdId(profilData?.revetement_cd_id || null)
     setRvId(profilData?.revetement_rv_id || null)
@@ -144,6 +148,7 @@ export default function ProfilPage() {
       bois_id: boisId || null,
       revetement_cd_id: cdId || null,
       revetement_rv_id: rvId || null,
+      newsletter_ok: newsletterOk,
     }).eq("id", user.id)
     if (error) { setMessage("Erreur : " + error.message); return }
     setMessage("Profil mis à jour avec succès !")
@@ -318,6 +323,20 @@ export default function ProfilPage() {
                     <option value="">Choisir...</option>
                     {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
+                </div>
+                <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "12px 14px" }}>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={newsletterOk}
+                      onChange={e => setNewsletterOk(e.target.checked)}
+                      style={{ marginTop: "2px", accentColor: "#D97757", width: "16px", height: "16px", flexShrink: 0, cursor: "pointer" }}
+                    />
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", marginBottom: "2px" }}>Recevoir la newsletter TT-Kip</p>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.5 }}>Nouveaux produits, articles, mises à jour — pas de spam. Désinscription possible à tout moment.</p>
+                    </div>
+                  </label>
                 </div>
                 <button type="submit" style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Sauvegarder</button>
               </form>

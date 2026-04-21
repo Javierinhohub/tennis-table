@@ -425,6 +425,7 @@ export default function AdminPage() {
     { id: "modifier-joueur", label: "Modifier un joueur" },
     { id: "articles", label: "Articles & Tests", href: "/admin/articles" },
     { id: "edit-produits", label: "Éditer revêtements / bois", href: "/admin/produits" },
+    { id: "newsletter", label: "Newsletter", href: "/admin/newsletter" },
   ]
 
   const inputStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", width: "100%", fontFamily: "Inter, sans-serif", outline: "none", color: "var(--text)" }
