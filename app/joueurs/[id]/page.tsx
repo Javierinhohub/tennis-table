@@ -1,5 +1,34 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
+import { Metadata } from "next"
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const { data: j } = await supabase
+    .from("joueurs_pro")
+    .select("nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
+    .eq("id", id)
+    .single()
+
+  if (!j) return { title: "Joueur introuvable" }
+
+  const genre = j.genre === "F" ? "joueuse" : "joueur"
+  const title = `${j.nom} — Matériel et classement #${j.classement_mondial} mondial`
+  const materiel = [j.bois_nom, j.revetement_cd, j.revetement_rv].filter(Boolean).join(", ")
+  const description = `${j.nom} est ${genre} de tennis de table professionnel(le), classé(e) #${j.classement_mondial} mondial (${j.pays})${j.style ? `, style ${j.style}` : ""}. ${materiel ? `Matériel utilisé : ${materiel}.` : ""} Retrouvez sa fiche complète sur TT-Kip.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.tt-kip.com/joueurs/${id}`,
+      type: "profile",
+    },
+    alternates: { canonical: `https://www.tt-kip.com/joueurs/${id}` },
+  }
+}
 
 const DRAPEAUX: Record<string, string> = {
   "Chine": "🇨🇳", "Suède": "🇸🇪", "Brésil": "🇧🇷", "Japon": "🇯🇵",
@@ -34,7 +63,21 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
     </div>
   )
 
+  const materielParts = [j.bois_nom, j.revetement_cd, j.revetement_rv].filter(Boolean)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": j.nom,
+    "url": `https://www.tt-kip.com/joueurs/${j.id || ""}`,
+    "nationality": { "@type": "Country", "name": j.pays },
+    "description": `${j.nom}, ${j.genre === "F" ? "joueuse" : "joueur"} de tennis de table professionnel(le), classé(e) #${j.classement_mondial} mondial (${j.pays})${j.style ? `, style de jeu ${j.style}` : ""}.${materielParts.length > 0 ? ` Matériel : ${materielParts.join(", ")}.` : ""}`,
+    "sport": "Tennis de table",
+    ...(j.style ? { "hasOccupation": { "@type": "Occupation", "name": `Joueur de tennis de table (style ${j.style})` } } : {}),
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "800px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/joueurs" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
         ← Retour aux joueurs
@@ -101,5 +144,6 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
         💡 Les informations matériel sont indicatives et peuvent évoluer en cours de saison.
       </div>
     </main>
+    </>
   )
 }

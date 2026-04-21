@@ -15,6 +15,8 @@ export default function MessagesClient() {
   const [searchPseudo, setSearchPseudo] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [creating, setCreating] = useState(false)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -117,6 +119,16 @@ export default function MessagesClient() {
     }
   }
 
+  async function deleteConversation(e: React.MouseEvent, convId: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm("Supprimer cette conversation ? Les messages seront définitivement perdus.")) return
+    setDeletingId(convId)
+    await supabase.from("conversations").delete().eq("id", convId)
+    setConversations(prev => prev.filter(c => c.id !== convId))
+    setDeletingId(null)
+  }
+
   function unread(conv: any) {
     return conv.lastMsg && !conv.lastMsg.lu && conv.lastMsg.sender_id !== user?.id
   }
@@ -190,28 +202,45 @@ export default function MessagesClient() {
       ) : (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
           {conversations.map((conv, i) => (
-            <Link key={conv.id} href={"/messages/" + conv.id}
-              style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", textDecoration: "none", borderBottom: i < conversations.length - 1 ? "1px solid var(--border)" : "none", background: unread(conv) ? "#FFFBF7" : "#fff" }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = unread(conv) ? "#FFFBF7" : "#fff"}>
-              <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 700, color: "#D97757", flexShrink: 0, position: "relative" }}>
-                {conv.otherPseudo?.[0]?.toUpperCase()}
-                {unread(conv) && <div style={{ position: "absolute", top: 0, right: 0, width: "10px", height: "10px", background: "#D97757", borderRadius: "50%", border: "2px solid #fff" }} />}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                  <span style={{ fontSize: "14px", fontWeight: unread(conv) ? 700 : 500, color: "var(--text)" }}>{conv.otherPseudo}</span>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0, marginLeft: "8px" }}>
-                    {conv.lastMsg ? formatDate(conv.lastMsg.created_at) : formatDate(conv.last_message_at)}
-                  </span>
+            <div key={conv.id} style={{ position: "relative" }}
+              onMouseEnter={() => setHoveredId(conv.id)}
+              onMouseLeave={() => setHoveredId(null)}>
+              <Link href={"/messages/" + conv.id}
+                style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", paddingRight: hoveredId === conv.id ? "52px" : "16px", textDecoration: "none", borderBottom: i < conversations.length - 1 ? "1px solid var(--border)" : "none", background: unread(conv) ? "#FFFBF7" : "#fff", transition: "background 0.1s" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = unread(conv) ? "#FFFBF7" : "#fff"}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#FFF0EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 700, color: "#D97757", flexShrink: 0, position: "relative" }}>
+                  {conv.otherPseudo?.[0]?.toUpperCase()}
+                  {unread(conv) && <div style={{ position: "absolute", top: 0, right: 0, width: "10px", height: "10px", background: "#D97757", borderRadius: "50%", border: "2px solid #fff" }} />}
                 </div>
-                <p style={{ fontSize: "13px", color: unread(conv) ? "var(--text)" : "var(--text-muted)", margin: 0, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis", fontWeight: unread(conv) ? 500 : 400 }}>
-                  {conv.lastMsg
-                    ? (conv.lastMsg.sender_id === user.id ? "Vous : " : "") + conv.lastMsg.contenu
-                    : "Démarrez la conversation →"}
-                </p>
-              </div>
-            </Link>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                    <span style={{ fontSize: "14px", fontWeight: unread(conv) ? 700 : 500, color: "var(--text)" }}>{conv.otherPseudo}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0, marginLeft: "8px" }}>
+                      {conv.lastMsg ? formatDate(conv.lastMsg.created_at) : formatDate(conv.last_message_at)}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "13px", color: unread(conv) ? "var(--text)" : "var(--text-muted)", margin: 0, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis", fontWeight: unread(conv) ? 500 : 400 }}>
+                    {conv.lastMsg
+                      ? (conv.lastMsg.sender_id === user.id ? "Vous : " : "") + conv.lastMsg.contenu
+                      : "Démarrez la conversation →"}
+                  </p>
+                </div>
+              </Link>
+              {hoveredId === conv.id && (
+                <button
+                  onClick={e => deleteConversation(e, conv.id)}
+                  disabled={deletingId === conv.id}
+                  title="Supprimer la conversation"
+                  style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: "6px", color: "#999", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#e53e3e"; (e.currentTarget as HTMLElement).style.background = "#fff3f3" }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#999"; (e.currentTarget as HTMLElement).style.background = "none" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

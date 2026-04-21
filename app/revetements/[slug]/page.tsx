@@ -26,8 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const type = TYPE_LABELS[rev?.type_revetement] || rev?.type_revetement || "Revêtement"
   const nom = produit.nom
 
-  const title = `${marque} ${nom} — Test, avis et caractéristiques`
-  const description = `Découvrez le ${marque} ${nom}, revêtement ${type.toLowerCase()} de tennis de table. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10. Avis et notes des joueurs sur TT-Kip.`
+  const notes = [
+    rev?.vitesse_note ? `Vitesse ${rev.vitesse_note}/10` : "",
+    rev?.effet_note   ? `Effet ${rev.effet_note}/10`   : "",
+    rev?.controle_note ? `Contrôle ${rev.controle_note}/10` : "",
+  ].filter(Boolean).join(", ")
+
+  const title = `${marque} ${nom} (${type}) — Avis et test ping`
+  const description = `Test et avis du revêtement de tennis de table ${marque} ${nom} (${type.toLowerCase()})${notes ? `. ${notes}` : ""}. Retours des joueurs, comparaison et caractéristiques complètes sur TT-Kip.`
 
   return {
     title,
@@ -39,6 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "website",
     },
     alternates: { canonical: `https://www.tt-kip.com/revetements/${slug}` },
+    keywords: [`${marque} ${nom}`, "revêtement tennis de table", "revêtement ping pong", type, marque, "TT-Kip"].filter(Boolean),
   }
 }
 

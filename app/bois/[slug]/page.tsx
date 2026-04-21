@@ -20,13 +20,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const b = produit.bois as any
   const nom = produit.nom
 
-  const title = `${marque} ${nom} — Test, avis et caractéristiques`
-  const desc = [
-    b?.style ? `Style ${b.style}` : "",
+  const details = [
+    b?.style ? `style ${b.style}` : "",
     b?.nb_plis ? `${b.nb_plis} plis` : "",
-    b?.composition || "",
+    b?.poids_g ? `${b.poids_g} g` : "",
   ].filter(Boolean).join(", ")
-  const description = `Découvrez le bois de tennis de table ${marque} ${nom}${desc ? ` (${desc})` : ""}. Avis des joueurs, notes et caractéristiques sur TT-Kip.`
+
+  const title = `${marque} ${nom}${b?.style ? ` ${b.style}` : ""} — Avis, test et composition`
+  const description = `Test et avis du bois de ping ${marque} ${nom}${details ? ` (${details})` : ""}${b?.composition ? `. Composition : ${b.composition}` : ""}. Notes et retours des joueurs sur TT-Kip.`
 
   return {
     title,
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "website",
     },
     alternates: { canonical: `https://www.tt-kip.com/bois/${slug}` },
+    keywords: [`${marque} ${nom}`, "bois tennis de table", "bois ping pong", marque, b?.style || "", "TT-Kip"].filter(Boolean),
   }
 }
 
