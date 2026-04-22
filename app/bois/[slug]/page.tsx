@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import AvisSectionBois from "./AvisSectionBois"
 import NotesSectionBois from "./NotesSectionBois"
 import BackButton from "@/app/components/BackButton"
+import VideoSection from "@/app/components/VideoSection"
 
 // ── Métadonnées dynamiques ────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -91,6 +92,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   }
 
   const plis = [b?.pli1, b?.pli2, b?.pli3, b?.pli4, b?.pli5, b?.pli6, b?.pli7].filter(Boolean)
+
+  // Vidéos YouTube liées à ce produit
+  const { data: videosData } = await supabase
+    .from("produit_videos")
+    .select("id, youtube_url, titre")
+    .eq("produit_id", produit.id)
+    .order("ordre")
+    .order("cree_le")
 
   // Avis : moyenne, nombre et contenu pour aggregateRating + review Google
   const { data: avisData } = await supabase
@@ -253,6 +262,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               </div>
             </div>
           )}
+
+          {/* Vidéos de jeu */}
+          <VideoSection videos={videosData || []} />
 
           {/* Section Caractéristiques & Notes (TT-Kip + Utilisateurs) */}
           <NotesSectionBois produitId={produit.id} bois={b} />

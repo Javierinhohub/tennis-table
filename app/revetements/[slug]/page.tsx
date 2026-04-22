@@ -5,6 +5,7 @@ import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"
 import BackButton from "@/app/components/BackButton"
+import VideoSection from "@/app/components/VideoSection"
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
@@ -75,6 +76,14 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     { label: "Effet", value: rev?.effet_note, color: "#0E7F4F" },
     { label: "Contrôle", value: rev?.controle_note, color: "#B45309" },
   ]
+
+  // Vidéos YouTube liées à ce produit
+  const { data: videosData } = await supabase
+    .from("produit_videos")
+    .select("id, youtube_url, titre")
+    .eq("produit_id", produit.id)
+    .order("ordre")
+    .order("cree_le")
 
   // Avis : moyenne, nombre et contenu pour aggregateRating + review Google
   const { data: avisData } = await supabase
@@ -212,6 +221,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             </div>
           )}
 
+          <VideoSection videos={videosData || []} />
           <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
           <AvisSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
         </div>
