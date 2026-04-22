@@ -361,7 +361,7 @@ export default function ProfilPage() {
                     background: newsletterOk ? "#F0FAF4" : "#D97757",
                     color: newsletterOk ? "#2D7A4F" : "#fff"
                   }}>
-                  {newsletterLoading ? "…" : newsletterOk ? "✓ Inscrit" : "S'inscrire"}
+                  {newsletterLoading ? "…" : newsletterOk ? "Se désinscrire" : "S'inscrire"}
                 </button>
               </div>
               {newsletterMsg && (
