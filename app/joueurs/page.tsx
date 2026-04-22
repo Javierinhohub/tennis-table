@@ -65,13 +65,13 @@ function getBrand(nom: string | null, productMap: Map<string, string>): string |
 function getType(nom: string | null, typeMap: Map<string, string>): string | null {
   if (!nom) return null
   const n = normalize(nom)
+  // Exact match uniquement — on préfère ne rien afficher plutôt qu'un faux positif
   if (typeMap.has(n)) return typeMap.get(n)!
-  // Pour les types, on utilise includes (le nom du joueur peut être une variante)
-  // Minimum 8 chars pour éviter les faux positifs
+  // Préfixe strict : le nom du joueur commence par le nom produit (min 10 chars)
   let best: string | null = null
   let bestLen = 0
   for (const [key, type] of typeMap.entries()) {
-    if (key.length >= 8 && n.includes(key) && key.length > bestLen) {
+    if (key.length >= 10 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
       best = type; bestLen = key.length
     }
   }
@@ -160,9 +160,13 @@ export default function JoueursPage() {
     return joueurs.map(j => {
       const brandsSet = new Set<string>()
       const typesSet  = new Set<string>()
+      // Marques : bois + cd + rv
       ;[j.bois_nom, j.revetement_cd, j.revetement_rv].forEach(eq => {
         const b = getBrand(eq, productMap)
         if (b) brandsSet.add(b)
+      })
+      // Types : UNIQUEMENT revetement_cd et revetement_rv — jamais le bois
+      ;[j.revetement_cd, j.revetement_rv].forEach(eq => {
         const t = getType(eq, typeMap)
         if (t) typesSet.add(t)
       })
