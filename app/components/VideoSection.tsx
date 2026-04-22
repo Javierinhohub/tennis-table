@@ -47,18 +47,18 @@ export default function VideoSection({
         Vidéos de jeu
       </h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
         {valides.map(v => {
           const videoId = getYoutubeId(v.youtube_url)!
           return (
-            <div key={v.id}>
+            <div key={v.id} style={{ width: "calc(50% - 0.5rem)", minWidth: "220px" }}>
               {v.titre && (
                 <p
                   style={{
-                    fontSize: "13px",
+                    fontSize: "12px",
                     fontWeight: 600,
                     color: "var(--text)",
-                    marginBottom: "8px",
+                    marginBottom: "6px",
                   }}
                 >
                   {v.titre}
