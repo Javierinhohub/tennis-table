@@ -136,21 +136,28 @@ export default function JoueursPage() {
       .order("classement_mondial")
       .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
 
-    // Produits avec marques et types de revêtements
+    // Marques depuis produits
     supabase
       .from("produits")
-      .select("nom, marques(nom), revetements(type_revetement)")
+      .select("nom, marques(nom)")
       .then(({ data }) => {
         const pm = new Map<string, string>()
-        const tm = new Map<string, string>()
         data?.forEach((p: any) => {
-          const key = normalize(p.nom)
-          if (p.marques?.nom) pm.set(key, p.marques.nom)
-          // revetements est retourné en tableau par Supabase (relation 1-to-many)
-          const rev = Array.isArray(p.revetements) ? p.revetements[0] : p.revetements
-          if (rev?.type_revetement) tm.set(key, rev.type_revetement)
+          if (p.marques?.nom) pm.set(normalize(p.nom), p.marques.nom)
         })
         setProductMap(pm)
+      })
+
+    // Types depuis revetements directement (évite le problème du tableau imbriqué)
+    supabase
+      .from("revetements")
+      .select("type_revetement, produits(nom)")
+      .then(({ data }) => {
+        const tm = new Map<string, string>()
+        data?.forEach((r: any) => {
+          const nom = r.produits?.nom
+          if (nom && r.type_revetement) tm.set(normalize(nom), r.type_revetement)
+        })
         setTypeMap(tm)
       })
   }, [])
