@@ -140,7 +140,8 @@ export default function ProfilPage() {
   }
 
   async function updateProfil(e: React.FormEvent) {
-    e.preventDefault()
+    e?.preventDefault()
+    if (!user) { setMessage("Erreur : utilisateur non connecté"); return }
     setMessage("")
     const { error } = await supabase.from("utilisateurs").update({
       pseudo, classement: classement || null,
