@@ -130,6 +130,24 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         "priceCurrency": "EUR",
         "availability": "https://schema.org/InStock",
         "url": `https://www.tt-kip.com/bois/${slug}`,
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "applicableCountry": "FR",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": 30,
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/FreeReturn"
+        },
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "EUR" },
+          "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "FR" },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2, "unitCode": "DAY" },
+            "transitTime": { "@type": "QuantitativeValue", "minValue": 2, "maxValue": 5, "unitCode": "DAY" }
+          }
+        }
       }
     } : {}),
     "aggregateRating": {
