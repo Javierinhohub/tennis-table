@@ -136,30 +136,30 @@ export default function JoueursPage() {
       .order("classement_mondial")
       .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
 
-    // Marques depuis produits
-    supabase
-      .from("produits")
-      .select("nom, marques(nom)")
-      .then(({ data }) => {
-        const pm = new Map<string, string>()
-        data?.forEach((p: any) => {
-          if (p.marques?.nom) pm.set(normalize(p.nom), p.marques.nom)
-        })
-        setProductMap(pm)
+    // Requête combinée : marques + types en une seule fois
+    Promise.all([
+      supabase.from("produits").select("nom, marques(nom)"),
+      supabase.from("revetements").select("type_revetement, produits(nom)"),
+    ]).then(([{ data: produitsData }, { data: revData }]) => {
+      const pm = new Map<string, string>()
+      const tm = new Map<string, string>()
+
+      // Marques depuis produits (marques = many-to-one → objet ou tableau selon Supabase)
+      produitsData?.forEach((p: any) => {
+        const marque = Array.isArray(p.marques) ? p.marques[0] : p.marques
+        if (marque?.nom) pm.set(normalize(p.nom), marque.nom)
       })
 
-    // Types depuis revetements directement (évite le problème du tableau imbriqué)
-    supabase
-      .from("revetements")
-      .select("type_revetement, produits(nom)")
-      .then(({ data }) => {
-        const tm = new Map<string, string>()
-        data?.forEach((r: any) => {
-          const nom = r.produits?.nom
-          if (nom && r.type_revetement) tm.set(normalize(nom), r.type_revetement)
-        })
-        setTypeMap(tm)
+      // Types depuis revetements (produits = many-to-one → objet ou tableau)
+      revData?.forEach((r: any) => {
+        const produit = Array.isArray(r.produits) ? r.produits[0] : r.produits
+        const nom = produit?.nom
+        if (nom && r.type_revetement) tm.set(normalize(nom), r.type_revetement)
       })
+
+      setProductMap(pm)
+      setTypeMap(tm)
+    })
   }, [])
 
   // Détermine les marques et types de chaque joueur
