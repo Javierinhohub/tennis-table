@@ -102,6 +102,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
+    "image": "https://www.tt-kip.com/og-image.jpg",
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Revêtement de tennis de table",
     "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,

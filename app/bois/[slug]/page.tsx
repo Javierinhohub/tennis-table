@@ -118,6 +118,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
+    "image": "https://www.tt-kip.com/og-image.jpg",
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Bois de tennis de table",
     "description": `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
