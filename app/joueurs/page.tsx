@@ -38,41 +38,39 @@ function matchSearch(nom: string, query: string) {
   return query.trim().split(/\s+/).every(word => n.includes(normalize(word)))
 }
 
-// Matching strict : exact ou préfixe long (min 6 chars) avec limite de mot
-function matchProduct(equipmentName: string, productKey: string): boolean {
-  if (productKey.length < 6) return false
-  if (equipmentName === productKey) return true
-  // Le nom de l'équipement doit commencer par la clé suivie d'un espace, tiret ou fin de chaîne
-  return equipmentName.startsWith(productKey + " ") || equipmentName.startsWith(productKey + "-")
-}
-
-function getBrand(nom: string | null, productMap: Map<string, string>): string | null {
+// Marque : vérifie si le nom de l'équipement COMMENCE par un nom de marque connu
+// Ex: "Butterfly Tenergy 05" → "Butterfly", "DHS Hurricane 3" → "DHS"
+function getBrand(nom: string | null, brandNames: string[]): string | null {
   if (!nom) return null
   const n = normalize(nom)
-  // Exact match
-  if (productMap.has(n)) return productMap.get(n)!
-  // Préfixe le plus long (min 6 chars)
   let best: string | null = null
   let bestLen = 0
-  for (const [key, brand] of productMap.entries()) {
-    if (matchProduct(n, key) && key.length > bestLen) {
-      best = brand; bestLen = key.length
+  for (const brand of brandNames) {
+    const b = normalize(brand)
+    if (b.length >= 2 && b.length > bestLen && (n === b || n.startsWith(b + " "))) {
+      best = brand
+      bestLen = b.length
     }
   }
   return best
 }
 
+// Type : cherche le nom du produit comme sous-chaîne dans le nom de l'équipement
+// Ex: "Butterfly Tenergy 05" contient "tenergy 05" → type "In"
 function getType(nom: string | null, typeMap: Map<string, string>): string | null {
   if (!nom) return null
   const n = normalize(nom)
-  // Exact match uniquement — on préfère ne rien afficher plutôt qu'un faux positif
   if (typeMap.has(n)) return typeMap.get(n)!
-  // Préfixe strict : le nom du joueur commence par le nom produit (min 10 chars)
   let best: string | null = null
   let bestLen = 0
   for (const [key, type] of typeMap.entries()) {
-    if (key.length >= 10 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
-      best = type; bestLen = key.length
+    if (key.length < 5) continue
+    const idx = n.indexOf(key)
+    if (idx >= 0) {
+      const after = n[idx + key.length]
+      if (after === undefined || after === " " || after === "-") {
+        if (key.length > bestLen) { best = type; bestLen = key.length }
+      }
     }
   }
   return best
@@ -117,9 +115,10 @@ export default function JoueursPage() {
   const [filterBrand, setFilterBrand] = useState<string | null>(null)
   const [filterType, setFilterType]   = useState<string | null>(null)
 
-  // Maps : nom normalisé → marque / type
-  const [productMap, setProductMap] = useState<Map<string, string>>(new Map())
-  const [typeMap, setTypeMap]       = useState<Map<string, string>>(new Map())
+  // Liste des noms de marques (pour matching startsWith)
+  const [brandNames, setBrandNames] = useState<string[]>([])
+  // Map : nom produit normalisé → type de revêtement
+  const [typeMap, setTypeMap] = useState<Map<string, string>>(new Map())
 
   // Debounce recherche
   useEffect(() => {
@@ -128,7 +127,7 @@ export default function JoueursPage() {
   }, [inputValue])
 
   useEffect(() => {
-    // Joueurs pro avec équipement
+    // 1. Joueurs pro (sans colonnes de type explicites pour éviter les erreurs si migration pas faite)
     supabase
       .from("joueurs_pro")
       .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
@@ -136,28 +135,18 @@ export default function JoueursPage() {
       .order("classement_mondial")
       .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
 
-    // Requête combinée : marques + types en une seule fois
-    Promise.all([
-      supabase.from("produits").select("nom, marques(nom)"),
-      supabase.from("revetements").select("type_revetement, produits(nom)"),
-    ]).then(([{ data: produitsData }, { data: revData }]) => {
-      const pm = new Map<string, string>()
+    // 2. Noms de marques pour le matching
+    supabase.from("marques").select("nom").then(({ data }) => {
+      setBrandNames((data || []).map((m: any) => m.nom))
+    })
+
+    // 3. Types de revêtements : nom produit → type
+    supabase.from("revetements").select("type_revetement, produits(nom)").then(({ data }) => {
       const tm = new Map<string, string>()
-
-      // Marques depuis produits (marques = many-to-one → objet ou tableau selon Supabase)
-      produitsData?.forEach((p: any) => {
-        const marque = Array.isArray(p.marques) ? p.marques[0] : p.marques
-        if (marque?.nom) pm.set(normalize(p.nom), marque.nom)
+      data?.forEach((r: any) => {
+        const p = Array.isArray(r.produits) ? r.produits[0] : r.produits
+        if (p?.nom && r.type_revetement) tm.set(normalize(p.nom), r.type_revetement)
       })
-
-      // Types depuis revetements (produits = many-to-one → objet ou tableau)
-      revData?.forEach((r: any) => {
-        const produit = Array.isArray(r.produits) ? r.produits[0] : r.produits
-        const nom = produit?.nom
-        if (nom && r.type_revetement) tm.set(normalize(nom), r.type_revetement)
-      })
-
-      setProductMap(pm)
       setTypeMap(tm)
     })
   }, [])
@@ -167,19 +156,19 @@ export default function JoueursPage() {
     return joueurs.map(j => {
       const brandsSet = new Set<string>()
       const typesSet  = new Set<string>()
-      // Marques : bois + cd + rv
+      // Marques : bois + cd + rv — le nom commence par le nom de marque
       ;[j.bois_nom, j.revetement_cd, j.revetement_rv].forEach(eq => {
-        const b = getBrand(eq, productMap)
+        const b = getBrand(eq, brandNames)
         if (b) brandsSet.add(b)
       })
-      // Types : UNIQUEMENT revetement_cd et revetement_rv — jamais le bois
+      // Types : matching textuel sur cd et rv uniquement (jamais le bois)
       ;[j.revetement_cd, j.revetement_rv].forEach(eq => {
         const t = getType(eq, typeMap)
         if (t) typesSet.add(t)
       })
       return { ...j, brands: [...brandsSet], types: [...typesSet] }
     })
-  }, [joueurs, productMap, typeMap])
+  }, [joueurs, brandNames, typeMap])
 
   // Marques disponibles (triées par nombre de joueurs)
   const brandsDispos = useMemo(() => {

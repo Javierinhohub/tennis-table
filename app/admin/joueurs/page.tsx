@@ -112,8 +112,10 @@ export default function AdminJoueursPage() {
   const [boisId, setBoisId] = useState<string | null>(null)
   const [revetementCd, setRevetementCd] = useState("")
   const [revetementCdId, setRevetementCdId] = useState<string | null>(null)
+  const [revetementCdType, setRevetementCdType] = useState("")
   const [revetementRv, setRevetementRv] = useState("")
   const [revetementRvId, setRevetementRvId] = useState<string | null>(null)
+  const [revetementRvType, setRevetementRvType] = useState("")
 
   useEffect(() => { checkAdmin() }, [])
 
@@ -129,7 +131,7 @@ export default function AdminJoueursPage() {
   async function fetchJoueurs() {
     const { data } = await supabase
       .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style, main, age, bois_nom, revetement_cd, revetement_rv, actif")
+      .select("id, nom, pays, classement_mondial, genre, style, main, age, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
       .eq("actif", true)
       .order("classement_mondial")
     setJoueurs(data || [])
@@ -146,8 +148,10 @@ export default function AdminJoueursPage() {
     setBoisId(null)
     setRevetementCd(j.revetement_cd || "")
     setRevetementCdId(null)
+    setRevetementCdType(j.revetement_cd_type || "")
     setRevetementRv(j.revetement_rv || "")
     setRevetementRvId(null)
+    setRevetementRvType(j.revetement_rv_type || "")
   }
 
   // Recherche bois dans la base
@@ -198,7 +202,9 @@ export default function AdminJoueursPage() {
         age: age ? parseInt(age) : null,
         bois_nom: boisNom || null,
         revetement_cd: revetementCd || null,
+        revetement_cd_type: revetementCdType || null,
         revetement_rv: revetementRv || null,
+        revetement_rv_type: revetementRvType || null,
       })
       .eq("id", joueur.id)
 
@@ -387,23 +393,59 @@ export default function AdminJoueursPage() {
                   displayFn={displayBois}
                 />
 
-                <Autocomplete
-                  label="Revêtement coup droit"
-                  placeholder="Rechercher un revêtement... (ex: Tenergy, Dignics)"
-                  value={revetementCd}
-                  onSelect={item => { setRevetementCd(displayRevetement(item)); setRevetementCdId(item.id) }}
-                  searchFn={searchRevetement}
-                  displayFn={displayRevetement}
-                />
+                <div>
+                  <Autocomplete
+                    label="Revêtement coup droit"
+                    placeholder="Rechercher un revêtement... (ex: Tenergy, Dignics)"
+                    value={revetementCd}
+                    onSelect={item => {
+                      setRevetementCd(displayRevetement(item))
+                      setRevetementCdId(item.id)
+                      const t = Array.isArray(item.revetements) ? item.revetements[0]?.type_revetement : item.revetements?.type_revetement
+                      if (t) setRevetementCdType(t)
+                    }}
+                    searchFn={searchRevetement}
+                    displayFn={displayRevetement}
+                  />
+                  <div style={{ marginTop: "8px" }}>
+                    <label style={labelStyle}>Type — coup droit</label>
+                    <select value={revetementCdType} onChange={e => setRevetementCdType(e.target.value)} style={inputStyle}>
+                      <option value="">— Sélectionner un type</option>
+                      <option value="In">Backside (In)</option>
+                      <option value="Out">Picots courts (Out)</option>
+                      <option value="Mid">Picots mi-longs (Mid)</option>
+                      <option value="Long">Picots longs (Long)</option>
+                      <option value="Anti">Anti-spin</option>
+                    </select>
+                  </div>
+                </div>
 
-                <Autocomplete
-                  label="Revêtement revers"
-                  placeholder="Rechercher un revêtement... (ex: Rozena, Glayzer)"
-                  value={revetementRv}
-                  onSelect={item => { setRevetementRv(displayRevetement(item)); setRevetementRvId(item.id) }}
-                  searchFn={searchRevetement}
-                  displayFn={displayRevetement}
-                />
+                <div>
+                  <Autocomplete
+                    label="Revêtement revers"
+                    placeholder="Rechercher un revêtement... (ex: Rozena, Glayzer)"
+                    value={revetementRv}
+                    onSelect={item => {
+                      setRevetementRv(displayRevetement(item))
+                      setRevetementRvId(item.id)
+                      const t = Array.isArray(item.revetements) ? item.revetements[0]?.type_revetement : item.revetements?.type_revetement
+                      if (t) setRevetementRvType(t)
+                    }}
+                    searchFn={searchRevetement}
+                    displayFn={displayRevetement}
+                  />
+                  <div style={{ marginTop: "8px" }}>
+                    <label style={labelStyle}>Type — revers</label>
+                    <select value={revetementRvType} onChange={e => setRevetementRvType(e.target.value)} style={inputStyle}>
+                      <option value="">— Sélectionner un type</option>
+                      <option value="In">Backside (In)</option>
+                      <option value="Out">Picots courts (Out)</option>
+                      <option value="Mid">Picots mi-longs (Mid)</option>
+                      <option value="Long">Picots longs (Long)</option>
+                      <option value="Anti">Anti-spin</option>
+                    </select>
+                  </div>
+                </div>
 
               </div>
 
@@ -424,12 +466,14 @@ export default function AdminJoueursPage() {
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>Coup droit</span>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{revetementCd}</span>
+                        {revetementCdType && <span style={{ fontSize: "11px", background: "#F0F0F0", borderRadius: "6px", padding: "2px 8px", color: "var(--text-muted)" }}>{revetementCdType}</span>}
                       </div>
                     )}
                     {revetementRv && (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "70px" }}>Revers</span>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{revetementRv}</span>
+                        {revetementRvType && <span style={{ fontSize: "11px", background: "#F0F0F0", borderRadius: "6px", padding: "2px 8px", color: "var(--text-muted)" }}>{revetementRvType}</span>}
                       </div>
                     )}
                   </div>
