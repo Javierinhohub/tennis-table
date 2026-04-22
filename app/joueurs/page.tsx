@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
@@ -19,15 +19,53 @@ const DRAPEAUX: Record<string, string> = {
   "Pays de Galles":"🏴󠁧󠁢󠁷󠁬󠁳󠁿",
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  "In": "Backside",
+  "Out": "Picots courts",
+  "Mid": "Picots mi-longs",
+  "Long": "Picots longs",
+  "Anti": "Anti-spin",
+}
+
+// Marques connues pour extraction depuis le nom du produit
+const MARQUES_CONNUES = [
+  "Butterfly","DHS","Tibhar","Stiga","Yasaka","Donic","Victas","Joola","Xiom",
+  "Gewo","Nittaku","Andro","Cornilleau","Mizuno","Sanwei","729","Globe","Palio",
+  "TSP","Avalox","Friendship","Kokutaku",
+]
+
 function normalize(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 }
 
 function matchSearch(nom: string, query: string) {
   if (!query.trim()) return true
   const n = normalize(nom)
-  // Chaque mot du query doit être contenu dans le nom
   return query.trim().split(/\s+/).every(word => n.includes(normalize(word)))
+}
+
+// Extrait la marque depuis un nom de produit en cherchant dans la map puis en fallback
+function getBrand(nom: string | null, productMap: Map<string, string>): string | null {
+  if (!nom) return null
+  const n = normalize(nom)
+  // Cherche dans la map produits
+  for (const [key, brand] of productMap.entries()) {
+    if (n.includes(key)) return brand
+  }
+  // Fallback : cherche le nom de marque directement dans le nom
+  for (const m of MARQUES_CONNUES) {
+    if (n.includes(normalize(m))) return m
+  }
+  return null
+}
+
+function getType(nom: string | null, typeMap: Map<string, string>): string | null {
+  if (!nom) return null
+  const n = normalize(nom)
+  for (const [key, type] of typeMap.entries()) {
+    if (n.includes(key)) return type
+  }
+  return null
 }
 
 function CarteJoueur({ j }: { j: any }) {
@@ -46,31 +84,108 @@ function CarteJoueur({ j }: { j: any }) {
   )
 }
 
-export default function JoueursPage() {
-  const [joueurs, setJoueurs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState("")
-  const [inputValue, setInputValue] = useState("")
+function PillButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        padding: "5px 12px", borderRadius: "20px", border: "1px solid", fontSize: "12px", fontWeight: 600,
+        cursor: "pointer", fontFamily: "Poppins, sans-serif", transition: "all 0.1s",
+        background: active ? "#D97757" : "#fff",
+        color: active ? "#fff" : "var(--text-muted)",
+        borderColor: active ? "#D97757" : "var(--border)",
+      }}>
+      {label}
+    </button>
+  )
+}
 
-  // Debounce
+export default function JoueursPage() {
+  const [joueurs, setJoueurs]         = useState<any[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [query, setQuery]             = useState("")
+  const [inputValue, setInputValue]   = useState("")
+  const [filterBrand, setFilterBrand] = useState<string | null>(null)
+  const [filterType, setFilterType]   = useState<string | null>(null)
+
+  // Maps : nom normalisé → marque / type
+  const [productMap, setProductMap] = useState<Map<string, string>>(new Map())
+  const [typeMap, setTypeMap]       = useState<Map<string, string>>(new Map())
+
+  // Debounce recherche
   useEffect(() => {
     const t = setTimeout(() => setQuery(inputValue), 200)
     return () => clearTimeout(t)
   }, [inputValue])
 
   useEffect(() => {
+    // Joueurs pro avec équipement
     supabase
       .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style")
+      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
       .eq("actif", true)
       .order("classement_mondial")
       .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
+
+    // Produits avec marques et types de revêtements
+    supabase
+      .from("produits")
+      .select("nom, marques(nom), revetements(type_revetement)")
+      .then(({ data }) => {
+        const pm = new Map<string, string>()
+        const tm = new Map<string, string>()
+        data?.forEach((p: any) => {
+          const key = normalize(p.nom)
+          if (p.marques?.nom) pm.set(key, p.marques.nom)
+          if (p.revetements?.type_revetement) tm.set(key, p.revetements.type_revetement)
+        })
+        setProductMap(pm)
+        setTypeMap(tm)
+      })
   }, [])
 
-  const filtered = joueurs.filter(j => matchSearch(j.nom, query))
-  const hommes = filtered.filter(j => j.genre === "H")
-  const femmes = filtered.filter(j => j.genre === "F")
-  const recherche = query.trim().length > 0
+  // Détermine les marques et types de chaque joueur
+  const joueursEnrichis = useMemo(() => {
+    return joueurs.map(j => {
+      const brandsSet = new Set<string>()
+      const typesSet  = new Set<string>()
+      ;[j.bois_nom, j.revetement_cd, j.revetement_rv].forEach(eq => {
+        const b = getBrand(eq, productMap)
+        if (b) brandsSet.add(b)
+        const t = getType(eq, typeMap)
+        if (t) typesSet.add(t)
+      })
+      return { ...j, brands: [...brandsSet], types: [...typesSet] }
+    })
+  }, [joueurs, productMap, typeMap])
+
+  // Marques disponibles (triées par nombre de joueurs)
+  const brandsDispos = useMemo(() => {
+    const count: Record<string, number> = {}
+    joueursEnrichis.forEach(j => j.brands.forEach((b: string) => { count[b] = (count[b] || 0) + 1 }))
+    return Object.entries(count).sort((a, b) => b[1] - a[1]).map(([b]) => b)
+  }, [joueursEnrichis])
+
+  // Types disponibles
+  const typesDispos = useMemo(() => {
+    const found = new Set<string>()
+    joueursEnrichis.forEach(j => j.types.forEach((t: string) => found.add(t)))
+    return Object.keys(TYPE_LABELS).filter(t => found.has(t))
+  }, [joueursEnrichis])
+
+  // Filtrage
+  const filtered = useMemo(() => {
+    return joueursEnrichis.filter(j => {
+      if (!matchSearch(j.nom, query)) return false
+      if (filterBrand && !j.brands.includes(filterBrand)) return false
+      if (filterType  && !j.types.includes(filterType))  return false
+      return true
+    })
+  }, [joueursEnrichis, query, filterBrand, filterType])
+
+  const hommes    = filtered.filter(j => j.genre === "H")
+  const femmes    = filtered.filter(j => j.genre === "F")
+  const recherche = query.trim().length > 0 || !!filterBrand || !!filterType
+  const nbFiltres = (filterBrand ? 1 : 0) + (filterType ? 1 : 0)
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem 1rem" }}>
@@ -82,23 +197,14 @@ export default function JoueursPage() {
       </div>
 
       {/* Barre de recherche */}
-      <div style={{ position: "relative", marginBottom: "1.2rem" }}>
-        <svg
-          style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}
+      <div style={{ position: "relative", marginBottom: "1rem" }}>
+        <svg style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}
           width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input
-          type="text"
-          placeholder="Rechercher un joueur par nom ou prénom…"
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          style={{
-            width: "100%", boxSizing: "border-box",
-            background: "#fff", border: "1px solid var(--border)", borderRadius: "10px",
-            padding: "11px 40px 11px 40px", fontSize: "14px",
-            fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)",
-          }}
+        <input type="text" placeholder="Rechercher un joueur par nom ou prénom…"
+          value={inputValue} onChange={e => setInputValue(e.target.value)}
+          style={{ width: "100%", boxSizing: "border-box", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "11px 40px 11px 40px", fontSize: "14px", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)" }}
         />
         {inputValue && (
           <button onClick={() => setInputValue("")}
@@ -108,7 +214,44 @@ export default function JoueursPage() {
         )}
       </div>
 
-      {/* Bandeau info (masqué pendant une recherche) */}
+      {/* Filtres */}
+      {!loading && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px", marginBottom: "1.2rem" }}>
+          {/* Marques */}
+          {brandsDispos.length > 0 && (
+            <div style={{ marginBottom: "10px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "8px" }}>Marque</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {brandsDispos.map(b => (
+                  <PillButton key={b} label={b} active={filterBrand === b}
+                    onClick={() => setFilterBrand(filterBrand === b ? null : b)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Types */}
+          {typesDispos.length > 0 && (
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "8px" }}>Type de revêtement</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {typesDispos.map(t => (
+                  <PillButton key={t} label={TYPE_LABELS[t] || t} active={filterType === t}
+                    onClick={() => setFilterType(filterType === t ? null : t)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Réinitialiser */}
+          {nbFiltres > 0 && (
+            <button onClick={() => { setFilterBrand(null); setFilterType(null) }}
+              style={{ marginTop: "10px", background: "none", border: "none", color: "#D97757", fontSize: "12px", fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "Poppins, sans-serif" }}>
+              × Effacer les filtres ({nbFiltres})
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Bandeau info (masqué pendant filtrage/recherche) */}
       {!recherche && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderLeft: "3px solid #D97757", borderRadius: "0 8px 8px 0", padding: "12px 16px", marginBottom: "1.5rem" }}>
           <p style={{ fontSize: "13px", color: "var(--text)", lineHeight: 1.7 }}>
@@ -122,17 +265,20 @@ export default function JoueursPage() {
         <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", fontSize: "14px" }}>Chargement...</div>
       )}
 
-      {/* Résultats de recherche : liste unifiée */}
+      {/* Résultats filtrés : liste unifiée */}
       {!loading && recherche && (
         <div>
           {filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "3rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "14px" }}>
-              Aucun joueur trouvé pour « {query} »
+              Aucun joueur trouvé pour ces critères
             </div>
           ) : (
             <div>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "12px" }}>
-                {filtered.length} résultat{filtered.length > 1 ? "s" : ""} pour « <strong style={{ color: "var(--text)" }}>{query}</strong> »
+                {filtered.length} joueur{filtered.length > 1 ? "s" : ""}
+                {filterBrand && <> · <strong style={{ color: "var(--text)" }}>{filterBrand}</strong></>}
+                {filterType  && <> · <strong style={{ color: "var(--text)" }}>{TYPE_LABELS[filterType]}</strong></>}
+                {query.trim() && <> · « <strong style={{ color: "var(--text)" }}>{query}</strong> »</>}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 {filtered.map(j => <CarteJoueur key={j.id} j={j} />)}
@@ -145,7 +291,6 @@ export default function JoueursPage() {
       {/* Vue normale : 2 colonnes Hommes / Femmes */}
       {!loading && !recherche && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem" }}>
-          {/* Hommes */}
           <div>
             <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>Hommes</h2>
@@ -155,12 +300,10 @@ export default function JoueursPage() {
               {hommes.map(j => <CarteJoueur key={j.id} j={j} />)}
             </div>
           </div>
-
-          {/* Femmes */}
           <div>
             <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>Femmes</h2>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{femmes.length} joueurs classées</p>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{femmes.length} joueuses classées</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {femmes.map(j => <CarteJoueur key={j.id} j={j} />)}
