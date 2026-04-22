@@ -11,6 +11,7 @@ export default async function BoisPage() {
     { data: avisData },
     { data: notesData },
     { data: toutesMarques },
+    { data: videosData },
   ] = await Promise.all([
     supabase
       .from("produits")
@@ -23,6 +24,7 @@ export default async function BoisPage() {
     supabase.from("notes_bois").select("produit_id"),
 
     supabase.from("marques").select("id, nom").order("nom"),
+    supabase.from("produit_videos").select("produit_id"),
   ])
 
   const avisCount: Record<string, number> = {}
@@ -33,6 +35,11 @@ export default async function BoisPage() {
   const notesCount: Record<string, number> = {}
   notesData?.forEach((n: any) => {
     notesCount[n.produit_id] = (notesCount[n.produit_id] || 0) + 1
+  })
+
+  const videoCount: Record<string, number> = {}
+  videosData?.forEach((v: any) => {
+    videoCount[v.produit_id] = (videoCount[v.produit_id] || 0) + 1
   })
 
   // Tri : bois avec notes/avis en premier, puis alphabétique
@@ -55,6 +62,7 @@ export default async function BoisPage() {
         toutesMarques={toutesMarques || []}
         avisCount={avisCount}
         notesCount={notesCount}
+        videoCount={videoCount}
       />
     </main>
   )

@@ -24,12 +24,14 @@ export default function BoisClient({
   toutesMarques,
   avisCount,
   notesCount,
+  videoCount,
 }: {
   initialProduits: any[]
   initialTotal: number
   toutesMarques: { id: string; nom: string }[]
   avisCount: Record<string, number>
   notesCount: Record<string, number>
+  videoCount: Record<string, number>
 }) {
   const [produits, setProduits] = useState(initialProduits)
   const [total, setTotal] = useState(initialTotal)
@@ -222,7 +224,7 @@ export default function BoisClient({
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Style", "Plis", "Prix", "Notes", "Avis"].map(h => (
+                {["Nom", "Marque", "Style", "Plis", "Prix", "Notes", "Avis", "Vidéos"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -291,6 +293,15 @@ export default function BoisClient({
                     {avisCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
                         {avisCount[p.id]} avis
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {videoCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#7C3AED", background: "#F5F0FF", padding: "2px 8px", borderRadius: "10px" }}>
+                        ▶ {videoCount[p.id]}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>

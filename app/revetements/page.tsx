@@ -12,11 +12,13 @@ export default async function RevatementsPage() {
     { data: notesData },
     { data: produitsIndex },
     { data: marquesData },
+    { data: videosData },
   ] = await Promise.all([
     supabase.from("avis").select("produit_id").eq("valide", true),
     supabase.from("notes_revetements").select("produit_id"),
     supabase.from("produits").select("id, marque_id, revetements!inner(type_revetement)").eq("actif", true).limit(1000),
     supabase.from("marques").select("id, nom, produits!inner(revetements!inner(id))").eq("produits.actif", true).order("nom"),
+    supabase.from("produit_videos").select("produit_id"),
   ])
 
   const avisCount: Record<string, number> = {}
@@ -27,6 +29,11 @@ export default async function RevatementsPage() {
   const notesCount: Record<string, number> = {}
   notesData?.forEach((n: any) => {
     notesCount[n.produit_id] = (notesCount[n.produit_id] || 0) + 1
+  })
+
+  const videoCount: Record<string, number> = {}
+  videosData?.forEach((v: any) => {
+    videoCount[v.produit_id] = (videoCount[v.produit_id] || 0) + 1
   })
 
   // IDs des produits ayant au moins une note ou un avis (triés par score décroissant)
@@ -97,6 +104,7 @@ export default async function RevatementsPage() {
         toutesMarques={toutesMarques}
         avisCount={avisCount}
         notesCount={notesCount}
+        videoCount={videoCount}
       />
     </Suspense>
   )

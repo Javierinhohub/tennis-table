@@ -12,13 +12,14 @@ const TYPE_LABELS: Record<string, string> = {
 const ALL_TYPES = ["In", "Out", "Mid", "Long", "Anti"]
 const PAGE_SIZE = 50
 
-export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount, notesCount }: {
+export default function RevatementsClient({ initialProduits, initialTotal, produitsIndex, toutesMarques, avisCount, notesCount, videoCount }: {
   initialProduits: any[]
   initialTotal: number
   produitsIndex: any[]
   toutesMarques: { id: string; nom: string; nbRevs: number }[]
   avisCount: Record<string, number>
   notesCount: Record<string, number>
+  videoCount: Record<string, number>
 }) {
   const searchParams = useSearchParams()
 
@@ -237,7 +238,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Type", "Prix", "Notes", "Avis"].map(h => (
+                {["Nom", "Marque", "Type", "Prix", "Notes", "Avis", "Vidéos"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
                 {user && (
@@ -302,6 +303,15 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                     {avisCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
                         {avisCount[p.id]} avis
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {videoCount[p.id] > 0 ? (
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#7C3AED", background: "#F5F0FF", padding: "2px 8px", borderRadius: "10px" }}>
+                        ▶ {videoCount[p.id]}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
