@@ -82,6 +82,8 @@ export default function ProfilPage() {
 
   // Newsletter
   const [newsletterOk, setNewsletterOk] = useState(false)
+  const [newsletterMsg, setNewsletterMsg] = useState("")
+  const [newsletterLoading, setNewsletterLoading] = useState(false)
 
   // Suppression de compte
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -154,6 +156,18 @@ export default function ProfilPage() {
     if (error) { setMessage("Erreur : " + error.message); return }
     setMessage("Profil mis à jour avec succès !")
     await fetchData()
+  }
+
+  async function toggleNewsletter() {
+    if (!user) return
+    setNewsletterLoading(true)
+    setNewsletterMsg("")
+    const newVal = !newsletterOk
+    const { error } = await supabase.from("utilisateurs").update({ newsletter_ok: newVal }).eq("id", user.id)
+    if (error) { setNewsletterMsg("Erreur : " + error.message); setNewsletterLoading(false); return }
+    setNewsletterOk(newVal)
+    setNewsletterMsg(newVal ? "✓ Inscrit à la newsletter !" : "✓ Désinscrit de la newsletter.")
+    setNewsletterLoading(false)
   }
 
   async function retirerMateriel(id: string) {
@@ -325,20 +339,6 @@ export default function ProfilPage() {
                     {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
-                <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "12px 14px" }}>
-                  <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={newsletterOk}
-                      onChange={e => setNewsletterOk(e.target.checked)}
-                      style={{ marginTop: "2px", accentColor: "#D97757", width: "16px", height: "16px", flexShrink: 0, cursor: "pointer" }}
-                    />
-                    <div>
-                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", marginBottom: "2px" }}>Recevoir la newsletter TT-Kip</p>
-                      <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.5 }}>Nouveaux produits, articles, mises à jour — pas de spam. Désinscription possible à tout moment.</p>
-                    </div>
-                  </label>
-                </div>
                 <button type="submit" style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>Sauvegarder</button>
               </form>
             </div>
@@ -347,6 +347,28 @@ export default function ProfilPage() {
               <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>Informations du compte</h2>
               <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "4px" }}>Email : {user?.email}</p>
               <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Membre depuis : {new Date(profil?.cree_le).toLocaleDateString("fr-FR")}</p>
+            </div>
+
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1rem" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Newsletter</h2>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                <div>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", marginBottom: "2px" }}>Newsletter TT-Kip</p>
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Nouveaux produits, articles, actus ping</p>
+                </div>
+                <button onClick={toggleNewsletter} disabled={newsletterLoading}
+                  style={{ flexShrink: 0, padding: "8px 16px", borderRadius: "20px", border: "none", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif", transition: "background 0.15s",
+                    background: newsletterOk ? "#F0FAF4" : "#D97757",
+                    color: newsletterOk ? "#2D7A4F" : "#fff"
+                  }}>
+                  {newsletterLoading ? "…" : newsletterOk ? "✓ Inscrit" : "S'inscrire"}
+                </button>
+              </div>
+              {newsletterMsg && (
+                <p style={{ fontSize: "12px", marginTop: "10px", fontWeight: 500, color: newsletterMsg.startsWith("Erreur") ? "#DC2626" : "#2D7A4F" }}>
+                  {newsletterMsg}
+                </p>
+              )}
             </div>
 
             <div style={{ border: "1px solid #FECACA", borderRadius: "10px", padding: "20px", background: "#FFF5F5" }}>
