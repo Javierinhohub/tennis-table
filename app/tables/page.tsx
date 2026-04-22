@@ -88,6 +88,7 @@ export default function TablesPage() {
         <div style={{ flex: 2, minWidth: "200px" }}>
           <input type="text" placeholder="Rechercher une table..." value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
+            autoComplete="off"
             style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
         </div>
 

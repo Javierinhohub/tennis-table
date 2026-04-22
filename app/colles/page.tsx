@@ -39,7 +39,7 @@ export default function Page() {
         <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{tous.length} produits disponibles</p>
       </div>
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 2, minWidth: "200px" }} />
+        <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" style={{ flex: 2, minWidth: "200px" }} />
         <select value={marqueFilter} onChange={e => setMarqueFilter(e.target.value)} style={{ flex: 1, minWidth: "160px" }}>
           <option value="">Toutes les marques</option>
           {marques.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}

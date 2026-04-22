@@ -66,10 +66,12 @@ function getType(nom: string | null, typeMap: Map<string, string>): string | nul
   if (!nom) return null
   const n = normalize(nom)
   if (typeMap.has(n)) return typeMap.get(n)!
+  // Pour les types, on utilise includes (le nom du joueur peut être une variante)
+  // Minimum 8 chars pour éviter les faux positifs
   let best: string | null = null
   let bestLen = 0
   for (const [key, type] of typeMap.entries()) {
-    if (matchProduct(n, key) && key.length > bestLen) {
+    if (key.length >= 8 && n.includes(key) && key.length > bestLen) {
       best = type; bestLen = key.length
     }
   }
@@ -214,6 +216,7 @@ export default function JoueursPage() {
         </svg>
         <input type="text" placeholder="Rechercher un joueur par nom ou prénom…"
           value={inputValue} onChange={e => setInputValue(e.target.value)}
+          autoComplete="off"
           style={{ width: "100%", boxSizing: "border-box", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "11px 40px 11px 40px", fontSize: "14px", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)" }}
         />
         {inputValue && (
