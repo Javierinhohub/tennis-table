@@ -149,7 +149,9 @@ export default function JoueursPage() {
         data?.forEach((p: any) => {
           const key = normalize(p.nom)
           if (p.marques?.nom) pm.set(key, p.marques.nom)
-          if (p.revetements?.type_revetement) tm.set(key, p.revetements.type_revetement)
+          // revetements est retourné en tableau par Supabase (relation 1-to-many)
+          const rev = Array.isArray(p.revetements) ? p.revetements[0] : p.revetements
+          if (rev?.type_revetement) tm.set(key, rev.type_revetement)
         })
         setProductMap(pm)
         setTypeMap(tm)
@@ -227,40 +229,50 @@ export default function JoueursPage() {
         )}
       </div>
 
-      {/* Filtres */}
+      {/* Filtre type de revêtement — toujours visible */}
       {!loading && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px", marginBottom: "1.2rem" }}>
-          {/* Marques */}
-          {brandsDispos.length > 0 && (
-            <div style={{ marginBottom: "10px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "8px" }}>Marque</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {brandsDispos.map(b => (
-                  <PillButton key={b} label={b} active={filterBrand === b}
-                    onClick={() => setFilterBrand(filterBrand === b ? null : b)} />
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Types */}
-          {typesDispos.length > 0 && (
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "8px" }}>Type de revêtement</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {typesDispos.map(t => (
-                  <PillButton key={t} label={TYPE_LABELS[t] || t} active={filterType === t}
-                    onClick={() => setFilterType(filterType === t ? null : t)} />
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Réinitialiser */}
-          {nbFiltres > 0 && (
-            <button onClick={() => { setFilterBrand(null); setFilterType(null) }}
-              style={{ marginTop: "10px", background: "none", border: "none", color: "#D97757", fontSize: "12px", fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "Poppins, sans-serif" }}>
-              × Effacer les filtres ({nbFiltres})
-            </button>
-          )}
+        <div style={{ marginBottom: "10px" }}>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" as const }}>
+            {(["In","Out","Mid","Long"] as const).map(t => {
+              const count = joueursEnrichis.filter(j => j.types.includes(t)).length
+              return (
+                <button key={t} onClick={() => setFilterType(filterType === t ? null : t)}
+                  disabled={count === 0}
+                  style={{
+                    padding: "7px 14px", borderRadius: "8px", border: "1px solid", fontSize: "13px", fontWeight: 600,
+                    cursor: count === 0 ? "default" : "pointer", fontFamily: "Poppins, sans-serif", transition: "all 0.1s",
+                    background: filterType === t ? "#D97757" : count === 0 ? "var(--bg)" : "#fff",
+                    color: filterType === t ? "#fff" : count === 0 ? "var(--text-muted)" : "var(--text)",
+                    borderColor: filterType === t ? "#D97757" : "var(--border)",
+                    opacity: count === 0 ? 0.5 : 1,
+                  }}>
+                  {TYPE_LABELS[t]}
+                  {count > 0 && <span style={{ marginLeft: "6px", fontSize: "11px", fontWeight: 500, opacity: 0.7 }}>{count}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Filtre marques */}
+      {!loading && brandsDispos.length > 0 && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 14px", marginBottom: "1.2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>Marque</p>
+            {nbFiltres > 0 && (
+              <button onClick={() => { setFilterBrand(null); setFilterType(null) }}
+                style={{ background: "none", border: "none", color: "#D97757", fontSize: "12px", fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "Poppins, sans-serif" }}>
+                × Effacer ({nbFiltres})
+              </button>
+            )}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {brandsDispos.map(b => (
+              <PillButton key={b} label={b} active={filterBrand === b}
+                onClick={() => setFilterBrand(filterBrand === b ? null : b)} />
+            ))}
+          </div>
         </div>
       )}
 
