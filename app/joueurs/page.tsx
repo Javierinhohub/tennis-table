@@ -27,12 +27,6 @@ const TYPE_LABELS: Record<string, string> = {
   "Anti": "Anti-spin",
 }
 
-// Marques connues pour extraction depuis le nom du produit
-const MARQUES_CONNUES = [
-  "Butterfly","DHS","Tibhar","Stiga","Yasaka","Donic","Victas","Joola","Xiom",
-  "Gewo","Nittaku","Andro","Cornilleau","Mizuno","Sanwei","729","Globe","Palio",
-  "TSP","Avalox","Friendship","Kokutaku",
-]
 
 function normalize(s: string) {
   return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -44,27 +38,28 @@ function matchSearch(nom: string, query: string) {
   return query.trim().split(/\s+/).every(word => n.includes(normalize(word)))
 }
 
-// Matching strict : exact, ou le nom de l'équipement commence par le nom du produit
+// Matching strict : exact ou préfixe long (min 6 chars) avec limite de mot
+function matchProduct(equipmentName: string, productKey: string): boolean {
+  if (productKey.length < 6) return false
+  if (equipmentName === productKey) return true
+  // Le nom de l'équipement doit commencer par la clé suivie d'un espace, tiret ou fin de chaîne
+  return equipmentName.startsWith(productKey + " ") || equipmentName.startsWith(productKey + "-")
+}
+
 function getBrand(nom: string | null, productMap: Map<string, string>): string | null {
   if (!nom) return null
   const n = normalize(nom)
-  // Exact match d'abord
+  // Exact match
   if (productMap.has(n)) return productMap.get(n)!
-  // Cherche le match le plus long dont le nom commence par la clé (min 4 chars)
+  // Préfixe le plus long (min 6 chars)
   let best: string | null = null
   let bestLen = 0
   for (const [key, brand] of productMap.entries()) {
-    if (key.length >= 4 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
+    if (matchProduct(n, key) && key.length > bestLen) {
       best = brand; bestLen = key.length
     }
   }
-  if (best) return best
-  // Fallback : le nom de la marque est au début du nom de l'équipement
-  for (const m of MARQUES_CONNUES) {
-    const mn = normalize(m)
-    if (n.startsWith(mn + " ") || n === mn) return m
-  }
-  return null
+  return best
 }
 
 function getType(nom: string | null, typeMap: Map<string, string>): string | null {
@@ -74,7 +69,7 @@ function getType(nom: string | null, typeMap: Map<string, string>): string | nul
   let best: string | null = null
   let bestLen = 0
   for (const [key, type] of typeMap.entries()) {
-    if (key.length >= 4 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
+    if (matchProduct(n, key) && key.length > bestLen) {
       best = type; bestLen = key.length
     }
   }
