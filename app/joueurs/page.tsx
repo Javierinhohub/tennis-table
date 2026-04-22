@@ -44,17 +44,25 @@ function matchSearch(nom: string, query: string) {
   return query.trim().split(/\s+/).every(word => n.includes(normalize(word)))
 }
 
-// Extrait la marque depuis un nom de produit en cherchant dans la map puis en fallback
+// Matching strict : exact, ou le nom de l'équipement commence par le nom du produit
 function getBrand(nom: string | null, productMap: Map<string, string>): string | null {
   if (!nom) return null
   const n = normalize(nom)
-  // Cherche dans la map produits
+  // Exact match d'abord
+  if (productMap.has(n)) return productMap.get(n)!
+  // Cherche le match le plus long dont le nom commence par la clé (min 4 chars)
+  let best: string | null = null
+  let bestLen = 0
   for (const [key, brand] of productMap.entries()) {
-    if (n.includes(key)) return brand
+    if (key.length >= 4 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
+      best = brand; bestLen = key.length
+    }
   }
-  // Fallback : cherche le nom de marque directement dans le nom
+  if (best) return best
+  // Fallback : le nom de la marque est au début du nom de l'équipement
   for (const m of MARQUES_CONNUES) {
-    if (n.includes(normalize(m))) return m
+    const mn = normalize(m)
+    if (n.startsWith(mn + " ") || n === mn) return m
   }
   return null
 }
@@ -62,10 +70,15 @@ function getBrand(nom: string | null, productMap: Map<string, string>): string |
 function getType(nom: string | null, typeMap: Map<string, string>): string | null {
   if (!nom) return null
   const n = normalize(nom)
+  if (typeMap.has(n)) return typeMap.get(n)!
+  let best: string | null = null
+  let bestLen = 0
   for (const [key, type] of typeMap.entries()) {
-    if (n.includes(key)) return type
+    if (key.length >= 4 && (n === key || n.startsWith(key + " ") || n.startsWith(key + "-")) && key.length > bestLen) {
+      best = type; bestLen = key.length
+    }
   }
-  return null
+  return best
 }
 
 function CarteJoueur({ j }: { j: any }) {
