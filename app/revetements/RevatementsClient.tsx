@@ -5,9 +5,14 @@ import { useSearchParams } from "next/navigation"
 import NoteModal from "@/app/components/NoteModal"
 import ComparaisonModal from "@/app/components/ComparaisonModal"
 import { supabase } from "@/lib/supabase"
+import { useT } from "@/lib/useT"
+import { useLocale } from "@/lib/useLocale"
 
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_LABELS_FR: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
+}
+const TYPE_LABELS_EN: Record<string, string> = {
+  In: "Backside", Out: "Short pips", Mid: "Medium pips", Long: "Long pips", Anti: "Anti-spin"
 }
 const ALL_TYPES = ["In", "Out", "Mid", "Long", "Anti"]
 const PAGE_SIZE = 50
@@ -22,6 +27,9 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   videoCount: Record<string, number>
 }) {
   const searchParams = useSearchParams()
+  const t = useT()
+  const locale = useLocale()
+  const TYPE_LABELS = locale === "en" ? TYPE_LABELS_EN : TYPE_LABELS_FR
 
   const [produits, setProduits] = useState(initialProduits)
   const [total, setTotal] = useState(initialTotal)
@@ -127,8 +135,8 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Revêtements</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{total.toLocaleString("fr-FR")} revêtements LARC 2026</p>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>{t("rubbers", "title")}</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{total.toLocaleString("fr-FR")} {t("rubbers", "subtitle")}</p>
         </div>
         <button
           onClick={() => selection.length >= 2 && setShowComparaison(true)}
@@ -143,7 +151,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             fontFamily: "Poppins, sans-serif", transition: "all 0.15s",
           }}
         >
-          <span>Comparer</span>
+          <span>{t("common", "compare")}</span>
           <span style={{
             background: selection.length >= 2 ? "rgba(255,255,255,0.25)" : "var(--border)",
             borderRadius: "20px", padding: "1px 8px", fontSize: "12px", fontWeight: 700,
@@ -156,7 +164,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
         <div style={{ position: "relative", flex: 2, minWidth: "200px" }}>
           <input
             type="text"
-            placeholder="Rechercher un revêtement..."
+            placeholder={t("rubbers", "searchPlaceholder")}
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
@@ -179,9 +187,9 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           onChange={e => { setTypeFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "140px" }}
         >
-          <option value="">Tous les types</option>
-          {typesDisponibles.map(t => (
-            <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+          <option value="">{t("rubbers", "allTypes")}</option>
+          {typesDisponibles.map(tp => (
+            <option key={tp} value={tp}>{TYPE_LABELS[tp]}</option>
           ))}
         </select>
 
@@ -190,11 +198,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
           onChange={e => { setMarqueFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}
         >
-          <option value="">Toutes les marques</option>
+          <option value="">{t("rubbers", "allBrands")}</option>
           {toutesMarques.filter(m => m.nbRevs >= 11).map((m) => (
             <option key={m.id} value={m.id}>{m.nom}</option>
           ))}
-          <optgroup label="── Autres marques ──">
+          <optgroup label={locale === "en" ? "── Other brands ──" : "── Autres marques ──"}>
             {toutesMarques.filter(m => m.nbRevs < 11).map((m) => (
               <option key={m.id} value={m.id}>{m.nom}</option>
             ))}
@@ -206,27 +214,29 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             onClick={reset}
             style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Poppins, sans-serif" }}
           >
-            ✕ Réinitialiser
+            ✕ {locale === "en" ? "Reset" : "Réinitialiser"}
           </button>
         )}
       </div>
 
       <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "1rem" }}>
-        {loading ? "Recherche en cours..." : `${produits.length} résultat${produits.length > 1 ? "s" : ""} sur ${total.toLocaleString("fr-FR")}`}
+        {loading ? t("common", "loading") : locale === "en"
+          ? `${produits.length} result${produits.length > 1 ? "s" : ""} out of ${total.toLocaleString()}`
+          : `${produits.length} résultat${produits.length > 1 ? "s" : ""} sur ${total.toLocaleString("fr-FR")}`}
       </p>
 
       {loading && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-          Chargement...
+          {t("common", "loading")}
         </div>
       )}
 
       {!loading && produits.length === 0 && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-          Aucun revêtement trouvé.
+          {locale === "en" ? "No rubber found." : "Aucun revêtement trouvé."}
           {hasFilter && (
             <button onClick={reset} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "#D97757", cursor: "pointer", fontFamily: "Poppins, sans-serif", fontSize: "14px" }}>
-              ← Réinitialiser les filtres
+              ← {locale === "en" ? "Reset filters" : "Réinitialiser les filtres"}
             </button>
           )}
         </div>
@@ -238,11 +248,11 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Type", "Prix", "Notes", "Avis", "Vidéos"].map(h => (
+                {[t("rubbers","colName"), t("rubbers","brand"), t("rubbers","colType"), t("rubbers","colPrice"), t("rubbers","colNotes"), t("rubbers","colReviews"), t("common","videos")].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
                 {user && (
-                  <th style={{ padding: "10px 16px", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>Note</th>
+                  <th style={{ padding: "10px 16px", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{locale === "en" ? "Rate" : "Note"}</th>
                 )}
               </tr>
             </thead>
@@ -293,7 +303,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                   <td style={{ padding: "12px 16px" }}>
                     {notesCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A56DB", background: "#EBF5FF", padding: "2px 8px", borderRadius: "10px" }}>
-                        {notesCount[p.id]} note{notesCount[p.id] > 1 ? "s" : ""}
+                        {notesCount[p.id]} {t("common", "notes")}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
@@ -302,7 +312,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                   <td style={{ padding: "12px 16px" }}>
                     {avisCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
-                        {avisCount[p.id]} avis
+                        {avisCount[p.id]} {t("common", "reviews")}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
@@ -322,7 +332,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
                       style={{ padding: "12px 16px" }}
                       onClick={e => { e.stopPropagation(); setProduitANoter(p) }}
                     >
-                      <span style={{ fontSize: "12px", color: "#D97757", fontWeight: 500, cursor: "pointer" }}>⭐ Noter</span>
+                      <span style={{ fontSize: "12px", color: "#D97757", fontWeight: 500, cursor: "pointer" }}>⭐ {locale === "en" ? "Rate" : "Noter"}</span>
                     </td>
                   )}
                 </tr>
@@ -340,17 +350,17 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
             disabled={page === 0}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page === 0 ? "var(--bg)" : "#fff", cursor: page === 0 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif" }}
           >
-            ← Précédent
+            ← {locale === "en" ? "Previous" : "Précédent"}
           </button>
           <span style={{ padding: "8px 16px", fontSize: "13px", color: "var(--text-muted)" }}>
-            Page {page + 1} / {totalPages}
+            {locale === "en" ? "Page" : "Page"} {page + 1} / {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page >= totalPages - 1 ? "var(--bg)" : "#fff", cursor: page >= totalPages - 1 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif" }}
           >
-            Suivant →
+            {locale === "en" ? "Next" : "Suivant"} →
           </button>
         </div>
       )}
@@ -402,7 +412,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
               fontFamily: "Poppins, sans-serif",
             }}
           >
-            {selection.length < 2 ? "Sélectionner 2 min." : "Comparer"}
+            {selection.length < 2 ? (locale === "en" ? "Select 2 min." : "Sélectionner 2 min.") : t("common", "compare")}
           </button>
         </div>
       )}

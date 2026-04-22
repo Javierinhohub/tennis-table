@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import ComparaisonModal from "@/app/components/ComparaisonModal"
+import { useT } from "@/lib/useT"
+import { useLocale } from "@/lib/useLocale"
 
-const STYLE_LABELS: Record<string, string> = {
+const STYLE_LABELS_FR: Record<string, string> = {
   "OFF+":  "Offensif++",
   "OFF":   "Offensif",
   "OFF-":  "Offensif-",
@@ -15,6 +17,19 @@ const STYLE_LABELS: Record<string, string> = {
   "DEF":   "Défensif",
   "DEF-":  "Défensif-",
 }
+
+const STYLE_LABELS_EN: Record<string, string> = {
+  "OFF+":  "Offensive++",
+  "OFF":   "Offensive",
+  "OFF-":  "Offensive-",
+  "ALL+":  "All-round+",
+  "ALL":   "All-round",
+  "ALL-":  "All-round-",
+  "DEF+":  "Defensive+",
+  "DEF":   "Defensive",
+  "DEF-":  "Defensive-",
+}
+
 const STYLE_ORDER = ["OFF+", "OFF", "OFF-", "ALL+", "ALL", "ALL-", "DEF+", "DEF", "DEF-"]
 const PAGE_SIZE = 50
 
@@ -33,6 +48,10 @@ export default function BoisClient({
   notesCount: Record<string, number>
   videoCount: Record<string, number>
 }) {
+  const t = useT()
+  const locale = useLocale()
+  const STYLE_LABELS = locale === "en" ? STYLE_LABELS_EN : STYLE_LABELS_FR
+
   const [produits, setProduits] = useState(initialProduits)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(0)
@@ -119,6 +138,14 @@ export default function BoisClient({
 
   return (
     <>
+      {/* Titre */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>{t("blades", "title")}</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{initialTotal.toLocaleString(locale === "en" ? "en-US" : "fr-FR")} {t("blades", "subtitle")}</p>
+        </div>
+      </div>
+
       {/* Bouton comparer */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
         <button
@@ -134,7 +161,7 @@ export default function BoisClient({
             fontFamily: "Poppins, sans-serif", transition: "all 0.15s",
           }}
         >
-          <span>Comparer</span>
+          <span>{t("common", "compare")}</span>
           <span style={{
             background: selection.length >= 2 ? "rgba(255,255,255,0.25)" : "var(--border)",
             borderRadius: "20px", padding: "1px 8px", fontSize: "12px", fontWeight: 700,
@@ -147,7 +174,7 @@ export default function BoisClient({
         <div style={{ position: "relative", flex: 2, minWidth: "200px" }}>
           <input
             type="text"
-            placeholder="Rechercher un bois..."
+            placeholder={t("blades", "searchPlaceholder")}
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
@@ -170,7 +197,7 @@ export default function BoisClient({
           onChange={e => { setMarqueFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "160px" }}
         >
-          <option value="">Toutes les marques</option>
+          <option value="">{t("blades", "allBrands")}</option>
           {toutesMarques.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
         </select>
 
@@ -179,7 +206,7 @@ export default function BoisClient({
           onChange={e => { setStyleFilter(e.target.value); setPage(0) }}
           style={{ ...inputStyle, flex: 1, minWidth: "150px" }}
         >
-          <option value="">Tous les styles</option>
+          <option value="">{t("blades", "allStyles")}</option>
           {STYLE_ORDER.map(s => (
             <option key={s} value={s}>{STYLE_LABELS[s]}</option>
           ))}
@@ -190,29 +217,31 @@ export default function BoisClient({
             onClick={reset}
             style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Poppins, sans-serif" }}
           >
-            ✕ Réinitialiser
+            ✕ {locale === "en" ? "Reset" : "Réinitialiser"}
           </button>
         )}
       </div>
 
       <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "1rem" }}>
         {loading
-          ? "Recherche en cours..."
-          : `${produits.length} résultat${produits.length > 1 ? "s" : ""} sur ${total.toLocaleString("fr-FR")}`}
+          ? t("common", "loading")
+          : locale === "en"
+            ? `${produits.length} result${produits.length > 1 ? "s" : ""} out of ${total.toLocaleString()}`
+            : `${produits.length} résultat${produits.length > 1 ? "s" : ""} sur ${total.toLocaleString("fr-FR")}`}
       </p>
 
       {loading && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-          Chargement...
+          {t("common", "loading")}
         </div>
       )}
 
       {!loading && produits.length === 0 && (
         <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", background: "#fff", borderRadius: "10px", border: "1px solid var(--border)" }}>
-          Aucun bois trouvé.
+          {locale === "en" ? "No blade found." : "Aucun bois trouvé."}
           {hasFilter && (
             <button onClick={reset} style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: "#D97757", cursor: "pointer", fontFamily: "Poppins, sans-serif", fontSize: "14px" }}>
-              ← Réinitialiser les filtres
+              ← {locale === "en" ? "Reset filters" : "Réinitialiser les filtres"}
             </button>
           )}
         </div>
@@ -224,7 +253,7 @@ export default function BoisClient({
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
                 <th style={{ padding: "10px 12px", width: "44px" }} />
-                {["Nom", "Marque", "Style", "Plis", "Prix", "Notes", "Avis", "Vidéos"].map(h => (
+                {[t("blades","colName"), t("blades","brand"), t("blades","colStyle"), t("blades","colPlies"), t("blades","colPrice"), t("blades","colNotes"), t("blades","colReviews"), t("common","videos")].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left" as const, fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -274,7 +303,7 @@ export default function BoisClient({
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" as const }}>
                     {p.bois?.nb_plis
-                      ? <span style={{ background: "#F5F0FF", color: "#7C3AED", padding: "2px 8px", borderRadius: "10px", fontWeight: 600, fontSize: "12px" }}>{p.bois.nb_plis} plis</span>
+                      ? <span style={{ background: "#F5F0FF", color: "#7C3AED", padding: "2px 8px", borderRadius: "10px", fontWeight: 600, fontSize: "12px" }}>{p.bois.nb_plis} {locale === "en" ? "ply" : "plis"}</span>
                       : <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>—</span>}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" as const, fontSize: "13px", fontWeight: p.bois?.prix ? 600 : 400, color: p.bois?.prix ? "var(--text)" : "var(--text-muted)" }}>
@@ -283,7 +312,7 @@ export default function BoisClient({
                   <td style={{ padding: "12px 16px" }}>
                     {notesCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A56DB", background: "#EBF5FF", padding: "2px 8px", borderRadius: "10px" }}>
-                        {notesCount[p.id]} note{notesCount[p.id] > 1 ? "s" : ""}
+                        {notesCount[p.id]} {t("common", "notes")}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
@@ -292,7 +321,7 @@ export default function BoisClient({
                   <td style={{ padding: "12px 16px" }}>
                     {avisCount[p.id] > 0 ? (
                       <span style={{ fontSize: "12px", fontWeight: 600, color: "#D97757", background: "#FFF0EB", padding: "2px 8px", borderRadius: "10px" }}>
-                        {avisCount[p.id]} avis
+                        {avisCount[p.id]} {t("common", "reviews")}
                       </span>
                     ) : (
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
@@ -322,17 +351,17 @@ export default function BoisClient({
             disabled={page === 0}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page === 0 ? "var(--bg)" : "#fff", cursor: page === 0 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif", color: page === 0 ? "var(--text-muted)" : "var(--text)" }}
           >
-            ← Précédent
+            ← {locale === "en" ? "Previous" : "Précédent"}
           </button>
           <span style={{ padding: "8px 16px", fontSize: "13px", color: "var(--text-muted)" }}>
-            Page {page + 1} / {totalPages}
+            {locale === "en" ? "Page" : "Page"} {page + 1} / {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
             style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: page >= totalPages - 1 ? "var(--bg)" : "#fff", cursor: page >= totalPages - 1 ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Poppins, sans-serif", color: page >= totalPages - 1 ? "var(--text-muted)" : "var(--text)" }}
           >
-            Suivant →
+            {locale === "en" ? "Next" : "Suivant"} →
           </button>
         </div>
       )}
@@ -380,7 +409,7 @@ export default function BoisClient({
               fontFamily: "Poppins, sans-serif",
             }}
           >
-            {selection.length < 2 ? "Sélectionner 2 min." : "Comparer"}
+            {selection.length < 2 ? (locale === "en" ? "Select 2 min." : "Sélectionner 2 min.") : t("common", "compare")}
           </button>
         </div>
       )}

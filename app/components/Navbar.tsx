@@ -5,21 +5,12 @@ import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { useSession } from "@/app/components/SessionProvider"
-
-const CATEGORIES = [
-  { href: "/", label: "Accueil", icon: "⌂" },
-  { href: "/revetements", label: "Revêtements", icon: "R" },
-  { href: "/bois", label: "Bois", icon: "B" },
-  { href: "/autre-materiel", label: "Autre matériel", icon: "+" },
-  { href: "/joueurs", label: "Joueurs pro", icon: "J" },
-  { href: "/articles", label: "Articles & Tests", icon: "A" },
-  { href: "/forum", label: "Forum", icon: "F" },
-  { href: "/a-propos", label: "À propos", icon: "?" },
-  { href: "/contact", label: "Contact", icon: "✉" },
-]
+import LanguageToggle from "@/app/components/LanguageToggle"
+import { useT } from "@/lib/useT"
 
 export default function Navbar() {
   const { user } = useSession()
+  const t = useT()
   const [pseudo, setPseudo] = useState("")
   const [role, setRole] = useState("")
   const [open, setOpen] = useState(false)
@@ -28,6 +19,18 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  const CATEGORIES = [
+    { href: "/", label: t("nav", "home"), icon: "⌂" },
+    { href: "/revetements", label: t("nav", "rubbers"), icon: "R" },
+    { href: "/bois", label: t("nav", "blades"), icon: "B" },
+    { href: "/autre-materiel", label: t("nav", "otherGear"), icon: "+" },
+    { href: "/joueurs", label: t("nav", "proPlayers"), icon: "J" },
+    { href: "/articles", label: t("nav", "articles"), icon: "A" },
+    { href: "/forum", label: t("nav", "forum"), icon: "F" },
+    { href: "/a-propos", label: t("nav", "about"), icon: "?" },
+    { href: "/contact", label: t("nav", "contact"), icon: "✉" },
+  ]
 
   // Fermer les menus au changement de page
   useEffect(() => {
@@ -93,6 +96,11 @@ export default function Navbar() {
 
   return (
     <>
+      {/* ── Bouton langue FR/EN ─────────────────────────────────────── */}
+      <div style={{ position: "fixed", top: "12px", right: "62px", zIndex: 200 }}>
+        <LanguageToggle />
+      </div>
+
       {/* ── Avatar utilisateur en haut à droite ─────────────────────── */}
       <div ref={userMenuRef} style={{ position: "fixed", top: "12px", right: "12px", zIndex: 200 }}>
         {user ? (
@@ -150,7 +158,7 @@ export default function Navbar() {
               </div>
               <div>
                 <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)", margin: 0 }}>{pseudo}</p>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Connecté</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>{t("nav", "connected")}</p>
               </div>
             </div>
 
@@ -162,7 +170,7 @@ export default function Navbar() {
                 <span style={{ width: "18px", textAlign: "center" as const, color: "var(--text-muted)" }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </span>
-                Messages
+                {t("nav", "messages")}
                 {unreadCount > 0 && (
                   <span style={{ marginLeft: "auto", background: "#EF4444", color: "#fff", borderRadius: "10px", padding: "1px 7px", fontSize: "10px", fontWeight: 700 }}>
                     {unreadCount}
@@ -176,7 +184,7 @@ export default function Navbar() {
                 <span style={{ width: "18px", textAlign: "center" as const, color: "var(--text-muted)" }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </span>
-                Paramètres
+                {t("nav", "settings")}
               </Link>
 
               {role === "admin" && (
@@ -186,7 +194,7 @@ export default function Navbar() {
                   <span style={{ width: "18px", textAlign: "center" as const }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                   </span>
-                  Administration
+                  {t("nav", "admin")}
                 </Link>
               )}
             </div>
@@ -199,7 +207,7 @@ export default function Navbar() {
                 <span style={{ width: "18px", textAlign: "center" as const, color: "var(--text-muted)" }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   </span>
-                Déconnexion
+                {t("nav", "logout")}
               </button>
             </div>
           </div>
@@ -272,7 +280,7 @@ export default function Navbar() {
                   </span>
                 )}
               </span>
-              Messages
+              {t("nav", "messages")}
               {unreadCount > 0 && (
                 <span style={{ marginLeft: "auto", background: "#EF4444", color: "#fff", borderRadius: "10px", padding: "1px 6px", fontSize: "10px", fontWeight: 700 }}>
                   {unreadCount}
@@ -285,7 +293,7 @@ export default function Navbar() {
             <Link href="/admin"
               style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", textDecoration: "none", marginTop: "8px", background: "var(--accent-light)", color: "var(--accent)", fontWeight: 600, fontSize: "14px" }}>
               <span style={{ width: "28px", height: "28px", borderRadius: "6px", background: "var(--accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>⚙</span>
-              Administration
+              {t("nav", "admin")}
             </Link>
           )}
         </nav>
@@ -299,20 +307,20 @@ export default function Navbar() {
                 </div>
                 <div>
                   <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)" }}>{pseudo}</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>Mon profil</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t("nav", "profile")}</p>
                 </div>
               </a>
               <button onClick={handleLogout} style={{ width: "100%", background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-                Déconnexion
+                {t("nav", "logout")}
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <Link href="/auth/login" style={{ display: "block", textAlign: "center", color: "var(--text)", textDecoration: "none", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 500, background: "var(--bg)" }}>
-                Connexion
+                {t("nav", "login")}
               </Link>
               <Link href="/auth/signup" style={{ display: "block", textAlign: "center", background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "9px", fontSize: "13px", fontWeight: 700 }}>
-                Inscription
+                {t("nav", "signup")}
               </Link>
             </div>
           )}

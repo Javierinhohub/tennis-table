@@ -52,10 +52,6 @@ export default async function BoisPage() {
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>Bois</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{(total || 0).toLocaleString("fr-FR")} bois disponibles</p>
-      </div>
       <BoisClient
         initialProduits={produitsTriés}
         initialTotal={total || 0}
