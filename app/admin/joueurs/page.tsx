@@ -130,12 +130,22 @@ export default function AdminJoueursPage() {
   }
 
   async function fetchJoueurs() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("joueurs_pro")
       .select("id, nom, pays, classement_mondial, genre, style, main, age, prise, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
       .eq("actif", true)
       .order("classement_mondial")
-    setJoueurs(data || [])
+    if (error) {
+      // Fallback si la colonne prise n'existe pas encore en base
+      const { data: data2 } = await supabase
+        .from("joueurs_pro")
+        .select("id, nom, pays, classement_mondial, genre, style, main, age, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
+        .eq("actif", true)
+        .order("classement_mondial")
+      setJoueurs(data2 || [])
+    } else {
+      setJoueurs(data || [])
+    }
   }
 
   function selectionner(j: any) {
