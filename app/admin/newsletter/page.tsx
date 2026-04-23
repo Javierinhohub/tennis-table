@@ -71,11 +71,15 @@ export default function AdminNewsletterPage() {
     }
     setSending(true)
     setSendResult(null)
+    const { data: { session } } = await supabase.auth.getSession()
     const body: any = { sujet, contenu }
     if (mode === "test") body.testEmail = testEmail
     const res = await fetch("/api/newsletter/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session?.access_token ?? ""}`,
+      },
       body: JSON.stringify(body),
     })
     const json = await res.json()

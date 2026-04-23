@@ -6,6 +6,15 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.tt-kip.com"
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "TT-Kip <noreply@tt-kip.com>"
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { recipientId, senderPseudo, conversationId, preview } = await req.json()
@@ -39,13 +48,13 @@ export async function POST(req: NextRequest) {
             <p style="color: #fff; font-size: 20px; font-weight: 700; margin: 0;">TT-Kip</p>
           </div>
           <div style="padding: 28px;">
-            <p style="font-size: 16px; color: #111827; margin: 0 0 8px;">Bonjour ${recipientPseudo},</p>
+            <p style="font-size: 16px; color: #111827; margin: 0 0 8px;">Bonjour ${escapeHtml(recipientPseudo)},</p>
             <p style="font-size: 14px; color: #6B7280; margin: 0 0 20px;">
-              <strong style="color: #D97757">${senderPseudo}</strong> vous a envoyé un message sur TT-Kip.
+              <strong style="color: #D97757">${escapeHtml(senderPseudo)}</strong> vous a envoyé un message sur TT-Kip.
             </p>
             ${preview ? `
             <div style="background: #F9FAFB; border-left: 3px solid #D97757; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px;">
-              <p style="font-size: 13px; color: #374151; margin: 0; font-style: italic;">"${preview.slice(0, 120)}${preview.length > 120 ? "…" : ""}"</p>
+              <p style="font-size: 13px; color: #374151; margin: 0; font-style: italic;">"${escapeHtml(preview.slice(0, 120))}${preview.length > 120 ? "…" : ""}"</p>
             </div>` : ""}
             <a href="${SITE_URL}/messages/${conversationId}"
               style="display: inline-block; background: #D97757; color: #fff; text-decoration: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 600;">

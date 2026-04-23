@@ -93,8 +93,8 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     .eq("valide", true)
     .order("cree_le", { ascending: false })
   const avisCount = avisData?.length ?? 0
-  const avgNote = avisCount > 0
-    ? (avisData!.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
+  const avgNote = avisCount > 0 && avisData
+    ? (avisData.reduce((s, a) => s + a.note, 0) / avisCount).toFixed(1)
     : null
 
   // Seulement si au moins 1 avis : évite le schema Product invalide sans reviews

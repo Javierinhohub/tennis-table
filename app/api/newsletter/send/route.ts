@@ -10,9 +10,33 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// Client pour vérifier la session de l'appelant
+const supabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Vérif que c'est bien l'admin qui appelle
+    const authHeader = req.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "")
+    if (!token) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+    const { data: { user }, error: authCheckError } = await supabaseClient.auth.getUser(token)
+    if (authCheckError || !user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+    const { data: profil } = await supabaseAdmin
+      .from("utilisateurs")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+    if (!profil || profil.role !== "admin") {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 })
+    }
+
     const { sujet, contenu, testEmail } = await req.json()
 
     if (!sujet || !contenu) {
