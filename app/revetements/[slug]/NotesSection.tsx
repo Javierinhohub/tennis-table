@@ -40,6 +40,15 @@ const CRITERES: Record<string, { key: string, label: string, color: string }[]> 
     { key: "durabilite",   label: "Durabilité",         color: "#D97757" },
     { key: "qualite_prix", label: "Qualité / Prix",     color: "#10B981" },
   ],
+  Mid: [
+    { key: "vitesse",      label: "Vitesse",            color: "#1A56DB" },
+    { key: "adherence",    label: "Adhérence",          color: "#7C3AED" },
+    { key: "controle",     label: "Contrôle",           color: "#0E7F4F" },
+    { key: "gene",         label: "Gêne",               color: "#EF4444" },
+    { key: "inversion",    label: "Inversion",          color: "#F59E0B" },
+    { key: "durabilite",   label: "Durabilité",         color: "#D97757" },
+    { key: "qualite_prix", label: "Qualité / Prix",     color: "#10B981" },
+  ],
   Long: [
     { key: "vitesse",      label: "Vitesse",            color: "#1A56DB" },
     { key: "adherence",    label: "Adhérence",          color: "#7C3AED" },
