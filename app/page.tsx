@@ -5,7 +5,7 @@ import DerniersArticles from "./components/DerniersArticles"
 import AccueilHero from "./components/AccueilHero"
 import { getLocale, makeT } from "@/lib/getLocale"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const locale = await getLocale()
