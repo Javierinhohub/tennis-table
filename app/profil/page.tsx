@@ -135,7 +135,16 @@ export default function ProfilPage() {
       if (type === "rv") setResultsRV([])
       return
     }
-    const { data } = await supabase.from("produits").select("id, nom, marques(nom)").ilike("nom", "%" + q + "%").eq("actif", true).limit(6)
+    // !inner garantit qu'on ne retourne que les produits du bon type
+    const selectBois = "id, nom, marques(nom), bois!inner(id)"
+    const selectRev  = "id, nom, marques(nom), revetements!inner(id)"
+    const sel = type === "bois" ? selectBois : selectRev
+    const { data } = await supabase
+      .from("produits")
+      .select(sel)
+      .ilike("nom", "%" + q + "%")
+      .eq("actif", true)
+      .limit(6)
     if (type === "bois") setResultsBois(data || [])
     if (type === "cd") setResultsCD(data || [])
     if (type === "rv") setResultsRV(data || [])
