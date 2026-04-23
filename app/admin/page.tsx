@@ -137,6 +137,7 @@ export default function AdminPage() {
   const [editClassement, setEditClassement] = useState("")
   const [editStyle, setEditStyle] = useState("")
   const [editMain, setEditMain] = useState("")
+  const [editPrise, setEditPrise] = useState("")
   const [editAge, setEditAge] = useState("")
   const [editBoisNom, setEditBoisNom] = useState("")
   const [editRevetementCd, setEditRevetementCd] = useState("")
@@ -262,6 +263,7 @@ export default function AdminPage() {
     setEditClassement(j.classement_mondial ? String(j.classement_mondial) : "")
     setEditStyle(j.style || "")
     setEditMain(j.main || "")
+    setEditPrise(j.prise || "Classique")
     setEditAge(j.age ? String(j.age) : "")
     setEditBoisNom(j.bois_nom || "")
     setEditRevetementCd(j.revetement_cd || "")
@@ -276,6 +278,7 @@ export default function AdminPage() {
       classement_mondial: editClassement ? parseInt(editClassement) : null,
       style: editStyle || null,
       main: editMain || null,
+      prise: editPrise || null,
       age: editAge ? parseInt(editAge) : null,
       bois_nom: editBoisNom || null,
       revetement_cd: editRevetementCd || null,
@@ -769,7 +772,7 @@ export default function AdminPage() {
               {/* Classement & Infos */}
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginBottom: "12px" }}>
                 <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>📊 Classement & Informations</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "10px" }}>
                   <div>
                     <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Classement</label>
                     <input type="number" value={editClassement} onChange={e => setEditClassement(e.target.value)} style={inputStyleAC} placeholder="Ex: 12" />
@@ -788,12 +791,22 @@ export default function AdminPage() {
                       <option value="Bloqueur">Bloqueur</option>
                     </select>
                   </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
                     <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Main</label>
                     <select value={editMain} onChange={e => setEditMain(e.target.value)} style={inputStyleAC}>
                       <option value="">—</option>
                       <option value="Droitier">Droitier</option>
                       <option value="Gaucher">Gaucher</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontFamily: "Poppins, sans-serif" }}>Type de prise</label>
+                    <select value={editPrise} onChange={e => setEditPrise(e.target.value)} style={inputStyleAC}>
+                      <option value="">—</option>
+                      <option value="Classique">Classique</option>
+                      <option value="Porte-plume">Porte-plume</option>
                     </select>
                   </div>
                 </div>
