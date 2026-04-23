@@ -21,8 +21,27 @@ export default function Signup() {
       email, password,
       options: { data: { pseudo } }
     })
-    if (error) { setError(error.message); setLoading(false) }
-    else if (data.user) {
+    if (error) {
+      const msg = error.message.toLowerCase()
+      if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user already")) {
+        setError("__already__")
+      } else if (msg.includes("rate limit") || msg.includes("email rate")) {
+        setError("Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.")
+      } else if (msg.includes("password") || msg.includes("weak")) {
+        setError("Le mot de passe doit contenir au moins 6 caractères.")
+      } else if (msg.includes("invalid email") || msg.includes("unable to validate")) {
+        setError("Adresse email invalide.")
+      } else {
+        setError("Une erreur est survenue. Veuillez réessayer.")
+      }
+      setLoading(false)
+    } else if (data.user) {
+      // identities vide = email déjà confirmé (protection anti-énumération Supabase)
+      if (data.user.identities && data.user.identities.length === 0) {
+        setError("__already__")
+        setLoading(false)
+        return
+      }
       await supabase.from("utilisateurs").upsert({ id: data.user.id, email, pseudo })
       setSuccess(true)
     }
@@ -85,7 +104,15 @@ export default function Signup() {
 
         {error && (
           <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: "8px", padding: "10px 14px", marginBottom: "1rem", fontSize: "13px" }}>
-            {error}
+            {error === "__already__" ? (
+              <>
+                Un compte existe déjà avec cette adresse email.{" "}
+                <Link href="/auth/login" style={{ color: "#DC2626", fontWeight: 600, textDecoration: "underline" }}>Se connecter</Link>
+                {" "}ou{" "}
+                <Link href="/auth/reset-password" style={{ color: "#DC2626", fontWeight: 600, textDecoration: "underline" }}>mot de passe oublié</Link>
+                .
+              </>
+            ) : error}
           </div>
         )}
 
