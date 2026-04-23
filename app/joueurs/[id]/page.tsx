@@ -115,7 +115,7 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
 
       {/* Caractéristiques */}
       <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>{t("players", "characteristics")}</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "12px", marginBottom: "1.5rem" }}>
         {badge(t("players", "playStyle"), j.style || "—")}
         {badge(t("players", "hand"), j.main || "—")}
         {j.prise && badge(t("players", "grip"), j.prise)}
