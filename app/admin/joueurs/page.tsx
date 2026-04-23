@@ -106,6 +106,7 @@ export default function AdminJoueursPage() {
   const [style, setStyle] = useState("")
   const [main, setMain] = useState("")
   const [age, setAge] = useState("")
+  const [prise, setPrise] = useState("")
 
   // Matériel — texte affiché + ID produit pour la sync joueurs_pro_produits
   const [boisNom, setBoisNom] = useState("")
@@ -131,7 +132,7 @@ export default function AdminJoueursPage() {
   async function fetchJoueurs() {
     const { data } = await supabase
       .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style, main, age, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
+      .select("id, nom, pays, classement_mondial, genre, style, main, age, prise, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
       .eq("actif", true)
       .order("classement_mondial")
     setJoueurs(data || [])
@@ -144,6 +145,7 @@ export default function AdminJoueursPage() {
     setStyle(j.style || "")
     setMain(j.main || "")
     setAge(j.age ? String(j.age) : "")
+    setPrise(j.prise || "Classique")
     setBoisNom(j.bois_nom || "")
     setBoisId(null)
     setRevetementCd(j.revetement_cd || "")
@@ -200,6 +202,7 @@ export default function AdminJoueursPage() {
         style: style || null,
         main: main || null,
         age: age ? parseInt(age) : null,
+        prise: prise || null,
         bois_nom: boisNom || null,
         revetement_cd: revetementCd || null,
         revetement_cd_type: revetementCdType || null,
@@ -338,7 +341,7 @@ export default function AdminJoueursPage() {
             {/* Classement & Infos */}
             <div style={cardStyle}>
               <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "16px" }}>Classement & Informations</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: "10px" }}>
                 <div>
                   <label style={labelStyle}>Classement mondial</label>
                   <input
@@ -371,6 +374,14 @@ export default function AdminJoueursPage() {
                     <option value="">—</option>
                     <option value="Droitier">Droitier</option>
                     <option value="Gaucher">Gaucher</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Type de prise</label>
+                  <select value={prise} onChange={e => setPrise(e.target.value)} style={inputStyle}>
+                    <option value="">—</option>
+                    <option value="Classique">Classique</option>
+                    <option value="Porte-plume">Porte-plume</option>
                   </select>
                 </div>
               </div>
