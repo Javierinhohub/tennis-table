@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import { useLocale } from "@/lib/useLocale"
+import { useT } from "@/lib/useT"
 
 const DRAPEAUX: Record<string, string> = {
   "Chine":"🇨🇳","France":"🇫🇷","Allemagne":"🇩🇪","Suède":"🇸🇪","Japon":"🇯🇵",
@@ -19,11 +21,18 @@ const DRAPEAUX: Record<string, string> = {
   "Pays de Galles":"🏴󠁧󠁢󠁷󠁬󠁳󠁿",
 }
 
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_LABELS_FR: Record<string, string> = {
   "In": "Backside",
   "Out": "Picots courts",
   "Mid": "Picots mi-longs",
   "Long": "Picots longs",
+  "Anti": "Anti-spin",
+}
+const TYPE_LABELS_EN: Record<string, string> = {
+  "In": "Backside",
+  "Out": "Short pips",
+  "Mid": "Medium pips",
+  "Long": "Long pips",
   "Anti": "Anti-spin",
 }
 
@@ -108,6 +117,10 @@ function PillButton({ label, active, onClick }: { label: string; active: boolean
 }
 
 export default function JoueursPage() {
+  const locale = useLocale()
+  const t = useT()
+  const TYPE_LABELS = locale === "en" ? TYPE_LABELS_EN : TYPE_LABELS_FR
+
   const [joueurs, setJoueurs]         = useState<any[]>([])
   const [loading, setLoading]         = useState(true)
   const [query, setQuery]             = useState("")
@@ -204,8 +217,8 @@ export default function JoueursPage() {
 
       {/* En-tête */}
       <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>Joueurs professionnels</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Classement mondial ITTF avril 2026</p>
+        <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>{t("players", "title")}</h1>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{t("players", "subtitle")}</p>
       </div>
 
       {/* Barre de recherche */}
@@ -214,7 +227,7 @@ export default function JoueursPage() {
           width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" placeholder="Rechercher un joueur par nom ou prénom…"
+        <input type="text" placeholder={t("players", "searchPlaceholder")}
           value={inputValue} onChange={e => setInputValue(e.target.value)}
           autoComplete="off"
           style={{ width: "100%", boxSizing: "border-box", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "11px 40px 11px 40px", fontSize: "14px", fontFamily: "Poppins, sans-serif", outline: "none", color: "var(--text)" }}
@@ -257,11 +270,11 @@ export default function JoueursPage() {
       {!loading && brandsDispos.length > 0 && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 14px", marginBottom: "1.2rem" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>Marque</p>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.4px" }}>{t("players", "brand")}</p>
             {nbFiltres > 0 && (
               <button onClick={() => { setFilterBrand(null); setFilterType(null) }}
                 style={{ background: "none", border: "none", color: "#D97757", fontSize: "12px", fontWeight: 600, cursor: "pointer", padding: 0, fontFamily: "Poppins, sans-serif" }}>
-                × Effacer ({nbFiltres})
+                {t("players", "clearFilters")} ({nbFiltres})
               </button>
             )}
           </div>
@@ -278,14 +291,13 @@ export default function JoueursPage() {
       {!recherche && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderLeft: "3px solid #D97757", borderRadius: "0 8px 8px 0", padding: "12px 16px", marginBottom: "1.5rem" }}>
           <p style={{ fontSize: "13px", color: "var(--text)", lineHeight: 1.7 }}>
-            Retrouvez sur cette page le matériel utilisé par les meilleurs joueurs mondiaux : bois, revêtements coup droit et revers.
-            À noter que les professionnels jouent avec des versions spéciales de certains produits — boostés, personnalisés ou non disponibles à la vente — qui ne correspondent pas toujours aux gammes accessibles au grand public.
+            {t("players", "infoText")}
           </p>
         </div>
       )}
 
       {loading && (
-        <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", fontSize: "14px" }}>Chargement...</div>
+        <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-muted)", fontSize: "14px" }}>{t("players", "loading")}</div>
       )}
 
       {/* Résultats filtrés : liste unifiée */}
@@ -293,12 +305,12 @@ export default function JoueursPage() {
         <div>
           {filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "3rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "14px" }}>
-              Aucun joueur trouvé pour ces critères
+              {t("players", "noResults")}
             </div>
           ) : (
             <div>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "12px" }}>
-                {filtered.length} joueur{filtered.length > 1 ? "s" : ""}
+                {filtered.length} {filtered.length > 1 ? t("players", "players_plural") : t("players", "player")}
                 {filterBrand && <> · <strong style={{ color: "var(--text)" }}>{filterBrand}</strong></>}
                 {filterType  && <> · <strong style={{ color: "var(--text)" }}>{TYPE_LABELS[filterType]}</strong></>}
                 {query.trim() && <> · « <strong style={{ color: "var(--text)" }}>{query}</strong> »</>}
@@ -316,8 +328,8 @@ export default function JoueursPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem" }}>
           <div>
             <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>Hommes</h2>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{hommes.length} joueurs classés</p>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>{t("players", "men")}</h2>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{hommes.length} {t("players", "menRanked")}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {hommes.map(j => <CarteJoueur key={j.id} j={j} />)}
@@ -325,8 +337,8 @@ export default function JoueursPage() {
           </div>
           <div>
             <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>Femmes</h2>
-              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{femmes.length} joueuses classées</p>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>{t("players", "women")}</h2>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{femmes.length} {t("players", "womenRanked")}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {femmes.map(j => <CarteJoueur key={j.id} j={j} />)}

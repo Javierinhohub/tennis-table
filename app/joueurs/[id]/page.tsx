@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+import { getLocale, makeT } from "@/lib/getLocale"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -47,6 +48,9 @@ const DRAPEAUX: Record<string, string> = {
 
 export default async function JoueurPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const locale = await getLocale()
+  const t = makeT(locale)
+
   const { data: j } = await supabase
     .from("joueurs_pro")
     .select("*")
@@ -63,6 +67,8 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
     </div>
   )
 
+  const ageLabel = j.age ? `${j.age} ${t("players", "years")}` : "—"
+
   const materielParts = [j.bois_nom, j.revetement_cd, j.revetement_rv].filter(Boolean)
   const jsonLd = {
     "@context": "https://schema.org",
@@ -75,12 +81,16 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
     ...(j.style ? { "hasOccupation": { "@type": "Occupation", "name": `Joueur de tennis de table (style ${j.style})` } } : {}),
   }
 
+  const worldLabel = locale === "en"
+    ? `#${j.classement_mondial} ${t("players", "worldRanking")} ${j.genre === "F" ? "🏆 Women" : "🏆 Men"}`
+    : `#${j.classement_mondial} ${t("players", "worldRanking")} ${j.genre === "F" ? "🏆 Femmes" : "🏆 Hommes"}`
+
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main style={{ maxWidth: "800px", margin: "0 auto", padding: "2.5rem 2rem" }}>
       <a href="/joueurs" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, display: "inline-block", marginBottom: "1.5rem" }}>
-        ← Retour aux joueurs
+        {t("players", "backToPlayers")}
       </a>
 
       {/* Header */}
@@ -93,7 +103,7 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
             <h1 style={{ fontSize: "clamp(1.4rem, 4vw, 2rem)", fontWeight: 800, marginBottom: "6px", letterSpacing: "-0.5px" }}>{j.nom}</h1>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" as const }}>
               <span style={{ background: "rgba(255,255,255,0.2)", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: 600 }}>
-                #{j.classement_mondial} Mondial {j.genre === "F" ? "🏆 Femmes" : "🏆 Hommes"}
+                {worldLabel}
               </span>
               <span style={{ background: "rgba(255,255,255,0.2)", padding: "4px 12px", borderRadius: "20px", fontSize: "13px" }}>
                 {j.pays}
@@ -104,34 +114,34 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Caractéristiques */}
-      <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>Caractéristiques</h2>
+      <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>{t("players", "characteristics")}</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
-        {badge("Style de jeu", j.style || "—")}
-        {badge("Main", j.main || "—")}
-        {badge("Âge", j.age ? j.age + " ans" : "—")}
-        {badge("Pays", `${drapeau} ${j.pays}`)}
+        {badge(t("players", "playStyle"), j.style || "—")}
+        {badge(t("players", "hand"), j.main || "—")}
+        {badge(t("players", "age"), ageLabel)}
+        {badge(t("players", "country"), `${drapeau} ${j.pays}`)}
       </div>
 
       {/* Matériel */}
       {(j.bois_nom || j.revetement_cd || j.revetement_rv) && (
         <>
-          <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>Matériel</h2>
+          <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "1rem" }}>{t("players", "equipment")}</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
             {j.bois_nom && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🏏 Bois</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🏏 {t("players", "blade")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.bois_nom}</p>
               </div>
             )}
             {j.revetement_cd && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🔴 Coup droit</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🔴 {t("players", "forehand")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_cd}</p>
               </div>
             )}
             {j.revetement_rv && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>⚫ Revers</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>⚫ {t("players", "backhand")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_rv}</p>
               </div>
             )}
@@ -141,7 +151,7 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
 
       {/* Note info */}
       <div style={{ background: "#FFF0EB", border: "1px solid #D97757", borderRadius: "10px", padding: "12px 16px", fontSize: "13px", color: "#C4694A" }}>
-        💡 Les informations matériel sont indicatives et peuvent évoluer en cours de saison.
+        {t("players", "equipmentNote")}
       </div>
     </main>
     </>
