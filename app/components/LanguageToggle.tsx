@@ -3,6 +3,30 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale } from "@/lib/useLocale"
 
+// Drapeau France en SVG
+function FlagFR() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="28" height="19" style={{ borderRadius: "3px", display: "block" }}>
+      <rect width="10" height="20" fill="#002395"/>
+      <rect x="10" width="10" height="20" fill="#EDEDED"/>
+      <rect x="20" width="10" height="20" fill="#ED2939"/>
+    </svg>
+  )
+}
+
+// Drapeau Royaume-Uni en SVG
+function FlagGB() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="28" height="19" style={{ borderRadius: "3px", display: "block" }}>
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="#fff" strokeWidth="10"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
+    </svg>
+  )
+}
+
 export default function LanguageToggle() {
   const locale = useLocale()
   const pathname = usePathname()
@@ -10,10 +34,8 @@ export default function LanguageToggle() {
 
   function toggle() {
     if (locale === "fr") {
-      // Switch to English: prefix path with /en
       router.push("/en" + pathname)
     } else {
-      // Switch to French: remove /en prefix
       const newPath = pathname.replace(/^\/en/, "") || "/"
       router.push(newPath)
     }
@@ -27,35 +49,30 @@ export default function LanguageToggle() {
         width: "40px",
         height: "40px",
         borderRadius: "10px",
-        background: "var(--bg)",
-        border: "1px solid var(--border)",
+        background: "transparent",
+        border: "none",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        letterSpacing: "0.3px",
-        fontFamily: "Poppins, sans-serif",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        transition: "background 0.15s, color 0.15s",
+        padding: 0,
+        transition: "opacity 0.15s, transform 0.15s",
         flexShrink: 0,
+        opacity: 0.85,
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLButtonElement
-        el.style.background = "#FFF0EB"
-        el.style.color = "#D97757"
-        el.style.borderColor = "#D97757"
+        el.style.opacity = "1"
+        el.style.transform = "scale(1.1)"
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLButtonElement
-        el.style.background = "var(--bg)"
-        el.style.color = "var(--text-muted)"
-        el.style.borderColor = "var(--border)"
+        el.style.opacity = "0.85"
+        el.style.transform = "scale(1)"
       }}
     >
-      {locale === "fr" ? "EN" : "FR"}
+      {/* Affiche le drapeau de la langue CIBLE (celle vers laquelle on bascule) */}
+      {locale === "fr" ? <FlagGB /> : <FlagFR />}
     </button>
   )
 }
