@@ -351,7 +351,7 @@ export default function AdminJoueursPage() {
             {/* Classement & Infos */}
             <div style={cardStyle}>
               <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "16px" }}>Classement & Informations</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "10px" }}>
                 <div>
                   <label style={labelStyle}>Classement mondial</label>
                   <input
@@ -378,6 +378,8 @@ export default function AdminJoueursPage() {
                     <option value="Bloqueur">Bloqueur</option>
                   </select>
                 </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
                   <label style={labelStyle}>Main</label>
                   <select value={main} onChange={e => setMain(e.target.value)} style={inputStyle}>
