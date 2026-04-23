@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
+import { useLocale } from "@/lib/useLocale"
+import { useT } from "@/lib/useT"
 
 type Result = { id: string, nom: string, slug: string, type: string, detail?: string }
 
-const TYPE_COLORS: Record<string, string> = {
+const TYPE_COLORS_FR: Record<string, string> = {
   "Revêtement": "#1A56DB",
   "Bois": "#0E7F4F",
   "Marque": "#D97757",
@@ -13,11 +15,27 @@ const TYPE_COLORS: Record<string, string> = {
   "Conseil": "#7C3AED",
   "Joueur": "#EF4444",
 }
-const TYPE_LABELS: Record<string, string> = {
+const TYPE_COLORS_EN: Record<string, string> = {
+  "Rubber": "#1A56DB",
+  "Blade": "#0E7F4F",
+  "Brand": "#D97757",
+  "Article": "#D97757",
+  "Tip": "#7C3AED",
+  "Player": "#EF4444",
+}
+const TYPE_LABELS_FR: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
+}
+const TYPE_LABELS_EN: Record<string, string> = {
+  In: "Backside", Out: "Short pips", Mid: "Medium pips", Long: "Long pips", Anti: "Anti-spin"
 }
 
 export default function AccueilHero() {
+  const locale = useLocale()
+  const t = useT()
+  const TYPE_LABELS = locale === "en" ? TYPE_LABELS_EN : TYPE_LABELS_FR
+  const TYPE_COLORS = locale === "en" ? TYPE_COLORS_EN : TYPE_COLORS_FR
+
   const [search, setSearch] = useState("")
   const [resultats, setResultats] = useState<Result[]>([])
   const [loading, setLoading] = useState(false)
@@ -69,39 +87,47 @@ export default function AccueilHero() {
 
     const all: Result[] = []
 
+    const tagRubber = locale === "en" ? "Rubber" : "Revêtement"
+    const tagBlade  = locale === "en" ? "Blade"  : "Bois"
+    const tagBrand  = locale === "en" ? "Brand"  : "Marque"
+    const tagArticle = locale === "en" ? "Article" : "Article"
+    const tagAdvice = locale === "en" ? "Tip"    : "Conseil"
+    const tagPlayer = locale === "en" ? "Player" : "Joueur"
+    const seeAllProducts = locale === "en" ? "See all products" : "Voir tous les produits"
+
     revs.data?.forEach(p => all.push({
       id: p.id,
       nom: p.nom,
       slug: "/revetements/" + p.slug,
-      type: "Revêtement",
+      type: tagRubber,
       detail: (p.marques as any)?.nom + (p.revetements ? " · " + (TYPE_LABELS[(p.revetements as any).type_revetement] || "") : ""),
     }))
     boisData.data?.forEach(p => all.push({
       id: "b" + p.id,
       nom: p.nom,
       slug: "/bois/" + p.slug,
-      type: "Bois",
+      type: tagBlade,
       detail: (p.marques as any)?.nom,
     }))
     marqData.data?.forEach(m => all.push({
       id: "m" + m.id,
       nom: m.nom,
       slug: "/marques/" + m.slug,
-      type: "Marque",
-      detail: "Voir tous les produits",
+      type: tagBrand,
+      detail: seeAllProducts,
     }))
     arts.data?.forEach(a => all.push({
       id: "a" + a.id,
       nom: a.titre,
       slug: "/articles/" + a.slug,
-      type: a.categorie === "conseil" ? "Conseil" : "Article",
+      type: a.categorie === "conseil" ? tagAdvice : tagArticle,
       detail: "",
     }))
     joueurs.data?.forEach(j => all.push({
       id: "j" + j.id,
       nom: j.nom,
       slug: "/joueurs/" + j.id,
-      type: "Joueur",
+      type: tagPlayer,
       detail: j.pays,
     }))
 
@@ -153,9 +179,9 @@ export default function AccueilHero() {
     <section style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", padding: "3rem 2rem 2.5rem", textAlign: "center" as const }}>
       <div style={{ maxWidth: "700px", margin: "0 auto" }}>
         <h1 style={{ fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
-          Bienvenue chez TT-Kip
+          {t("home", "heroTitle")}
         </h1>
-        <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.85)", marginBottom: "1.5rem" }}>On évalue les équip&apos;</p>
+        <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.85)", marginBottom: "1.5rem" }}>{t("home", "heroSubtitle")}</p>
 
         <div style={{ position: "relative", maxWidth: "560px", margin: "0 auto" }}>
           {/* Champ de recherche */}
@@ -163,7 +189,7 @@ export default function AccueilHero() {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Rechercher revêtement, bois, marque, joueur..."
+              placeholder={t("home", "searchPlaceholder")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -212,7 +238,7 @@ export default function AccueilHero() {
               {/* Aucun résultat */}
               {!loading && resultats.length === 0 && (
                 <p style={{ fontSize: "14px", color: "#888", textAlign: "center" as const, padding: "16px" }}>
-                  Aucun résultat pour « {search} »
+                  {locale === "en" ? `No results for « ${search} »` : `Aucun résultat pour « ${search} »`}
                 </p>
               )}
 
@@ -262,12 +288,12 @@ export default function AccueilHero() {
                   onMouseEnter={() => setActiveIndex(resultats.length)}
                   onMouseLeave={() => setActiveIndex(-1)}
                 >
-                  <span>{resultats.length} résultat{resultats.length > 1 ? "s" : ""}</span>
+                  <span>{resultats.length} {resultats.length > 1 ? t("home", "results_plural") : t("home", "results")}</span>
                   <a
                     href={"/revetements?q=" + encodeURIComponent(search)}
                     style={{ color: "#D97757", textDecoration: "none", fontWeight: 500 }}
                   >
-                    Voir tous les revêtements →
+                    {t("home", "seeAllRubbers")}
                   </a>
                 </div>
               )}

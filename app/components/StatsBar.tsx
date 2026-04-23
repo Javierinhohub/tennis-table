@@ -1,8 +1,12 @@
 import { supabase } from "@/lib/supabase"
+import { getLocale, makeT } from "@/lib/getLocale"
 
 export const revalidate = 60
 
 export default async function StatsBar() {
+  const locale = await getLocale()
+  const t = makeT(locale)
+
   const [r1, r2, r3, r4, r5] = await Promise.all([
     supabase.from("revetements").select("*", { count: "exact", head: true }),
     supabase.from("marques").select("*", { count: "exact", head: true }),
@@ -11,12 +15,13 @@ export default async function StatsBar() {
     supabase.from("notes_revetements").select("*", { count: "exact", head: true }),
   ])
 
+  const loc = locale === "en" ? "en-US" : "fr-FR"
   const stats = [
-    { label: "Revêtements", value: (r1.count || 0).toLocaleString("fr-FR") },
-    { label: "Bois", value: (r3.count || 0).toLocaleString("fr-FR") },
-    { label: "Marques", value: (r2.count || 0).toLocaleString("fr-FR") },
-    { label: "Avis publiés", value: (r4.count || 0).toLocaleString("fr-FR") },
-    { label: "Notes", value: (r5.count || 0).toLocaleString("fr-FR") },
+    { label: t("home", "statsRubbers"), value: (r1.count || 0).toLocaleString(loc) },
+    { label: t("home", "statsBlades"),  value: (r3.count || 0).toLocaleString(loc) },
+    { label: t("home", "statsBrands"),  value: (r2.count || 0).toLocaleString(loc) },
+    { label: t("home", "statsReviews"), value: (r4.count || 0).toLocaleString(loc) },
+    { label: t("home", "statsRatings"), value: (r5.count || 0).toLocaleString(loc) },
   ]
 
   return (
