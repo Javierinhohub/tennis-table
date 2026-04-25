@@ -11,6 +11,17 @@ const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
 
+function getYoutubeId(url: string): string | null {
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&\s]+)/,
+    /youtu\.be\/([^?&\s]+)/,
+    /youtube\.com\/embed\/([^?&\s]+)/,
+    /youtube\.com\/shorts\/([^?&\s]+)/,
+  ]
+  for (const p of patterns) { const m = url.match(p); if (m) return m[1] }
+  return null
+}
+
 // ── Métadonnées dynamiques ────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -80,7 +91,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   // Vidéos YouTube liées à ce produit
   const { data: videosData } = await supabase
     .from("produit_videos")
-    .select("id, youtube_url, titre")
+    .select("id, youtube_url, titre, cree_le")
     .eq("produit_id", produit.id)
     .order("ordre")
     .order("cree_le")
@@ -158,9 +169,30 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
       })),
   } : null
 
+  // VideoObject JSON-LD pour chaque vidéo YouTube — requis par Google pour indexation vidéo
+  const videoJsonLd = videosData && videosData.length > 0 ? videosData
+    .filter(v => getYoutubeId(v.youtube_url))
+    .map(v => {
+      const vid = getYoutubeId(v.youtube_url)!
+      return {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": v.titre || `${marque?.nom} ${produit.nom} — vidéo de jeu`,
+        "description": `Vidéo de jeu du revêtement ${marque?.nom} ${produit.nom}. Voir les caractéristiques techniques et avis sur TT-Kip.`,
+        "thumbnailUrl": `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`,
+        "uploadDate": v.cree_le ? new Date(v.cree_le).toISOString() : new Date().toISOString(),
+        "embedUrl": `https://www.youtube.com/embed/${vid}`,
+        "contentUrl": `https://www.youtube.com/watch?v=${vid}`,
+        "url": `https://www.tt-kip.com/revetements/${slug}`,
+      }
+    }) : []
+
   return (
     <>
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
+      {videoJsonLd.map((vld, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(vld) }} />
+      ))}
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
       <BackButton fallback="/revetements" label="Retour à la liste" />
