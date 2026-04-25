@@ -1,7 +1,15 @@
 import { supabase } from "@/lib/supabase"
 import BoisClient from "./BoisClient"
+import type { Metadata } from "next"
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: "Bois de tennis de table — Catalogue et comparatif",
+  description: "Comparez les bois et lames de tennis de table : composition, vitesse, style de jeu. Trouvez le bois idéal pour votre niveau.",
+  alternates: { canonical: "https://www.tt-kip.com/bois" },
+  openGraph: { url: "https://www.tt-kip.com/bois" },
+}
 
 const PAGE_SIZE = 50
 

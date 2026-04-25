@@ -29,6 +29,8 @@ export function middleware(request: NextRequest) {
     url.pathname = newPathname
     const response = NextResponse.rewrite(url)
     response.headers.set("x-locale", "en")
+    // Tell Google not to index /en/ pages as separate URLs — the canonical FR page is the reference
+    response.headers.set("X-Robots-Tag", "noindex, follow")
     return response
   }
 

@@ -4,8 +4,13 @@ import DerniersAvis from "./components/DerniersAvis"
 import DerniersArticles from "./components/DerniersArticles"
 import AccueilHero from "./components/AccueilHero"
 import { getLocale, makeT } from "@/lib/getLocale"
+import type { Metadata } from "next"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  alternates: { canonical: "https://www.tt-kip.com" },
+}
 
 export default async function Home() {
   const locale = await getLocale()

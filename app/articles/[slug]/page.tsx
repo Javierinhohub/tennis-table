@@ -1,6 +1,29 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import ArticleComments from "./ArticleComments"
+import type { Metadata } from "next"
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const { data: article } = await supabase
+    .from("articles")
+    .select("titre, extrait")
+    .eq("slug", slug)
+    .eq("publie", true)
+    .single()
+  if (!article) return { title: "Article introuvable" }
+  return {
+    title: article.titre,
+    description: article.extrait || undefined,
+    alternates: { canonical: `https://www.tt-kip.com/articles/${slug}` },
+    openGraph: {
+      title: article.titre,
+      description: article.extrait || undefined,
+      url: `https://www.tt-kip.com/articles/${slug}`,
+      type: "article",
+    },
+  }
+}
 
 const CAT_LABELS: Record<string, string> = {
   test: "Test", conseil: "Conseil", actualite: "Actualité", comparatif: "Comparatif"

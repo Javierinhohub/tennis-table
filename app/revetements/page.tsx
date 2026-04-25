@@ -1,8 +1,16 @@
 import { Suspense } from "react"
 import { supabase } from "@/lib/supabase"
 import RevatementsClient from "./RevatementsClient"
+import type { Metadata } from "next"
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: "Revêtements de tennis de table — Base de données LARC 2026",
+  description: "Retrouvez tous les revêtements homologués LARC 2026 : caractéristiques techniques, avis, notes et comparatif. Plus de 1 600 références.",
+  alternates: { canonical: "https://www.tt-kip.com/revetements" },
+  openGraph: { url: "https://www.tt-kip.com/revetements" },
+}
 
 export default async function RevatementsPage() {
   const SELECT = "id, nom, slug, marques(id, nom), revetements!inner(numero_larc, type_revetement, couleurs_dispo, prix)"

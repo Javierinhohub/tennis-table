@@ -23,10 +23,13 @@ export const metadata: Metadata = {
   },
   description: 'TT-Kip : base de données de revêtements, bois et équipements de tennis de table. Tests, avis et conseils par des passionnés de ping.',
   keywords: ['tennis de table', 'ping pong', 'revêtements', 'bois', 'raquette', 'LARC 2026'],
+  alternates: {
+    canonical: 'https://www.tt-kip.com',
+  },
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://tt-kip.com',
+    url: 'https://www.tt-kip.com',
     siteName: 'TT-Kip',
     title: 'TT-Kip — La référence des équipements de tennis de table',
     description: 'Base de données de revêtements, bois et équipements de tennis de table.',
