@@ -36,31 +36,58 @@ function sanitize(str: string) {
   return str.replace(/<script[^>]*>.*?<\/script>/gis, '').replace(/on\w+="[^"]*"/gi, '').replace(/javascript:/gi, '')
 }
 
+function inlineFormat(t: string) {
+  return t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\_(.+?)\_/g, "<em>$1</em>")
+}
+
 function renderMarkdown(text: string) {
   const lines = text.split("\n")
   const html: string[] = []
   let inList = false
+  let inTable = false
+  let tableHeaderDone = false
+
+  const closeList = () => { if (inList) { html.push("</ul>"); inList = false } }
+  const closeTable = () => { if (inTable) { html.push("</tbody></table>"); inTable = false; tableHeaderDone = false } }
+
   for (const line of lines) {
     const t = line.trim()
-    if (!t) { if (inList) { html.push("</ul>"); inList = false } html.push("<br/>"); continue }
-    if (t.startsWith("### ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h3 style="font-size:16px;font-weight:700;margin:1.2rem 0 0.4rem">${t.slice(4)}</h3>`); continue }
-    if (t.startsWith("## ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h2 style="font-size:18px;font-weight:700;margin:1.5rem 0 0.5rem;border-bottom:2px solid #D97757;padding-bottom:4px">${t.slice(3)}</h2>`); continue }
-    if (t.startsWith("# ")) { if (inList) { html.push("</ul>"); inList = false } html.push(`<h1 style="font-size:22px;font-weight:800;margin:1.5rem 0 0.5rem">${t.slice(2)}</h1>`); continue }
-    if (t.startsWith("- ") || t.startsWith("* ")) {
-      if (!inList) { html.push("<ul style=\"margin:0.5rem 0 0.5rem 1.2rem;\">"); inList = true }
-      let item = t.slice(2)
-      item = item.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      item = item.replace(/\_(.+?)\_/g, "<em>$1</em>")
-      html.push(`<li style="margin-bottom:4px">${item}</li>`)
+
+    // Tableau markdown (lignes commençant par |)
+    if (t.startsWith("|")) {
+      closeList()
+      const cells = t.split("|").filter((_, i, a) => i > 0 && i < a.length - 1).map(c => c.trim())
+      const isSeparator = cells.every(c => /^[-:]+$/.test(c))
+      if (isSeparator) continue // ligne de séparation --- ignorée
+      if (!inTable) {
+        // Première ligne = en-tête
+        html.push(`<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:14px">`)
+        html.push(`<thead><tr>${cells.map(c => `<th style="border:1px solid var(--border);padding:8px 12px;background:var(--bg);font-weight:700;text-align:left">${inlineFormat(c)}</th>`).join("")}</tr></thead>`)
+        html.push(`<tbody>`)
+        inTable = true
+        tableHeaderDone = true
+      } else {
+        html.push(`<tr>${cells.map((c, i) => `<td style="border:1px solid var(--border);padding:8px 12px;${i === 0 ? "font-weight:600" : ""}">${inlineFormat(c)}</td>`).join("")}</tr>`)
+      }
       continue
     }
-    if (inList) { html.push("</ul>"); inList = false }
-    let p = t
-    p = p.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    p = p.replace(/\_(.+?)\_/g, "<em>$1</em>")
-    html.push(`<p style="margin:0.6rem 0;line-height:1.8">${p}</p>`)
+
+    closeTable()
+
+    if (!t) { closeList(); html.push("<br/>"); continue }
+    if (t.startsWith("### ")) { closeList(); html.push(`<h3 style="font-size:16px;font-weight:700;margin:1.2rem 0 0.4rem">${inlineFormat(t.slice(4))}</h3>`); continue }
+    if (t.startsWith("## ")) { closeList(); html.push(`<h2 style="font-size:18px;font-weight:700;margin:1.5rem 0 0.5rem;border-bottom:2px solid #D97757;padding-bottom:4px">${inlineFormat(t.slice(3))}</h2>`); continue }
+    if (t.startsWith("# ")) { closeList(); html.push(`<h1 style="font-size:22px;font-weight:800;margin:1.5rem 0 0.5rem">${inlineFormat(t.slice(2))}</h1>`); continue }
+    if (t.startsWith("- ") || t.startsWith("* ")) {
+      if (!inList) { html.push(`<ul style="margin:0.5rem 0 0.5rem 1.2rem;">`); inList = true }
+      html.push(`<li style="margin-bottom:4px">${inlineFormat(t.slice(2))}</li>`)
+      continue
+    }
+    closeList()
+    html.push(`<p style="margin:0.6rem 0;line-height:1.8">${inlineFormat(t)}</p>`)
   }
-  if (inList) html.push("</ul>")
+  closeList()
+  closeTable()
   return sanitize(html.join(""))
 }
 
