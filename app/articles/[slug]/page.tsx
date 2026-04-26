@@ -83,6 +83,13 @@ function renderMarkdown(text: string) {
       html.push(`<li style="margin-bottom:4px">${inlineFormat(t.slice(2))}</li>`)
       continue
     }
+    // Image markdown : ![légende](url)
+    const imgMatch = t.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    if (imgMatch) {
+      const [, alt, src] = imgMatch
+      html.push(`<figure style="margin:1.5rem 0;text-align:center"><img src="${src}" alt="${alt}" style="max-width:100%;border-radius:10px;border:1px solid var(--border)" loading="lazy" />${alt ? `<figcaption style="font-size:12px;color:var(--text-muted);margin-top:6px;font-style:italic">${alt}</figcaption>` : ""}</figure>`)
+      continue
+    }
     closeList()
     html.push(`<p style="margin:0.6rem 0;line-height:1.8">${inlineFormat(t)}</p>`)
   }
