@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import ArticleComments from "./ArticleComments"
+import ArticleEditButton from "./ArticleEditButton"
 import type { Metadata } from "next"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -116,9 +117,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <main style={{ maxWidth: "780px", margin: "0 auto", padding: "2.5rem 2rem" }}>
-      <a href="/articles" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>
-        ← Retour aux articles
-      </a>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <a href="/articles" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500 }}>
+          ← Retour aux articles
+        </a>
+        <ArticleEditButton slug={article.slug} />
+      </div>
 
       <div style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
