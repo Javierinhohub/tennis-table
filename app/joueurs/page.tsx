@@ -146,6 +146,7 @@ export default function JoueursPage() {
       .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
       .eq("actif", true)
       .order("classement_mondial")
+      .limit(1000)
       .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
 
     // 2. Noms de marques pour le matching
