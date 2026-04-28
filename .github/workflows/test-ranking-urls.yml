@@ -7,82 +7,85 @@ jobs:
   test-urls:
     runs-on: ubuntu-latest
     steps:
-      - name: Test pagination results.ittf.link
+      - name: Install Playwright
         run: |
-          pip install beautifulsoup4 -q
+          pip install playwright -q
+          python3 -m playwright install chromium
+
+      - name: Test scraping WTT avec Playwright
+        run: |
           python3 - <<'EOF'
-          import requests
-          from bs4 import BeautifulSoup
-
-          HEADERS = {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          }
-
-          BASE_URLS = {
-              "H": "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles",
-              "F": "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles",
-          }
-
-          # Variantes de pagination Joomla / PHP
-          PAGINATION_PARAMS = [
-              "?limitstart=50",
-              "?start=50",
-              "?page=2",
-              "?p=2",
-              "?offset=50",
-              "?limit=100",
-              "?limit=200",
-              "?limitstart=0&limit=100",
-              "?limitstart=0&limit=200",
-          ]
-
-          def parse_players(html):
-              soup = BeautifulSoup(html, "html.parser")
-              players = []
-              for table in soup.find_all("table"):
-                  for row in table.find_all("tr"):
-                      cells = [td.get_text(strip=True) for td in row.find_all("td")]
-                      if len(cells) < 5:
-                          continue
-                      try:
-                          rang = int(cells[0])
-                          if 1 <= rang <= 500:
-                              nom = cells[4]
-                              pays = cells[6] if len(cells) > 6 else ""
-                              if nom:
-                                  players.append((rang, nom, pays))
-                      except ValueError:
-                          pass
-              return sorted(players, key=lambda x: x[0])
+          from playwright.sync_api import sync_playwright
+          import json, re
 
           print("\n" + "="*70)
-          print("  TEST PAGINATION results.ittf.link")
+          print("  SCRAPING WTT RANKINGS AVEC PLAYWRIGHT (navigateur headless)")
           print("="*70)
 
-          for genre, base in BASE_URLS.items():
-              label = "Hommes" if genre == "H" else "Femmes"
-              print(f"\n  ── {label} ──")
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page()
 
-              # Page de base
-              r = requests.get(base, headers=HEADERS, timeout=30)
-              p0 = parse_players(r.text)
-              print(f"  Page base ({len(r.text)} chars) : {len(p0)} joueurs  [#{p0[0][0]}..#{p0[-1][0]}]")
+              # Intercepter les requêtes API faites par la SPA
+              api_calls = []
+              def on_response(response):
+                  ct = response.headers.get("content-type", "")
+                  if "json" in ct and response.status == 200:
+                      url = response.url
+                      try:
+                          body = response.json()
+                          size = len(str(body))
+                          api_calls.append((url, size, body))
+                          print(f"  📡 API call interceptée: {url[:80]}")
+                          print(f"     size={size}  preview={str(body)[:120]}\n")
+                      except:
+                          pass
 
-              # Tester chaque variante de pagination
-              for param in PAGINATION_PARAMS:
-                  url = base + param
+              page.on("response", on_response)
+
+              for genre, url in [
+                  ("Hommes", "https://www.worldtabletennis.com/rankings?type=ms"),
+                  ("Femmes", "https://www.worldtabletennis.com/rankings?type=ws"),
+              ]:
+                  print(f"\n  ── {genre} ({url}) ──")
+                  page.goto(url, wait_until="networkidle", timeout=30000)
+
+                  # Attendre que les données se chargent
                   try:
-                      r2 = requests.get(url, headers=HEADERS, timeout=20)
-                      players = parse_players(r2.text)
-                      if players:
-                          same_as_base = players == p0
-                          ranks = f"#{players[0][0]}..#{players[-1][0]}"
-                          note = " ← MÊME QUE BASE" if same_as_base else f" ← NOUVEAUX ! {players[:2]}"
-                          print(f"  {param:35s} → {len(players)} joueurs {ranks}{note}")
-                      else:
-                          print(f"  {param:35s} → 0 joueurs (HTTP {r2.status_code})")
-                  except Exception as e:
-                      print(f"  {param:35s} → Exception: {e}")
+                      page.wait_for_selector("table, .ranking-row, [class*='rank'], tr", timeout=10000)
+                  except:
+                      print("  ⚠️  Timeout selector")
+
+                  # Extraire via DOM
+                  html = page.content()
+                  print(f"  HTML rendu : {len(html)} chars")
+
+                  # Chercher les rangs dans le DOM
+                  rows = page.query_selector_all("tr")
+                  players = []
+                  for row in rows:
+                      cells = row.query_selector_all("td")
+                      texts = [c.inner_text().strip() for c in cells]
+                      if len(texts) >= 3:
+                          try:
+                              rang = int(texts[0])
+                              nom = next((t for t in texts[1:] if len(t) > 3 and any(c.isalpha() for c in t)), "")
+                              if nom:
+                                  players.append((rang, nom))
+                          except:
+                              pass
+
+                  players.sort(key=lambda x: x[0])
+                  print(f"  Joueurs extraits du DOM : {len(players)}")
+                  if players:
+                      print(f"  Top 5 : {players[:5]}")
+                      print(f"  Rang max : #{players[-1][0]} {players[-1][1]}")
+
+              browser.close()
+
+              print("\n" + "="*70)
+              print(f"  Total appels API JSON interceptés : {len(api_calls)}")
+              for url, size, body in api_calls:
+                  print(f"  {url[:90]}  size={size}")
 
           EOF
