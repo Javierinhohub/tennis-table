@@ -74,31 +74,76 @@ HEADERS = {
 
 # ─── Récupération du classement ───────────────────────────────────────────────
 
+def fetch_page(url):
+    """Récupère et parse une URL JSON de classement. Renvoie (résultats, url_utilisée) ou ([], None)."""
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=20)
+        if r.status_code == 200:
+            data = r.json()
+            result = parse_json_rankings(data)
+            if result:
+                return result, url
+    except Exception:
+        pass
+    return [], None
+
 def fetch_rankings_wtt(genre="H"):
-    """Tente plusieurs sources API WTT/ITTF (JSON)."""
+    """Tente plusieurs sources API WTT/ITTF (JSON), avec pagination si nécessaire."""
     ms = "ms" if genre == "H" else "ws"
     tab = "MEN'S+SINGLES" if genre == "H" else "WOMEN'S+SINGLES"
-    urls = [
-        # ITTF ranking API — paramètre limit explicite
+
+    # Sources à essayer pour la page 1 (ou résultat complet)
+    urls_page1 = [
         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=200",
         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&page=1",
-        # WTT allplayersranking avec pagination
+        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1&pageSize=100",
+        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&offset=0&limit=100",
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=200",
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}",
-        # Ancienne API ITTF
         f"https://www.ittf.com/ranking/?rankingType={ms}&pageSize=100",
     ]
-    for url in urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=20)
-            if r.status_code == 200:
-                data = r.json()
-                result = parse_json_rankings(data)
-                if result:
-                    print(f"  ✅ API JSON ({url[:60]}…) : {len(result)} joueurs")
-                    return result
-        except Exception:
-            pass
+
+    for url in urls_page1:
+        result, working_url = fetch_page(url)
+        if not result:
+            continue
+
+        print(f"  ✅ API JSON ({url[:60]}…) : {len(result)} joueurs")
+
+        # Si on a déjà 80+ joueurs, pas besoin de paginer
+        if len(result) >= 80:
+            return result
+
+        # Exactement ~50 joueurs → l'API pagine probablement — tenter page 2
+        print(f"  ℹ️  Seulement {len(result)} résultats, tentative page 2…")
+        page2_variants = []
+
+        if "page=1" in working_url:
+            page2_variants.append(working_url.replace("page=1", "page=2"))
+        elif "offset=0" in working_url:
+            page2_variants.append(working_url.replace("offset=0", "offset=50"))
+        else:
+            sep = "&" if "?" in working_url else "?"
+            page2_variants += [
+                working_url + sep + "page=2",
+                working_url + sep + "offset=50",
+                working_url + sep + "skip=50",
+            ]
+
+        for url2 in page2_variants:
+            page2, _ = fetch_page(url2)
+            if page2:
+                # Ne garder que les joueurs au-delà du dernier rang déjà reçu
+                last_rank = result[-1]["rang"]
+                nouveaux = [p for p in page2 if p["rang"] > last_rank]
+                if nouveaux:
+                    result.extend(nouveaux)
+                    result.sort(key=lambda x: x["rang"])
+                    print(f"  ✅ Page 2 ({url2[:60]}…) : +{len(nouveaux)} joueurs → total {len(result)}")
+                    break
+
+        return result
+
     return []
 
 def parse_json_rankings(data):
