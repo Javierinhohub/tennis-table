@@ -1,89 +1,90 @@
 name: Test Ranking URLs
 
 on:
-  workflow_dispatch: # déclenchement manuel uniquement
+  workflow_dispatch:
 
 jobs:
   test-urls:
     runs-on: ubuntu-latest
     steps:
-      - name: Test toutes les URLs de classement
+      - name: Test et parsing des sources de classement
         run: |
+          pip install beautifulsoup4 -q
           python3 - <<'EOF'
-          import requests, json
+          import requests, re
+          from bs4 import BeautifulSoup
 
           HEADERS = {
-              "User-Agent": "Mozilla/5.0 (compatible; TT-Kip Rankings Bot/1.0)",
-              "Accept": "application/json, text/html, */*",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.5",
           }
 
-          URLS = [
-              # ITTF JSON API
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&limit=200",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&limit=100",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&page=1&pageSize=50",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&page=2&pageSize=50",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&limit=50&offset=0",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&limit=50&offset=50",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&page=1",
-              "https://ranking.ittf.com/api/v1/ranking?type=ms&page=2",
-              # WTT rankings
-              "https://www.worldtabletennis.com/rankings?type=ms&pageSize=200",
-              "https://www.worldtabletennis.com/rankings?type=ms&pageSize=100",
-              "https://www.worldtabletennis.com/rankings?type=ms&pageSize=50&page=1",
-              "https://www.worldtabletennis.com/rankings?type=ms&pageSize=50&page=2",
-              # WTT allplayersranking
-              "https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=MEN'S+SINGLES&pageSize=200",
-              "https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=MEN'S+SINGLES&pageSize=100",
-              "https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=MEN'S+SINGLES&pageSize=50&page=1",
-              "https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=MEN'S+SINGLES&pageSize=50&page=2",
-              # ITTF HTML
-              "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles",
-          ]
-
-          def count_players(data):
-              """Compte les entrées avec rang+nom dans la réponse JSON."""
-              items = data if isinstance(data, list) else (
-                  data.get("data") or data.get("results") or
-                  data.get("rankings") or []
-              )
-              count = 0
-              for item in items:
-                  rang = item.get("rank") or item.get("position") or item.get("ranking")
-                  nom = item.get("name") or item.get("playerName") or item.get("fullName")
-                  if rang and nom:
-                      count += 1
-              return count
-
           print("\n" + "="*70)
-          print("  TEST DES URLS DE CLASSEMENT DEPUIS GITHUB ACTIONS")
-          print("="*70 + "\n")
+          print("  PARSING results.ittf.link — Hommes")
+          print("="*70)
 
-          results = []
-          for url in URLS:
+          for url in [
+              "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles",
+              "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles",
+          ]:
+              genre = "Hommes" if "men" in url else "Femmes"
+              r = requests.get(url, headers=HEADERS, timeout=30)
+              print(f"\n  [{genre}] HTTP {r.status_code} — {len(r.text)} chars")
+
+              soup = BeautifulSoup(r.text, "html.parser")
+              tables = soup.find_all("table")
+              print(f"  Tables trouvées : {len(tables)}")
+
+              players = []
+              for table in tables:
+                  rows = table.find_all("tr")
+                  for row in rows:
+                      cells = [td.get_text(strip=True) for td in row.find_all("td")]
+                      if len(cells) < 3:
+                          continue
+                      # Chercher un rang en première colonne
+                      try:
+                          rang = int(cells[0])
+                          if 1 <= rang <= 200:
+                              # Trouver la colonne nom (premiere avec du texte alphabetique)
+                              nom = next((c for c in cells[1:] if len(c) > 3 and any(ch.isalpha() for ch in c) and not c.isdigit()), "")
+                              if nom:
+                                  players.append((rang, nom, cells))
+                      except ValueError:
+                          pass
+
+              players.sort(key=lambda x: x[0])
+              print(f"  Joueurs parsés : {len(players)}")
+              if players:
+                  print(f"  Top 5 :")
+                  for rang, nom, cells in players[:5]:
+                      print(f"    #{rang} {nom}  — cellules brutes: {cells[:8]}")
+                  print(f"  Rang max trouvé : #{players[-1][0]} {players[-1][1]}")
+
+          # Tester aussi l'API WTT interne (souvent /api/ranking ou similaire)
+          print("\n" + "="*70)
+          print("  TEST APIs internes WTT")
+          print("="*70)
+          api_variants = [
+              "https://www.worldtabletennis.com/api/ranking/ms?limit=200",
+              "https://www.worldtabletennis.com/api/ranking/ms",
+              "https://www.worldtabletennis.com/api/rankings?type=ms&limit=200",
+              "https://www.worldtabletennis.com/api/rankings/ms",
+              "https://www.worldtabletennis.com/api/v1/rankings?type=ms",
+              "https://www.worldtabletennis.com/api/v2/rankings?type=ms",
+              "https://sportsx.ittf.com/api/ranking?type=ms&limit=200",
+              "https://api.worldtabletennis.com/rankings?type=ms",
+          ]
+          for url in api_variants:
               try:
-                  r = requests.get(url, headers=HEADERS, timeout=15)
-                  status = r.status_code
-                  if status == 200:
-                      content_type = r.headers.get("content-type", "")
-                      if "json" in content_type:
-                          try:
-                              data = r.json()
-                              n = count_players(data)
-                              preview = str(data)[:100]
-                              results.append((url, status, f"JSON ✅  {n} joueurs  |  {preview}"))
-                          except Exception as e:
-                              results.append((url, status, f"JSON parse error: {e}"))
-                      else:
-                          results.append((url, status, f"HTML {len(r.text)} chars  ct={content_type[:40]}"))
-                  else:
-                      results.append((url, status, f"❌ HTTP {status}"))
+                  r = requests.get(url, headers=HEADERS, timeout=10)
+                  ct = r.headers.get("content-type","")
+                  info = f"HTTP {r.status_code}  ct={ct[:40]}  size={len(r.text)}"
+                  if r.status_code == 200 and "json" in ct:
+                      info += f"  preview={r.text[:80]}"
+                  print(f"  {url[8:65]}\n    → {info}")
               except Exception as e:
-                  results.append((url, 0, f"❌ Exception: {e}"))
-
-          for url, status, info in results:
-              short = url[8:70]  # sans https://
-              print(f"  {status}  {short}")
-              print(f"       → {info}\n")
+                  print(f"  {url[8:65]}\n    → Exception: {e}")
 
           EOF
