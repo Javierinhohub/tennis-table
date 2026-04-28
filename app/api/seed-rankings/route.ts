@@ -4,132 +4,238 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 const SECRET = "ttkip2026seed"
 
 const PAYS_FR: Record<string, string> = {
-  CHN: "Chine", JPN: "Japon", KOR: "Corée du Sud", GER: "Allemagne",
-  FRA: "France", SWE: "Suède", BRA: "Brésil", EGY: "Égypte",
-  IND: "Inde", USA: "États-Unis", AUS: "Australie", TPE: "Taipei",
-  HKG: "Hong Kong", SGP: "Singapour", POR: "Portugal", POL: "Pologne",
-  ROU: "Roumanie", SVN: "Slovénie", DEN: "Danemark", HRV: "Croatie",
-  CZE: "Tchéquie", KAZ: "Kazakhstan", NGA: "Nigeria", BEL: "Belgique",
-  ARG: "Argentine", CHL: "Chili", MDA: "Moldavie", HUN: "Hongrie",
-  LUX: "Luxembourg", CMR: "Cameroun", BEN: "Bénin", IRN: "Iran",
-  RUS: "Russie", UKR: "Ukraine", AUT: "Autriche", ESP: "Espagne",
-  GBR: "Angleterre", ENG: "Angleterre", WLS: "Pays de Galles",
-  PRI: "Porto Rico", MAC: "Macao", NED: "Pays-Bas", SRB: "Serbie",
-  THA: "Thaïlande", ITA: "Italie", TUR: "Turquie", CAN: "Canada",
-  ALG: "Algérie", DZA: "Algérie",
-  China: "Chine", Japan: "Japon", "Korea Republic": "Corée du Sud",
-  Germany: "Allemagne", France: "France", Sweden: "Suède",
-  Brazil: "Brésil", Egypt: "Égypte", India: "Inde",
-  "United States": "États-Unis", Australia: "Australie",
+  "China": "Chine", "Japan": "Japon", "Korea Republic": "Corée du Sud",
+  "Germany": "Allemagne", "France": "France", "Sweden": "Suède",
+  "Brazil": "Brésil", "Egypt": "Égypte", "India": "Inde",
+  "USA": "États-Unis", "United States": "États-Unis", "Australia": "Australie",
   "Chinese Taipei": "Taipei", "Hong Kong, China": "Hong Kong",
-  Singapore: "Singapour", Portugal: "Portugal", Poland: "Pologne",
-  Romania: "Roumanie", Slovenia: "Slovénie", Denmark: "Danemark",
-  Croatia: "Croatie", "Czech Republic": "Tchéquie", Czechia: "Tchéquie",
-  Kazakhstan: "Kazakhstan", Nigeria: "Nigeria", Belgium: "Belgique",
-  Argentina: "Argentine", Chile: "Chili", Moldova: "Moldavie",
-  Hungary: "Hongrie", Luxembourg: "Luxembourg", Cameroon: "Cameroun",
-  Benin: "Bénin", Iran: "Iran", Russia: "Russie", Ukraine: "Ukraine",
-  Austria: "Autriche", Spain: "Espagne", England: "Angleterre",
-  "Puerto Rico": "Porto Rico", Macao: "Macao", Netherlands: "Pays-Bas",
-  Serbia: "Serbie", Thailand: "Thaïlande", Italy: "Italie",
-  Turkey: "Turquie", Canada: "Canada", Algeria: "Algérie",
+  "Singapore": "Singapour", "Portugal": "Portugal", "Poland": "Pologne",
+  "Romania": "Roumanie", "Slovenia": "Slovénie", "Denmark": "Danemark",
+  "Croatia": "Croatie", "Czech Republic": "Tchéquie", "Czechia": "Tchéquie",
+  "Kazakhstan": "Kazakhstan", "Nigeria": "Nigeria", "Belgium": "Belgique",
+  "Argentina": "Argentine", "Chile": "Chili", "Moldova": "Moldavie",
+  "Hungary": "Hongrie", "Luxembourg": "Luxembourg", "Cameroon": "Cameroun",
+  "Iran": "Iran", "Russia": "Russie", "Ukraine": "Ukraine",
+  "Austria": "Autriche", "Spain": "Espagne", "England": "Angleterre",
+  "Wales": "Pays de Galles", "Puerto Rico": "Porto Rico",
+  "Macao, China": "Macao", "Macao": "Macao",
+  "Netherlands": "Pays-Bas", "Serbia": "Serbie", "Thailand": "Thaïlande",
+  "Italy": "Italie", "Turkey": "Turquie", "Türkiye": "Turquie",
+  "Canada": "Canada", "Algeria": "Algérie",
+  "Slovak Republic": "Slovaquie", "Slovakia": "Slovaquie",
+  "Monaco": "Monaco", "AIN": "Neutre",
 }
 
-function translateCountry(raw: string): string {
-  if (!raw) return ""
-  return PAYS_FR[raw.trim()] ?? raw.trim()
+function p(pays: string): string {
+  return PAYS_FR[pays.trim()] ?? pays.trim()
 }
 
-function parseRankings(data: unknown): { rang: number; nom: string; pays: string }[] {
-  const items: unknown[] = Array.isArray(data)
-    ? data
-    : ((data as Record<string, unknown>)?.data as unknown[] | undefined) ??
-      ((data as Record<string, unknown>)?.results as unknown[] | undefined) ??
-      ((data as Record<string, unknown>)?.rankings as unknown[] | undefined) ??
-      []
+// ── Classements ITTF — avril 2026 ──────────────────────────────────────────
+const HOMMES: { rang: number; nom: string; pays: string }[] = [
+  { rang: 1, nom: "Wang Chuqin", pays: "China" },
+  { rang: 2, nom: "Truls Moregard", pays: "Sweden" },
+  { rang: 3, nom: "Tomokazu Harimoto", pays: "Japan" },
+  { rang: 4, nom: "Félix Lebrun", pays: "France" },
+  { rang: 5, nom: "Hugo Calderano", pays: "Brazil" },
+  { rang: 6, nom: "Lin Shidong", pays: "China" },
+  { rang: 7, nom: "Lin Yun-Ju", pays: "Chinese Taipei" },
+  { rang: 8, nom: "Sora Matsushima", pays: "Japan" },
+  { rang: 9, nom: "Jang Woojin", pays: "Korea Republic" },
+  { rang: 10, nom: "Dang Qiu", pays: "Germany" },
+  { rang: 11, nom: "Wen Ruibo", pays: "China" },
+  { rang: 12, nom: "Alexis Lebrun", pays: "France" },
+  { rang: 13, nom: "Benedikt Duda", pays: "Germany" },
+  { rang: 14, nom: "Darko Jorgic", pays: "Slovenia" },
+  { rang: 15, nom: "Xiang Peng", pays: "China" },
+  { rang: 16, nom: "Anders Lind", pays: "Denmark" },
+  { rang: 17, nom: "Patrick Franziska", pays: "Germany" },
+  { rang: 18, nom: "Shunsuke Togami", pays: "Japan" },
+  { rang: 19, nom: "Simon Gauzy", pays: "France" },
+  { rang: 20, nom: "Zhou Qihao", pays: "China" },
+  { rang: 21, nom: "Liang Jingkun", pays: "China" },
+  { rang: 22, nom: "An Jaehyun", pays: "Korea Republic" },
+  { rang: 23, nom: "Flavien Coton", pays: "France" },
+  { rang: 24, nom: "Dimitrij Ovtcharov", pays: "Germany" },
+  { rang: 25, nom: "Chen Yuanyu", pays: "China" },
+  { rang: 26, nom: "Thibault Poret", pays: "France" },
+  { rang: 27, nom: "Yukiya Uda", pays: "Japan" },
+  { rang: 28, nom: "Tomislav Pucar", pays: "Croatia" },
+  { rang: 29, nom: "Kanak Jha", pays: "USA" },
+  { rang: 30, nom: "Oh Junsung", pays: "Korea Republic" },
+  { rang: 31, nom: "Hiroto Shinozuka", pays: "Japan" },
+  { rang: 32, nom: "Omar Assar", pays: "Egypt" },
+  { rang: 33, nom: "Anton Kallberg", pays: "Sweden" },
+  { rang: 34, nom: "Nicholas Lum", pays: "Australia" },
+  { rang: 35, nom: "Vladimir Sidorenko", pays: "AIN" },
+  { rang: 36, nom: "Chen Junsong", pays: "China" },
+  { rang: 37, nom: "Yuta Tanaka", pays: "Japan" },
+  { rang: 38, nom: "Kristian Karlsson", pays: "Sweden" },
+  { rang: 39, nom: "Manav Thakkar", pays: "India" },
+  { rang: 40, nom: "Lubomir Jancarik", pays: "Czechia" },
+  { rang: 41, nom: "Eduard Ionescu", pays: "Romania" },
+  { rang: 42, nom: "Sathiyan Gnanasekaran", pays: "India" },
+  { rang: 43, nom: "Joe Seyfried", pays: "France" },
+  { rang: 44, nom: "Maharu Yoshimura", pays: "Japan" },
+  { rang: 45, nom: "Jonathan Groth", pays: "Denmark" },
+  { rang: 46, nom: "Finn Luu", pays: "Australia" },
+  { rang: 47, nom: "Park Ganghyeon", pays: "Korea Republic" },
+  { rang: 48, nom: "Quadri Aruna", pays: "Nigeria" },
+  { rang: 49, nom: "Lilian Bardet", pays: "France" },
+  { rang: 50, nom: "Wong Chun Ting", pays: "Hong Kong, China" },
+  { rang: 51, nom: "Manush Shah", pays: "India" },
+  { rang: 52, nom: "Adrien Rassenfosse", pays: "Belgium" },
+  { rang: 53, nom: "Huang Youzheng", pays: "China" },
+  { rang: 54, nom: "João Geraldo", pays: "Portugal" },
+  { rang: 55, nom: "Lim Jonghoon", pays: "Korea Republic" },
+  { rang: 56, nom: "Léo De Nodrest", pays: "France" },
+  { rang: 57, nom: "Milosz Redzimski", pays: "Poland" },
+  { rang: 58, nom: "Kirill Gerassimenko", pays: "Kazakhstan" },
+  { rang: 59, nom: "Kazuki Hamada", pays: "Japan" },
+  { rang: 60, nom: "Cho Daeseong", pays: "Korea Republic" },
+  { rang: 61, nom: "Kazuhiro Yoshimura", pays: "Japan" },
+  { rang: 62, nom: "Ryoichi Yoshiyama", pays: "Japan" },
+  { rang: 63, nom: "Youssef Abdelaziz", pays: "Egypt" },
+  { rang: 64, nom: "Aditya Sareen", pays: "Australia" },
+  { rang: 65, nom: "Ricardo Walther", pays: "Germany" },
+  { rang: 66, nom: "Tom Jarvis", pays: "England" },
+  { rang: 67, nom: "Alvaro Robles", pays: "Spain" },
+  { rang: 68, nom: "André Bertelsmeier", pays: "Germany" },
+  { rang: 69, nom: "Wim Verdonschot", pays: "Germany" },
+  { rang: 70, nom: "Elias Ranefur", pays: "Sweden" },
+  { rang: 71, nom: "Mehdi Bouloussa", pays: "Algeria" },
+  { rang: 72, nom: "Horacio Cifuentes", pays: "Argentina" },
+  { rang: 73, nom: "Feng Yi-Hsin", pays: "Chinese Taipei" },
+  { rang: 74, nom: "Chang Yu-An", pays: "Chinese Taipei" },
+  { rang: 75, nom: "Chan Baldwin", pays: "Hong Kong, China" },
+  { rang: 76, nom: "Xue Fei", pays: "China" },
+  { rang: 77, nom: "Kao Cheng-Jui", pays: "Chinese Taipei" },
+  { rang: 78, nom: "Luka Mladenovic", pays: "Luxembourg" },
+  { rang: 79, nom: "Hwan Bae", pays: "Australia" },
+  { rang: 80, nom: "Csaba Andras", pays: "Hungary" },
+  { rang: 81, nom: "Park Gyuhyeon", pays: "Korea Republic" },
+  { rang: 82, nom: "Yuhi Sakai", pays: "Japan" },
+  { rang: 83, nom: "Kuo Guan-Hong", pays: "Chinese Taipei" },
+  { rang: 84, nom: "Harmeet Desai", pays: "India" },
+  { rang: 85, nom: "Jules Rolland", pays: "France" },
+  { rang: 86, nom: "Mizuki Oikawa", pays: "Japan" },
+  { rang: 87, nom: "Andrej Gacina", pays: "Croatia" },
+  { rang: 88, nom: "Marcos Freitas", pays: "Portugal" },
+  { rang: 89, nom: "Nicolas Burgos", pays: "Chile" },
+  { rang: 90, nom: "Mattias Karlsson", pays: "Sweden" },
+  { rang: 91, nom: "Vladislav Ursu", pays: "Moldova" },
+  { rang: 92, nom: "Iulian Chirita", pays: "Romania" },
+  { rang: 93, nom: "Florian Bourrassaud", pays: "France" },
+  { rang: 94, nom: "Deni Kozul", pays: "Slovenia" },
+  { rang: 95, nom: "Lam Siu Hang", pays: "Hong Kong, China" },
+  { rang: 96, nom: "Ylane Batix", pays: "Cameroon" },
+  { rang: 97, nom: "Snehit Suravajjula", pays: "India" },
+  { rang: 98, nom: "Lubomir Pistej", pays: "Slovak Republic" },
+  { rang: 99, nom: "Akash Pal", pays: "India" },
+  { rang: 100, nom: "Noshad Alamiyan", pays: "Iran" },
+]
 
-  const result: { rang: number; nom: string; pays: string }[] = []
-  for (const item of items.slice(0, 200)) {
-    const it = item as Record<string, unknown>
-    const rang = it.rank ?? it.position ?? it.ranking ?? it.worldRanking ?? it.world_ranking
-    const nom = (it.name ?? it.playerName ?? it.fullName ?? it.player_name ??
-      `${it.lastName ?? ""} ${it.firstName ?? ""}`.trim()) as string
-    const pays = (it.country ?? it.nationality ?? it.association ?? it.countryCode ?? "") as string
-
-    if (rang && nom && String(rang).match(/^\d+$/)) {
-      result.push({ rang: Number(rang), nom: nom.trim(), pays: pays.trim() })
-    }
-  }
-  return result.sort((a, b) => a.rang - b.rang)
-}
-
-async function fetchOnePage(url: string): Promise<{ rang: number; nom: string; pays: string }[]> {
-  try {
-    const r = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; TT-Kip Rankings Bot/1.0)" },
-      signal: AbortSignal.timeout(15000),
-    })
-    if (!r.ok) return []
-    const data = await r.json()
-    return parseRankings(data)
-  } catch {
-    return []
-  }
-}
-
-async function fetchTop100(genre: "ms" | "ws"): Promise<{ rang: number; nom: string; pays: string }[]> {
-  const tab = genre === "ms" ? "MEN'S+SINGLES" : "WOMEN'S+SINGLES"
-
-  // Niveau 1 : requête unique (espère 100+)
-  const singleUrls = [
-    `https://ranking.ittf.com/api/v1/ranking?type=${genre}&limit=200`,
-    `https://ranking.ittf.com/api/v1/ranking?type=${genre}&limit=100`,
-    `https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=${tab}&pageSize=200`,
-  ]
-  for (const url of singleUrls) {
-    const result = await fetchOnePage(url)
-    if (result.length >= 80) return result
-  }
-
-  // Niveau 2 : deux pages explicites
-  const paginationStrategies: [string, string][] = [
-    [
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=1&pageSize=50`,
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=2&pageSize=50`,
-    ],
-    [
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=1&pageSize=100`,
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=2&pageSize=100`,
-    ],
-    [
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&limit=50&offset=0`,
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&limit=50&offset=50`,
-    ],
-    [
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=1`,
-      `https://ranking.ittf.com/api/v1/ranking?type=${genre}&page=2`,
-    ],
-    [
-      `https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=${tab}&pageSize=50&page=1`,
-      `https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab=${tab}&pageSize=50&page=2`,
-    ],
-  ]
-
-  for (const [url1, url2] of paginationStrategies) {
-    const [p1, p2] = await Promise.all([fetchOnePage(url1), fetchOnePage(url2)])
-    if (!p1.length) continue
-    if (p2.length) {
-      const seen = new Set(p1.map(e => e.rang))
-      const combined = [...p1, ...p2.filter(e => !seen.has(e.rang))]
-        .sort((a, b) => a.rang - b.rang)
-        .filter(e => e.rang <= 100)
-      if (combined.length >= 80) return combined
-    }
-    if (p1.length >= 40) return p1 // fallback partiel
-  }
-
-  return []
-}
+const FEMMES: { rang: number; nom: string; pays: string }[] = [
+  { rang: 1, nom: "Sun Yingsha", pays: "China" },
+  { rang: 2, nom: "Wang Manyu", pays: "China" },
+  { rang: 3, nom: "Chen Xingtong", pays: "China" },
+  { rang: 4, nom: "Zhu Yuling", pays: "Macao, China" },
+  { rang: 5, nom: "Miwa Harimoto", pays: "Japan" },
+  { rang: 6, nom: "Chen Yi", pays: "China" },
+  { rang: 7, nom: "Kuai Man", pays: "China" },
+  { rang: 8, nom: "Wang Yidi", pays: "China" },
+  { rang: 9, nom: "Sabine Winter", pays: "Germany" },
+  { rang: 10, nom: "Shin Yubin", pays: "Korea Republic" },
+  { rang: 11, nom: "Hina Hayata", pays: "Japan" },
+  { rang: 12, nom: "Satsuki Odo", pays: "Japan" },
+  { rang: 13, nom: "Mima Ito", pays: "Japan" },
+  { rang: 14, nom: "Shi Xunyao", pays: "China" },
+  { rang: 15, nom: "Honoka Hashimoto", pays: "Japan" },
+  { rang: 16, nom: "Miyu Nagasaki", pays: "Japan" },
+  { rang: 17, nom: "Joo Cheonhui", pays: "Korea Republic" },
+  { rang: 18, nom: "Adriana Diaz", pays: "Puerto Rico" },
+  { rang: 19, nom: "Ying Han", pays: "Germany" },
+  { rang: 20, nom: "Hana Goda", pays: "Egypt" },
+  { rang: 21, nom: "Cheng I-Ching", pays: "Chinese Taipei" },
+  { rang: 22, nom: "Hitomi Sato", pays: "Japan" },
+  { rang: 23, nom: "Bruna Takahashi", pays: "Brazil" },
+  { rang: 24, nom: "Jia Nan Yuan", pays: "France" },
+  { rang: 25, nom: "Miyuu Kihara", pays: "Japan" },
+  { rang: 26, nom: "Bernadette Szocs", pays: "Romania" },
+  { rang: 27, nom: "Qin Yuxuan", pays: "China" },
+  { rang: 28, nom: "Prithika Pavade", pays: "France" },
+  { rang: 29, nom: "Sakura Yokoi", pays: "Japan" },
+  { rang: 30, nom: "Yangzi Liu", pays: "Australia" },
+  { rang: 31, nom: "Kim Nayeong", pays: "Korea Republic" },
+  { rang: 32, nom: "Miu Hirano", pays: "Japan" },
+  { rang: 33, nom: "Lee Eunhye", pays: "Korea Republic" },
+  { rang: 34, nom: "Zeng Jian", pays: "Singapore" },
+  { rang: 35, nom: "Doo Hoi Kem", pays: "Hong Kong, China" },
+  { rang: 36, nom: "Anna Hursey", pays: "Wales" },
+  { rang: 37, nom: "He Zhuojia", pays: "China" },
+  { rang: 38, nom: "Kaho Akae", pays: "Japan" },
+  { rang: 39, nom: "Amy Wang", pays: "USA" },
+  { rang: 40, nom: "Sofia Polcanova", pays: "Austria" },
+  { rang: 41, nom: "Sreeja Akula", pays: "India" },
+  { rang: 42, nom: "Lily Zhang", pays: "USA" },
+  { rang: 43, nom: "Elizabet Abraamian", pays: "AIN" },
+  { rang: 44, nom: "Elizabeta Samara", pays: "Romania" },
+  { rang: 45, nom: "Yeh Yi-Tian", pays: "Chinese Taipei" },
+  { rang: 46, nom: "Maria Xiao", pays: "Spain" },
+  { rang: 47, nom: "Saki Shibata", pays: "Japan" },
+  { rang: 48, nom: "Manika Batra", pays: "India" },
+  { rang: 49, nom: "Fu Yu", pays: "Portugal" },
+  { rang: 50, nom: "Dina Meshref", pays: "Egypt" },
+  { rang: 51, nom: "Margaryta Pesotska", pays: "Ukraine" },
+  { rang: 52, nom: "Li Yu-Jhun", pays: "Chinese Taipei" },
+  { rang: 53, nom: "Yoo Yerin", pays: "Korea Republic" },
+  { rang: 54, nom: "Charlotte Lutz", pays: "France" },
+  { rang: 55, nom: "Nina Mittelham", pays: "Germany" },
+  { rang: 56, nom: "Mo Zhang", pays: "Canada" },
+  { rang: 57, nom: "Andreea Dragoman", pays: "Romania" },
+  { rang: 58, nom: "Minhyung Jee", pays: "Australia" },
+  { rang: 59, nom: "Natalia Bajor", pays: "Poland" },
+  { rang: 60, nom: "Annett Kaufmann", pays: "Germany" },
+  { rang: 61, nom: "Yashaswini Ghorpade", pays: "India" },
+  { rang: 62, nom: "Huang Yu-Jie", pays: "Chinese Taipei" },
+  { rang: 63, nom: "Kim Seongjin", pays: "Korea Republic" },
+  { rang: 64, nom: "Lea Rakovac", pays: "Croatia" },
+  { rang: 65, nom: "Zong Geman", pays: "China" },
+  { rang: 66, nom: "Chien Tung-Chuan", pays: "Chinese Taipei" },
+  { rang: 67, nom: "Linda Bergstrom", pays: "Sweden" },
+  { rang: 68, nom: "Yang Ha Eun", pays: "Korea Republic" },
+  { rang: 69, nom: "Fan Shuhan", pays: "China" },
+  { rang: 70, nom: "Yuka Kaneyoshi", pays: "Japan" },
+  { rang: 71, nom: "Misuzu Takeya", pays: "Japan" },
+  { rang: 72, nom: "Constantina Psihogios", pays: "Australia" },
+  { rang: 73, nom: "Yang Yiyun", pays: "China" },
+  { rang: 74, nom: "Wang Xiaotong", pays: "China" },
+  { rang: 75, nom: "Park Gahyeon", pays: "Korea Republic" },
+  { rang: 76, nom: "Jieni Shao", pays: "Portugal" },
+  { rang: 77, nom: "Qian Tianyi", pays: "China" },
+  { rang: 78, nom: "Sibel Altinkaya", pays: "Türkiye" },
+  { rang: 79, nom: "Xu Yi", pays: "China" },
+  { rang: 80, nom: "Zhu Ziyu", pays: "China" },
+  { rang: 81, nom: "Gaia Monfardini", pays: "Italy" },
+  { rang: 82, nom: "Su Tsz Tung", pays: "Hong Kong, China" },
+  { rang: 83, nom: "Xiaoxin Yang", pays: "Monaco" },
+  { rang: 84, nom: "Xiaona Shan", pays: "Germany" },
+  { rang: 85, nom: "Mariam Alhodaby", pays: "Egypt" },
+  { rang: 86, nom: "Sally Moyland", pays: "USA" },
+  { rang: 87, nom: "Camille Lutz", pays: "France" },
+  { rang: 88, nom: "Orawan Paranang", pays: "Thailand" },
+  { rang: 89, nom: "Kyoka Idesawa", pays: "Japan" },
+  { rang: 90, nom: "Jessica Reyes Lai", pays: "USA" },
+  { rang: 91, nom: "Izabela Lupulesku", pays: "Serbia" },
+  { rang: 92, nom: "Christina Kallberg", pays: "Sweden" },
+  { rang: 93, nom: "Ayhika Mukherjee", pays: "India" },
+  { rang: 94, nom: "Asuka Sasao", pays: "Japan" },
+  { rang: 95, nom: "Diya Chitale", pays: "India" },
+  { rang: 96, nom: "Ng Wing Lam", pays: "Hong Kong, China" },
+  { rang: 97, nom: "Ryu Hanna", pays: "Korea Republic" },
+  { rang: 98, nom: "Kotomi Omoda", pays: "Japan" },
+  { rang: 99, nom: "Katarzyna Wegrzyn", pays: "Poland" },
+  { rang: 100, nom: "Ser Lin Qian", pays: "Singapore" },
+]
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -137,60 +243,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const dryRun = searchParams.get("dry") === "1"
+  const toInsert = [
+    ...HOMMES.map(j => ({ nom: j.nom, pays: p(j.pays), classement_mondial: j.rang, genre: "H", actif: true })),
+    ...FEMMES.map(j => ({ nom: j.nom, pays: p(j.pays), classement_mondial: j.rang, genre: "F", actif: true })),
+  ]
 
-  // 1. Récupérer les classements H et F en parallèle
-  const [hommes, femmes] = await Promise.all([
-    fetchTop100("ms"),
-    fetchTop100("ws"),
-  ])
-
-  if (hommes.length < 10 || femmes.length < 10) {
-    return NextResponse.json({
-      error: "Impossible de récupérer les classements ITTF",
-      hommes: hommes.length,
-      femmes: femmes.length,
-    }, { status: 502 })
-  }
-
-  if (dryRun) {
-    return NextResponse.json({
-      dry_run: true,
-      hommes: hommes.length,
-      femmes: femmes.length,
-      top5H: hommes.slice(0, 5),
-      top5F: femmes.slice(0, 5),
-    })
-  }
-
-  // 2. Vider la table joueurs_pro
+  // Vider la table
   const { error: deleteError } = await supabaseAdmin
     .from("joueurs_pro")
     .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000") // supprime tout
+    .neq("id", "00000000-0000-0000-0000-000000000000")
 
   if (deleteError) {
     return NextResponse.json({ error: `Suppression échouée: ${deleteError.message}` }, { status: 500 })
   }
 
-  // 3. Insérer les nouveaux joueurs
-  const toInsert = [
-    ...hommes.filter(j => j.rang <= 100).map(j => ({
-      nom: j.nom,
-      pays: translateCountry(j.pays),
-      classement_mondial: j.rang,
-      genre: "H",
-      actif: true,
-    })),
-    ...femmes.filter(j => j.rang <= 100).map(j => ({
-      nom: j.nom,
-      pays: translateCountry(j.pays),
-      classement_mondial: j.rang,
-      genre: "F",
-      actif: true,
-    })),
-  ]
-
+  // Insérer les 200 joueurs
   const { error: insertError } = await supabaseAdmin
     .from("joueurs_pro")
     .insert(toInsert)
@@ -202,11 +270,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     inserted: toInsert.length,
-    hommes: hommes.filter(j => j.rang <= 100).length,
-    femmes: femmes.filter(j => j.rang <= 100).length,
-    sources: {
-      hommes: `${hommes.length} joueurs récupérés`,
-      femmes: `${femmes.length} joueuses récupérées`,
-    },
+    hommes: HOMMES.length,
+    femmes: FEMMES.length,
   })
 }
