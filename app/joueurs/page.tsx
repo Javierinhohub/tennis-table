@@ -140,14 +140,26 @@ export default function JoueursPage() {
   }, [inputValue])
 
   useEffect(() => {
-    // 1. Joueurs pro (sans colonnes de type explicites pour éviter les erreurs si migration pas faite)
-    supabase
-      .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
-      .eq("actif", true)
-      .order("classement_mondial")
-      .limit(1000)
-      .then(({ data }) => { setJoueurs(data || []); setLoading(false) })
+    // 1. Joueurs pro — deux requêtes séparées H/F pour contourner la limite de lignes Supabase
+    Promise.all([
+      supabase
+        .from("joueurs_pro")
+        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
+        .eq("actif", true)
+        .eq("genre", "H")
+        .order("classement_mondial")
+        .limit(200),
+      supabase
+        .from("joueurs_pro")
+        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
+        .eq("actif", true)
+        .eq("genre", "F")
+        .order("classement_mondial")
+        .limit(200),
+    ]).then(([resH, resF]) => {
+      setJoueurs([...(resH.data || []), ...(resF.data || [])])
+      setLoading(false)
+    })
 
     // 2. Noms de marques pour le matching
     supabase.from("marques").select("nom").then(({ data }) => {
