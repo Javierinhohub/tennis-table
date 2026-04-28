@@ -218,6 +218,13 @@ def run():
         # Limiter au top 100
         top100 = [r for r in rankings if r["rang"] <= 100]
 
+        # Sécurité : si l'API renvoie moins de 80 joueurs, l'API est probablement
+        # paginée ou en erreur — on met à jour les rangs disponibles mais on
+        # n'archive PERSONNE pour éviter de désactiver des joueurs par erreur.
+        safe_to_archive = len(top100) >= 80
+        if not safe_to_archive:
+            print(f"  ⚠️  Seulement {len(top100)} joueurs reçus (< 80) — archivage désactivé cette semaine.")
+
         matched_db_ids = set()   # IDs de joueurs DB matchés cette semaine
         updated = inserted = archived = 0
 
@@ -255,15 +262,19 @@ def run():
                 time.sleep(0.05)
 
         # 2. Archiver les joueurs sortis du top 100
-        for joueur in pool:
-            if joueur["id"] not in matched_db_ids:
-                sb.table("joueurs_pro").update({
-                    "actif": False,
-                    "classement_mondial": None,
-                }).eq("id", joueur["id"]).execute()
-                print(f"  📦  Archivé (sorti top 100) : {joueur['nom']}")
-                archived += 1
-                time.sleep(0.03)
+        # (seulement si l'API a renvoyé suffisamment de données)
+        if safe_to_archive:
+            for joueur in pool:
+                if joueur["id"] not in matched_db_ids:
+                    sb.table("joueurs_pro").update({
+                        "actif": False,
+                        "classement_mondial": None,
+                    }).eq("id", joueur["id"]).execute()
+                    print(f"  📦  Archivé (sorti top 100) : {joueur['nom']}")
+                    archived += 1
+                    time.sleep(0.03)
+        else:
+            print(f"  ℹ️  Archivage ignoré (API incomplète).")
 
         print(f"     {updated} mis à jour · {inserted} insérés · {archived} archivés")
         total_updated  += updated
