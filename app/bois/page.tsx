@@ -11,8 +11,6 @@ export const metadata: Metadata = {
   openGraph: { url: "https://www.tt-kip.com/bois" },
 }
 
-const PAGE_SIZE = 50
-
 export default async function BoisPage() {
   const [
     { data: produits, count: total },
@@ -25,8 +23,7 @@ export default async function BoisPage() {
       .from("produits")
       .select("id, nom, slug, marques(id, nom), bois!inner(nb_plis, poids_g, epaisseur_mm, style, composition)", { count: "exact" })
       .eq("actif", true)
-      .order("nom")
-      .range(0, PAGE_SIZE - 1),
+      .order("nom"),
 
     supabase.from("avis").select("produit_id").eq("valide", true),
     supabase.from("notes_bois").select("produit_id"),
