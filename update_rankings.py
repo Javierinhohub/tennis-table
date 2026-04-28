@@ -74,75 +74,95 @@ HEADERS = {
 
 # ─── Récupération du classement ───────────────────────────────────────────────
 
-def fetch_page(url):
-    """Récupère et parse une URL JSON de classement. Renvoie (résultats, url_utilisée) ou ([], None)."""
+def fetch_json(url):
+    """GET JSON → liste normalisée, ou [] si échec."""
     try:
         r = requests.get(url, headers=HEADERS, timeout=20)
         if r.status_code == 200:
-            data = r.json()
-            result = parse_json_rankings(data)
-            if result:
-                return result, url
+            return parse_json_rankings(r.json())
     except Exception:
         pass
-    return [], None
+    return []
+
+def merge_pages(p1, p2):
+    """Fusionne deux pages triées en éliminant les doublons (par rang)."""
+    seen = {e["rang"] for e in p1}
+    combined = p1 + [e for e in p2 if e["rang"] not in seen]
+    return sorted(combined, key=lambda x: x["rang"])
 
 def fetch_rankings_wtt(genre="H"):
-    """Tente plusieurs sources API WTT/ITTF (JSON), avec pagination si nécessaire."""
-    ms = "ms" if genre == "H" else "ws"
+    """
+    Récupère le top 100 WTT/ITTF via JSON.
+
+    Stratégie pérenne en 3 niveaux :
+      1. Requête unique avec limit élevé (espère 100+ d'un coup)
+      2. Deux pages explicites avec toutes les variantes de paramètres connues
+      3. Si page 1 répond mais pas page 2 → renvoie page 1 (au moins 50)
+    """
+    ms  = "ms" if genre == "H" else "ws"
     tab = "MEN'S+SINGLES" if genre == "H" else "WOMEN'S+SINGLES"
+    label = "Hommes" if genre == "H" else "Femmes"
 
-    # Sources à essayer pour la page 1 (ou résultat complet)
-    urls_page1 = [
+    # ── Niveau 1 : requête unique (espère 100+ d'un coup) ────────────────────
+    for url in [
         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=200",
-        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&page=1",
-        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1&pageSize=100",
-        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&offset=0&limit=100",
+        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100",
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=200",
-        f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}",
-        f"https://www.ittf.com/ranking/?rankingType={ms}&pageSize=100",
-    ]
-
-    for url in urls_page1:
-        result, working_url = fetch_page(url)
-        if not result:
-            continue
-
-        print(f"  ✅ API JSON ({url[:60]}…) : {len(result)} joueurs")
-
-        # Si on a déjà 80+ joueurs, pas besoin de paginer
+        f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=100",
+    ]:
+        result = fetch_json(url)
         if len(result) >= 80:
+            print(f"  ✅ [{label}] Source unique ({url[:55]}…) : {len(result)} joueurs")
             return result
 
-        # Exactement ~50 joueurs → l'API pagine probablement — tenter page 2
-        print(f"  ℹ️  Seulement {len(result)} résultats, tentative page 2…")
-        page2_variants = []
+    # ── Niveau 2 : deux pages explicites ────────────────────────────────────
+    # Toutes les variantes de pagination connues (p1, p2)
+    PAGINATION_STRATEGIES = [
+        # ITTF — page/pageSize
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1&pageSize=50",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=2&pageSize=50"),
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1&pageSize=100",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=2&pageSize=100"),
+        # ITTF — limit/offset
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=50&offset=0",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=50&offset=50"),
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&offset=0",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&offset=100"),
+        # ITTF — start/count
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&start=0&count=50",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&start=50&count=50"),
+        # WTT — page
+        (f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=50&page=1",
+         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=50&page=2"),
+        # ITTF — sans paramètre taille (page 1 par défaut puis page 2)
+        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1",
+         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=2"),
+    ]
 
-        if "page=1" in working_url:
-            page2_variants.append(working_url.replace("page=1", "page=2"))
-        elif "offset=0" in working_url:
-            page2_variants.append(working_url.replace("offset=0", "offset=50"))
-        else:
-            sep = "&" if "?" in working_url else "?"
-            page2_variants += [
-                working_url + sep + "page=2",
-                working_url + sep + "offset=50",
-                working_url + sep + "skip=50",
-            ]
+    for url1, url2 in PAGINATION_STRATEGIES:
+        p1 = fetch_json(url1)
+        if not p1:
+            continue
+        p2 = fetch_json(url2)
+        if p2:
+            combined = merge_pages(p1, p2)
+            top100 = [e for e in combined if e["rang"] <= 100]
+            if len(top100) >= 80:
+                print(f"  ✅ [{label}] Pagination ({url1[:45]}…) : {len(p1)}+{len(p2)} → {len(top100)} joueurs")
+                return top100
+        # Page 2 vide mais page 1 répond — garder pour l'instant
+        if len(p1) >= 40:
+            print(f"  ⚠️  [{label}] Page 2 vide — page 1 seule : {len(p1)} joueurs ({url1[:45]}…)")
+            # On garde ce résultat partiel comme filet de sécurité
+            # mais on continue à chercher mieux
+            _fallback_p1 = p1
 
-        for url2 in page2_variants:
-            page2, _ = fetch_page(url2)
-            if page2:
-                # Ne garder que les joueurs au-delà du dernier rang déjà reçu
-                last_rank = result[-1]["rang"]
-                nouveaux = [p for p in page2 if p["rang"] > last_rank]
-                if nouveaux:
-                    result.extend(nouveaux)
-                    result.sort(key=lambda x: x["rang"])
-                    print(f"  ✅ Page 2 ({url2[:60]}…) : +{len(nouveaux)} joueurs → total {len(result)}")
-                    break
-
-        return result
+    # Si on a un fallback partiel, l'utiliser
+    try:
+        if _fallback_p1:
+            return _fallback_p1
+    except NameError:
+        pass
 
     return []
 
@@ -162,52 +182,126 @@ def parse_json_rankings(data):
             result.append({"rang": int(rang), "nom": nom.strip(), "pays": pays.strip()})
     return sorted(result, key=lambda x: x["rang"])
 
+def scrape_html_table(html, min_cells=4, rank_col=0, name_col=None, country_col=None):
+    """
+    Parse générique d'un tableau HTML.
+    Tente de détecter les colonnes nom/pays automatiquement si non spécifiées.
+    Retourne une liste de dicts {rang, nom, pays}.
+    """
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
+    result = []
+    for row in rows:
+        cells_raw = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+        cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells_raw]
+        if len(cells) < min_cells:
+            continue
+        try:
+            rang = int(cells[rank_col])
+            if not (1 <= rang <= 200):
+                continue
+            # Détection automatique de la colonne nom si non spécifiée
+            if name_col is None:
+                # La colonne nom est la première avec lettres (après rang)
+                nc = next((i for i, c in enumerate(cells) if i != rank_col and len(c) > 3 and any(ch.isalpha() for ch in c)), None)
+            else:
+                nc = name_col
+            nom = cells[nc] if nc is not None and nc < len(cells) else ""
+            pays = cells[country_col] if country_col is not None and country_col < len(cells) else ""
+            if nom:
+                result.append({"rang": rang, "nom": nom, "pays": pays})
+        except (ValueError, IndexError, TypeError):
+            pass
+    return result
+
 def fetch_rankings_html(genre="H"):
-    """Scrape la page ITTF en HTML."""
+    """Scrape plusieurs sources HTML de classement ITTF."""
+    label = "Hommes" if genre == "H" else "Femmes"
+    html_sources = [
+        # ITTF results (structure connue : rang, rang, mvt, pts, nom, '', pays)
+        {
+            "url": ("https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles"
+                    if genre == "H" else
+                    "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles"),
+            "rank_col": 0, "name_col": 4, "country_col": 6, "min_cells": 5,
+        },
+        # WTT rankings HTML
+        {
+            "url": ("https://www.worldtabletennis.com/rankings?type=ms"
+                    if genre == "H" else
+                    "https://www.worldtabletennis.com/rankings?type=ws"),
+            "rank_col": 0, "name_col": None, "country_col": None, "min_cells": 3,
+        },
+    ]
+
+    for src in html_sources:
+        try:
+            r = requests.get(src["url"], headers=HEADERS, timeout=30)
+            if r.status_code != 200:
+                continue
+            result = scrape_html_table(
+                r.text,
+                min_cells=src["min_cells"],
+                rank_col=src["rank_col"],
+                name_col=src["name_col"],
+                country_col=src["country_col"],
+            )
+            if result:
+                print(f"  ✅ [{label}] HTML ({src['url'][:55]}…) : {len(result)} joueurs")
+                return result
+        except Exception as e:
+            print(f"  ⚠️  HTML ({src['url'][:55]}…) échoué : {e}")
+
+    return []
+
+def fetch_rankings_wikipedia(genre="H"):
+    """
+    Scrape Wikipedia comme source de secours stable.
+    Les pages de classement ITTF sur Wikipedia sont régulièrement mises à jour.
+    """
+    label = "Hommes" if genre == "H" else "Femmes"
     url = (
-        "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-men-singles"
+        "https://en.wikipedia.org/wiki/ITTF_Men%27s_World_Rankings"
         if genre == "H" else
-        "https://results.ittf.link/index.php/ittf-rankings/ittf-ranking-women-singles"
+        "https://en.wikipedia.org/wiki/ITTF_Women%27s_World_Rankings"
     )
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
         if r.status_code != 200:
             return []
         html = r.text
-        # Chercher les lignes de tableau
-        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
-        result = []
-        for row in rows:
-            # Extraire toutes les cellules (y compris vides)
-            cells_raw = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
-            cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells_raw]
-            if len(cells) < 5:
-                continue
-            try:
-                rang = int(cells[0])
-                # Structure ITTF : [rang, rang, mouvement, points, nom, '', pays, ...]
-                nom  = cells[4]
-                pays = cells[6] if len(cells) > 6 else ""
-                if 1 <= rang <= 500 and nom:
-                    result.append({"rang": rang, "nom": nom, "pays": pays})
-            except (ValueError, IndexError):
-                pass
+        result = scrape_html_table(html, min_cells=3, rank_col=0)
+        # Wikipedia a souvent d'autres tables (historique etc.) — garder seulement ≤100
+        result = [e for e in result if e["rang"] <= 100 and len(e["nom"]) > 3]
         if result:
-            print(f"  ✅ Scraping HTML ITTF : {len(result)} joueurs")
+            print(f"  ✅ [{label}] Wikipedia : {len(result)} joueurs")
         return result
     except Exception as e:
-        print(f"  ⚠️  Scraping HTML échoué : {e}")
+        print(f"  ⚠️  Wikipedia échoué : {e}")
         return []
 
 def fetch_rankings(genre="H"):
-    """Essaie WTT API, puis scraping HTML."""
-    r = fetch_rankings_wtt(genre)
-    if r:
-        return r
-    r = fetch_rankings_html(genre)
-    if r:
-        return r
-    print(f"  ⚠️  Aucune source disponible pour les {'hommes' if genre == 'H' else 'femmes'}.")
+    """
+    Chaîne de sources par ordre de fiabilité :
+      1. API JSON WTT/ITTF (avec pagination automatique)
+      2. Scraping HTML ITTF / WTT
+      3. Wikipedia (source de secours stable)
+    Renvoie dès qu'une source donne ≥ 80 joueurs (ou la meilleure disponible).
+    """
+    label = "Hommes" if genre == "H" else "Femmes"
+    best = []
+
+    for fetcher in [fetch_rankings_wtt, fetch_rankings_html, fetch_rankings_wikipedia]:
+        result = fetcher(genre)
+        if len(result) > len(best):
+            best = result
+        if len(best) >= 80:
+            return best
+
+    if best:
+        print(f"  ⚠️  [{label}] Meilleur résultat : {len(best)} joueurs seulement.")
+        return best
+
+    print(f"  ❌  [{label}] Aucune source disponible.")
     return []
 
 # ─── Correspondance de noms ───────────────────────────────────────────────────
