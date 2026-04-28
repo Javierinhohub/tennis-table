@@ -9,19 +9,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  // Archiver les joueurs actifs dont le classement > 50 (données obsolètes)
-  const { data, error } = await supabaseAdmin
+  // Récupérer les joueurs actifs dont le classement > 50
+  const { data: joueurs, error: fetchError } = await supabaseAdmin
     .from("joueurs_pro")
-    .update({ actif: false, classement_mondial: null })
+    .select("id, nom, genre, classement_mondial")
     .eq("actif", true)
     .gt("classement_mondial", 50)
-    .select("id, nom, genre, classement_mondial")
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+  if (!joueurs || joueurs.length === 0) return NextResponse.json({ success: true, archived: 0 })
+
+  const ids = joueurs.map((j: any) => j.id)
+
+  const { error: updateError } = await supabaseAdmin
+    .from("joueurs_pro")
+    .update({ actif: false })
+    .in("id", ids)
+
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   return NextResponse.json({
     success: true,
-    archived: data?.length || 0,
-    players: data?.map(j => `${j.nom} (${j.genre}) ex-#${j.classement_mondial}`),
+    archived: joueurs.length,
+    players: joueurs.map((j: any) => `${j.nom} (${j.genre}) #${j.classement_mondial}`),
   })
 }
