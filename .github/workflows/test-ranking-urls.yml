@@ -7,110 +7,61 @@ jobs:
   test-urls:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Playwright
-        run: |
-          pip install playwright -q
-          python3 -m playwright install chromium
-
-      - name: Trouver et tester l'API WTT interne
+      - name: Inspecter structure SEN_SINGLES.json
         run: |
           python3 - <<'EOF'
-          from playwright.sync_api import sync_playwright
           import requests, json
 
           HEADERS = {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
               "Accept": "application/json, */*",
+              "Origin": "https://www.worldtabletennis.com",
+              "Referer": "https://www.worldtabletennis.com/",
           }
 
-          ranking_calls = []
+          url = "https://wtt-web-frontdoor-withoutcache-cqakg0andqf5hchn.a01.azurefd.net/ranking/SEN_SINGLES.json"
 
-          def on_response(response):
-              url = response.url
-              if "ranking" in url.lower() and response.status == 200:
-                  ct = response.headers.get("content-type", "")
-                  if "json" in ct:
-                      try:
-                          body = response.json()
-                          size = len(str(body))
-                          ranking_calls.append({
-                              "url": url,
-                              "size": size,
-                              "headers": dict(response.headers),
-                              "body": body,
-                          })
-                      except:
-                          pass
+          r = requests.get(url, headers=HEADERS, timeout=20)
+          print(f"HTTP {r.status_code}  size={len(r.text)}")
 
-          print("Ouverture de la page WTT avec Playwright...")
-          with sync_playwright() as p:
-              browser = p.chromium.launch(headless=True)
-              page = browser.new_page()
-              page.on("response", on_response)
-              page.goto("https://www.worldtabletennis.com/rankings?type=ms",
-                        wait_until="networkidle", timeout=40000)
-              browser.close()
+          data = r.json()
+          players = data.get("Result", [])
+          print(f"Total joueurs : {len(players)}")
+          print()
 
-          print(f"\n{len(ranking_calls)} appels 'ranking' interceptés\n")
+          # Afficher les 3 premiers joueurs complets
+          print("=== 3 premiers joueurs (structure complète) ===")
+          for i, p in enumerate(players[:3]):
+              print(f"\nJoueur {i+1}:")
+              for k, v in p.items():
+                  print(f"  {k}: {v}")
 
-          # Afficher les URLs complètes + structure des données
-          for call in ranking_calls:
-              print(f"URL COMPLÈTE : {call['url']}")
-              print(f"  size={call['size']}")
-              body = call['body']
-              if isinstance(body, dict):
-                  top_keys = list(body.keys())[:6]
-                  print(f"  clés: {top_keys}")
-                  # Chercher une liste de joueurs
-                  for k, v in body.items():
-                      if isinstance(v, list) and len(v) > 10:
-                          sample = v[:2]
-                          print(f"  body['{k}'] = liste de {len(v)} éléments")
-                          print(f"  exemple[0]: {str(sample[0])[:200]}")
-                          break
-              elif isinstance(body, list) and len(body) > 10:
-                  print(f"  liste de {len(body)} éléments")
-                  print(f"  exemple[0]: {str(body[0])[:200]}")
-              print()
+          # Afficher aussi un joueur féminin si la liste en contient
+          print("\n=== Chercher une joueuse ===")
+          for p in players:
+              gender = p.get("Gender", p.get("SubEventCode", p.get("GenderCode", "")))
+              if "f" in str(gender).lower() or "w" in str(gender).lower():
+                  print(f"Première joueuse trouvée:")
+                  for k, v in p.items():
+                      print(f"  {k}: {v}")
+                  break
 
-          # Essayer d'appeler directement les URLs ranking trouvées (sans Playwright)
-          print("\n" + "="*70)
-          print("  TEST ACCÈS DIRECT (sans navigateur)")
-          print("="*70)
+          # Compter par valeur unique du champ Gender/SubEventCode
+          print("\n=== Répartition par genre ===")
+          for field in ["Gender", "SubEventCode", "GenderCode", "EventGender"]:
+              values = {}
+              for p in players:
+                  v = p.get(field)
+                  if v:
+                      values[v] = values.get(v, 0) + 1
+              if values:
+                  print(f"  {field}: {values}")
 
-          for call in ranking_calls:
-              url = call["url"]
-              # Récupérer les headers utilisés par le navigateur
-              req_headers = {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                  "Accept": "application/json, */*",
-                  "Origin": "https://www.worldtabletennis.com",
-                  "Referer": "https://www.worldtabletennis.com/",
-              }
-              try:
-                  r = requests.get(url, headers=req_headers, timeout=15)
-                  info = f"HTTP {r.status_code}  size={len(r.text)}"
-                  if r.status_code == 200:
-                      try:
-                          data = r.json()
-                          info += f"  ✅ JSON parsé"
-                          # Compter les joueurs
-                          players = []
-                          if isinstance(data, list):
-                              players = data
-                          elif isinstance(data, dict):
-                              for v in data.values():
-                                  if isinstance(v, list) and len(v) > 10:
-                                      players = v
-                                      break
-                          if players:
-                              info += f"  → {len(players)} entrées"
-                      except:
-                          info += "  (pas JSON)"
-                  print(f"  {url[:80]}")
-                  print(f"    → {info}\n")
-              except Exception as e:
-                  print(f"  {url[:80]}")
-                  print(f"    → Exception: {e}\n")
+          # Afficher les champs disponibles contenant "rank"
+          print("\n=== Champs contenant 'rank' ===")
+          sample = players[0] if players else {}
+          for k in sample:
+              if "rank" in k.lower():
+                  print(f"  {k}: {sample[k]}")
 
           EOF
