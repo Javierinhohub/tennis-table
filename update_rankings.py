@@ -104,9 +104,16 @@ def fetch_rankings_wtt(genre="H"):
     label = "Hommes" if genre == "H" else "Femmes"
 
     # ── Niveau 1 : requête unique (espère 100+ d'un coup) ────────────────────
+    gender_wtt = "ms" if genre == "H" else "ws"
     for url in [
+        # ITTF ranking API
         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=200",
         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100",
+        # WTT rankings (page principale)
+        f"https://www.worldtabletennis.com/rankings?type={gender_wtt}&pageSize=200",
+        f"https://www.worldtabletennis.com/rankings?type={gender_wtt}&pageSize=100",
+        f"https://www.worldtabletennis.com/rankings?gender={gender_wtt}&limit=200",
+        # WTT allplayersranking
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=200",
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=100",
     ]:
@@ -116,7 +123,6 @@ def fetch_rankings_wtt(genre="H"):
             return result
 
     # ── Niveau 2 : deux pages explicites ────────────────────────────────────
-    # Toutes les variantes de pagination connues (p1, p2)
     PAGINATION_STRATEGIES = [
         # ITTF — page/pageSize
         (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1&pageSize=50",
@@ -126,15 +132,15 @@ def fetch_rankings_wtt(genre="H"):
         # ITTF — limit/offset
         (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=50&offset=0",
          f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=50&offset=50"),
-        (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&offset=0",
-         f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&offset=100"),
         # ITTF — start/count
         (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&start=0&count=50",
          f"https://ranking.ittf.com/api/v1/ranking?type={ms}&start=50&count=50"),
-        # WTT — page
+        # WTT rankings
+        (f"https://www.worldtabletennis.com/rankings?type={gender_wtt}&pageSize=50&page=1",
+         f"https://www.worldtabletennis.com/rankings?type={gender_wtt}&pageSize=50&page=2"),
         (f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=50&page=1",
          f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=50&page=2"),
-        # ITTF — sans paramètre taille (page 1 par défaut puis page 2)
+        # ITTF — page simple
         (f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=1",
          f"https://ranking.ittf.com/api/v1/ranking?type={ms}&page=2"),
     ]
