@@ -147,6 +147,7 @@ export default function JoueursPage() {
         .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
         .eq("actif", true)
         .eq("genre", "H")
+        .not("classement_mondial", "is", null)
         .order("classement_mondial")
         .limit(200),
       supabase
@@ -154,6 +155,7 @@ export default function JoueursPage() {
         .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
         .eq("actif", true)
         .eq("genre", "F")
+        .not("classement_mondial", "is", null)
         .order("classement_mondial")
         .limit(200),
     ]).then(([resH, resF]) => {

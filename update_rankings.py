@@ -75,11 +75,18 @@ HEADERS = {
 # ─── Récupération du classement ───────────────────────────────────────────────
 
 def fetch_rankings_wtt(genre="H"):
-    """Tente l'API WTT (JSON)."""
+    """Tente plusieurs sources API WTT/ITTF (JSON)."""
+    ms = "ms" if genre == "H" else "ws"
     tab = "MEN'S+SINGLES" if genre == "H" else "WOMEN'S+SINGLES"
     urls = [
+        # ITTF ranking API — paramètre limit explicite
+        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=200",
+        f"https://ranking.ittf.com/api/v1/ranking?type={ms}&limit=100&page=1",
+        # WTT allplayersranking avec pagination
+        f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}&pageSize=200",
         f"https://www.worldtabletennis.com/allplayersranking?Age=SENIOR&selectedTab={tab}",
-        f"https://ranking.ittf.com/api/v1/ranking?type={'ms' if genre == 'H' else 'ws'}&limit=200",
+        # Ancienne API ITTF
+        f"https://www.ittf.com/ranking/?rankingType={ms}&pageSize=100",
     ]
     for url in urls:
         try:
@@ -88,7 +95,7 @@ def fetch_rankings_wtt(genre="H"):
                 data = r.json()
                 result = parse_json_rankings(data)
                 if result:
-                    print(f"  ✅ API JSON ({url[:50]}…) : {len(result)} joueurs")
+                    print(f"  ✅ API JSON ({url[:60]}…) : {len(result)} joueurs")
                     return result
         except Exception:
             pass
