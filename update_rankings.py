@@ -270,14 +270,15 @@ def run():
 
         # 2. Archiver les joueurs sortis du top 100
         # (seulement si l'API a renvoyé suffisamment de données)
+        # On conserve classement_mondial pour pouvoir les réactiver avec leur dernier rang connu.
         if safe_to_archive:
             for joueur in pool:
                 if joueur["id"] not in matched_db_ids:
                     sb.table("joueurs_pro").update({
                         "actif": False,
-                        "classement_mondial": None,
+                        # Ne pas effacer classement_mondial : conserve le dernier rang connu
                     }).eq("id", joueur["id"]).execute()
-                    print(f"  📦  Archivé (sorti top 100) : {joueur['nom']}")
+                    print(f"  📦  Archivé (sorti top 100) : {joueur['nom']} (rang conservé : #{joueur.get('classement_mondial')})")
                     archived += 1
                     time.sleep(0.03)
         else:
