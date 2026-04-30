@@ -64,26 +64,6 @@ function getBrand(nom: string | null, brandNames: string[]): string | null {
   return best
 }
 
-// Type : cherche le nom du produit comme sous-chaîne dans le nom de l'équipement
-// Ex: "Butterfly Tenergy 05" contient "tenergy 05" → type "In"
-function getType(nom: string | null, typeMap: Map<string, string>): string | null {
-  if (!nom) return null
-  const n = normalize(nom)
-  if (typeMap.has(n)) return typeMap.get(n)!
-  let best: string | null = null
-  let bestLen = 0
-  for (const [key, type] of typeMap.entries()) {
-    if (key.length < 5) continue
-    const idx = n.indexOf(key)
-    if (idx >= 0) {
-      const after = n[idx + key.length]
-      if (after === undefined || after === " " || after === "-") {
-        if (key.length > bestLen) { best = type; bestLen = key.length }
-      }
-    }
-  }
-  return best
-}
 
 function CarteJoueur({ j }: { j: any }) {
   return (
@@ -130,8 +110,6 @@ export default function JoueursPage() {
 
   // Liste des noms de marques (pour matching startsWith)
   const [brandNames, setBrandNames] = useState<string[]>([])
-  // Map : nom produit normalisé → type de revêtement
-  const [typeMap, setTypeMap] = useState<Map<string, string>>(new Map())
 
   // Debounce recherche
   useEffect(() => {
@@ -144,7 +122,7 @@ export default function JoueursPage() {
     Promise.all([
       supabase
         .from("joueurs_pro")
-        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
+        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
         .eq("actif", true)
         .eq("genre", "H")
         .not("classement_mondial", "is", null)
@@ -152,7 +130,7 @@ export default function JoueursPage() {
         .limit(200),
       supabase
         .from("joueurs_pro")
-        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_rv")
+        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
         .eq("actif", true)
         .eq("genre", "F")
         .not("classement_mondial", "is", null)
@@ -167,16 +145,6 @@ export default function JoueursPage() {
     supabase.from("marques").select("nom").then(({ data }) => {
       setBrandNames((data || []).map((m: any) => m.nom))
     })
-
-    // 3. Types de revêtements : nom produit → type
-    supabase.from("revetements").select("type_revetement, produits(nom)").then(({ data }) => {
-      const tm = new Map<string, string>()
-      data?.forEach((r: any) => {
-        const p = Array.isArray(r.produits) ? r.produits[0] : r.produits
-        if (p?.nom && r.type_revetement) tm.set(normalize(p.nom), r.type_revetement)
-      })
-      setTypeMap(tm)
-    })
   }, [])
 
   // Détermine les marques et types de chaque joueur
@@ -189,14 +157,12 @@ export default function JoueursPage() {
         const b = getBrand(eq, brandNames)
         if (b) brandsSet.add(b)
       })
-      // Types : matching textuel sur cd et rv uniquement (jamais le bois)
-      ;[j.revetement_cd, j.revetement_rv].forEach(eq => {
-        const t = getType(eq, typeMap)
-        if (t) typesSet.add(t)
-      })
+      // Types : lus directement depuis les colonnes stockées en base
+      if (j.revetement_cd_type) typesSet.add(j.revetement_cd_type)
+      if (j.revetement_rv_type) typesSet.add(j.revetement_rv_type)
       return { ...j, brands: [...brandsSet], types: [...typesSet] }
     })
-  }, [joueurs, brandNames, typeMap])
+  }, [joueurs, brandNames])
 
   // Marques disponibles (triées par nombre de joueurs)
   const brandsDispos = useMemo(() => {
@@ -259,7 +225,7 @@ export default function JoueursPage() {
       {!loading && (
         <div style={{ marginBottom: "10px" }}>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" as const }}>
-            {(["In","Out","Mid","Long"] as const).map(t => {
+            {(["In","Out","Mid","Long","Anti"] as const).map(t => {
               const count = joueursEnrichis.filter(j => j.types.includes(t)).length
               return (
                 <button key={t} onClick={() => setFilterType(filterType === t ? null : t)}

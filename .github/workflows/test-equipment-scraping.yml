@@ -1,0 +1,90 @@
+name: Test scraping équipements (diagnostic)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer les dépendances
+        run: pip install requests beautifulsoup4
+
+      - name: Tester TT11 sur 5 joueurs connus
+        run: |
+          python3 - <<'EOF'
+          import requests, json, re
+          from bs4 import BeautifulSoup
+
+          HEADERS = {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,*/*",
+              "Accept-Language": "en-US,en;q=0.9",
+          }
+
+          TEST_PLAYERS = [
+              "Fan Zhendong",
+              "Wang Chuqin",
+              "Truls Moregard",
+              "Mima Ito",
+              "Sun Yingsha",
+          ]
+
+          def search_tt11(nom):
+              q = nom.replace(" ", "+")
+              url = f"https://www.tabletennis11.com/search?q={q}&type=player"
+              r = requests.get(url, headers=HEADERS, timeout=15)
+              print(f"\n  Recherche '{nom}' — HTTP {r.status_code}")
+              if r.status_code != 200:
+                  return None
+              soup = BeautifulSoup(r.text, "html.parser")
+              # Afficher les premiers résultats
+              for a in soup.select("a[href*='/player/']")[:3]:
+                  print(f"    → {a.get_text(strip=True)} : {a['href']}")
+              link = soup.select_one("a[href*='/player/']")
+              if link:
+                  href = link["href"]
+                  return href if href.startswith("http") else "https://www.tabletennis11.com" + href
+              return None
+
+          def parse_profile(url):
+              r = requests.get(url, headers=HEADERS, timeout=15)
+              print(f"  Profil HTTP {r.status_code} — {len(r.text)} chars")
+              if r.status_code != 200:
+                  return
+              soup = BeautifulSoup(r.text, "html.parser")
+
+              # Afficher le texte brut de la section équipement
+              text = soup.get_text(separator="\n", strip=True)
+              lines = text.split("\n")
+              for i, line in enumerate(lines):
+                  l = line.lower()
+                  if any(kw in l for kw in ["blade", "forehand", "backhand", "rubber", "equipment"]):
+                      # Afficher contexte
+                      start = max(0, i-1)
+                      end = min(len(lines), i+3)
+                      for ll in lines[start:end]:
+                          if ll.strip():
+                              print(f"    [{i}] {ll.strip()}")
+
+          for nom in TEST_PLAYERS:
+              print(f"\n{'='*50}")
+              print(f"  {nom}")
+              url = search_tt11(nom)
+              if url:
+                  print(f"  URL : {url}")
+                  parse_profile(url)
+              else:
+                  print("  ❌ Introuvable")
+
+          EOF

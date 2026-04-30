@@ -1,0 +1,46 @@
+name: Backup équipements joueurs
+
+on:
+  schedule:
+    - cron: '30 10 * * 2'  # Mardi 12h30 Paris — juste après la MAJ classements
+  workflow_dispatch:       # Lancement manuel possible
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer les dépendances
+        run: pip install supabase
+
+      - name: Exporter les équipements
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python3 backup_equipment.py
+
+      - name: Committer le backup si modifié
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add equipment_backup.json
+          if git diff --cached --quiet; then
+            echo "Aucun changement dans les équipements."
+          else
+            git commit -m "chore: backup équipements joueurs $(date +'%Y-%m-%d')"
+            git push
+          fi

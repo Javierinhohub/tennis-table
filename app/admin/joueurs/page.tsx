@@ -100,6 +100,7 @@ export default function AdminJoueursPage() {
   const [joueur, setJoueur] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const [backupLoading, setBackupLoading] = useState(false)
 
   // Champs éditables
   const [classement, setClassement] = useState("")
@@ -127,6 +128,30 @@ export default function AdminJoueursPage() {
       .from("utilisateurs").select("role").eq("id", user.id).single()
     if (!profil || profil.role !== "admin") { router.push("/"); return }
     fetchJoueurs()
+  }
+
+  async function downloadBackup() {
+    setBackupLoading(true)
+    // Récupérer TOUS les joueurs (H et F séparément pour éviter la limite Supabase)
+    const [resH, resF] = await Promise.all([
+      supabase.from("joueurs_pro")
+        .select("id, nom, pays, genre, classement_mondial, style, main, age, prise, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
+        .eq("actif", true).eq("genre", "H").order("classement_mondial").limit(200),
+      supabase.from("joueurs_pro")
+        .select("id, nom, pays, genre, classement_mondial, style, main, age, prise, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, actif")
+        .eq("actif", true).eq("genre", "F").order("classement_mondial").limit(200),
+    ])
+    const tous = [...(resH.data || []), ...(resF.data || [])]
+    const date = new Date().toISOString().slice(0, 10)
+    const json = JSON.stringify(tous, null, 2)
+    const blob = new Blob([json], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `joueurs_pro_backup_${date}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setBackupLoading(false)
   }
 
   async function fetchJoueurs() {
@@ -269,10 +294,35 @@ export default function AdminJoueursPage() {
       <a href="/admin" style={{ color: "#D97757", textDecoration: "none", fontSize: "13px", fontWeight: 500, marginBottom: "1.5rem", display: "inline-block" }}>
         ← Retour à l'administration
       </a>
-      <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "0.5rem" }}>Joueurs professionnels</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "2rem" }}>
-        Sélectionnez un joueur pour mettre à jour son classement et son matériel.
-      </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "2rem", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "0.5rem" }}>Joueurs professionnels</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+            Sélectionnez un joueur pour mettre à jour son classement et son matériel.
+          </p>
+        </div>
+        <button
+          onClick={downloadBackup}
+          disabled={backupLoading}
+          title="Télécharge un fichier JSON avec tous les équipements — à conserver précieusement !"
+          style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            background: backupLoading ? "var(--bg)" : "#fff",
+            border: "1px solid var(--border)", borderRadius: "8px",
+            padding: "10px 16px", fontSize: "13px", fontWeight: 600,
+            cursor: backupLoading ? "default" : "pointer",
+            color: "var(--text)", fontFamily: "Poppins, sans-serif",
+            flexShrink: 0,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          {backupLoading ? "Export..." : "Sauvegarder les équipements"}
+        </button>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "1.5rem", alignItems: "start" }}>
 
