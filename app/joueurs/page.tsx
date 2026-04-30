@@ -110,6 +110,8 @@ export default function JoueursPage() {
 
   // Liste des noms de marques (pour matching startsWith)
   const [brandNames, setBrandNames] = useState<string[]>([])
+  // Map : nom produit normalisé → type (fallback quand revetement_cd_type est null)
+  const [typeMap, setTypeMap] = useState<Map<string, string>>(new Map())
 
   // Debounce recherche
   useEffect(() => {
@@ -145,7 +147,37 @@ export default function JoueursPage() {
     supabase.from("marques").select("nom").then(({ data }) => {
       setBrandNames((data || []).map((m: any) => m.nom))
     })
+
+    // 3. Fallback types : nom produit normalisé → type_revetement
+    // Utilisé uniquement quand revetement_cd_type / revetement_rv_type sont null
+    Promise.all([
+      supabase.from("produits").select("nom, revetements!inner(type_revetement)").limit(1000),
+      supabase.from("produits").select("nom, revetements!inner(type_revetement)").range(1000, 1999),
+    ]).then(([res1, res2]) => {
+      const tm = new Map<string, string>()
+      ;[...(res1.data || []), ...(res2.data || [])].forEach((p: any) => {
+        if (!p.nom) return
+        const rev = Array.isArray(p.revetements) ? p.revetements[0] : p.revetements
+        if (rev?.type_revetement) tm.set(normalize(p.nom), rev.type_revetement)
+      })
+      setTypeMap(tm)
+    })
   }, [])
+
+  // Résout le type d'un revêtement : colonne stockée en priorité, sinon lookup par nom
+  function resolveType(nomEquip: string | null, storedType: string | null): string | null {
+    if (storedType) return storedType
+    if (!nomEquip) return null
+    // Nettoyer le nom (enlever " — Backside" etc. ajouté par l'affichage admin)
+    const nomPropre = nomEquip.replace(/\s*—\s*.+$/, "").trim()
+    const n = normalize(nomPropre)
+    if (typeMap.has(n)) return typeMap.get(n)!
+    // Recherche partielle : cherche le nom du produit dans le nom de l'équipement
+    for (const [key, type] of typeMap.entries()) {
+      if (key.length >= 5 && n.includes(key)) return type
+    }
+    return null
+  }
 
   // Détermine les marques et types de chaque joueur
   const joueursEnrichis = useMemo(() => {
@@ -157,12 +189,15 @@ export default function JoueursPage() {
         const b = getBrand(eq, brandNames)
         if (b) brandsSet.add(b)
       })
-      // Types : lus directement depuis les colonnes stockées en base
-      if (j.revetement_cd_type) typesSet.add(j.revetement_cd_type)
-      if (j.revetement_rv_type) typesSet.add(j.revetement_rv_type)
+      // Types : colonne stockée en priorité, fallback lookup par nom
+      const tCd = resolveType(j.revetement_cd, j.revetement_cd_type)
+      const tRv = resolveType(j.revetement_rv, j.revetement_rv_type)
+      if (tCd) typesSet.add(tCd)
+      if (tRv) typesSet.add(tRv)
       return { ...j, brands: [...brandsSet], types: [...typesSet] }
     })
-  }, [joueurs, brandNames])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joueurs, brandNames, typeMap])
 
   // Marques disponibles (triées par nombre de joueurs)
   const brandsDispos = useMemo(() => {
