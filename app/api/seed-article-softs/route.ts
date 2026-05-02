@@ -74,10 +74,15 @@ Peu importe votre choix, préparez-vous à un ajustement technique : le geste av
 _Retrouvez tous les softs adhérents et peu adhérents dans la base de données TT-Kip._`
 
 export async function GET(request: Request) {
+  // Route de seed — désactivée en production (utiliser uniquement depuis Vercel preview ou local)
+  if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "production") {
+    return NextResponse.json({ error: "Route désactivée en production" }, { status: 403 })
+  }
+
   const { searchParams } = new URL(request.url)
   const secret = searchParams.get("secret")
 
-  if (secret !== "ttkip-seed-2026") {
+  if (secret !== process.env.SEED_SECRET && secret !== "ttkip-seed-2026") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 

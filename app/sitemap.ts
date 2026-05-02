@@ -24,9 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Revêtements (toutes les fiches produit) ───────────────────────────────
   const { data: revetements } = await supabase
     .from("produits")
-    .select("slug")
-    .eq("actif", true)
     .select("slug, revetements!inner(id)")
+    .eq("actif", true)
     .limit(5000)
 
   const revetementPages: MetadataRoute.Sitemap = (revetements || []).map((p: any) => ({

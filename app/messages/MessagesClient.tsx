@@ -51,18 +51,26 @@ export default function MessagesClient() {
     const userMap: Record<string, string> = {}
     users?.forEach((u: any) => { userMap[u.id] = u.pseudo })
 
-    // 3. Récupérer le dernier message de chaque conversation
-    const enriched = await Promise.all(convs.map(async (conv: any) => {
+    // 3. Récupérer le dernier message de chaque conversation en une seule requête
+    const convIds = convs.map((c: any) => c.id)
+    const { data: allMessages } = await supabase
+      .from("messages")
+      .select("conversation_id, contenu, lu, sender_id, created_at")
+      .in("conversation_id", convIds)
+      .order("created_at", { ascending: false })
+
+    // Garder uniquement le message le plus récent par conversation
+    const lastMsgMap: Record<string, any> = {}
+    for (const msg of allMessages || []) {
+      if (!lastMsgMap[msg.conversation_id]) {
+        lastMsgMap[msg.conversation_id] = msg
+      }
+    }
+
+    const enriched = convs.map((conv: any) => {
       const otherId = conv.participant_1 === userId ? conv.participant_2 : conv.participant_1
-      const { data: lastMsg } = await supabase
-        .from("messages")
-        .select("contenu, lu, sender_id, created_at")
-        .eq("conversation_id", conv.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      return { ...conv, otherPseudo: userMap[otherId] || "Utilisateur", otherId, lastMsg }
-    }))
+      return { ...conv, otherPseudo: userMap[otherId] || "Utilisateur", otherId, lastMsg: lastMsgMap[conv.id] || null }
+    })
 
     setConversations(enriched)
     setLoading(false)

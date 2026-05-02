@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import { notFound } from "next/navigation"
 import ArticleComments from "./ArticleComments"
 import ArticleEditButton from "./ArticleEditButton"
@@ -110,7 +111,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   if (!article) notFound()
 
-  await supabase.from("articles").update({ vues: (article.vues || 0) + 1 }).eq("id", article.id)
+  // Incrément non-bloquant côté serveur via admin client (ne retarde pas le rendu)
+  supabaseAdmin
+    .from("articles")
+    .update({ vues: (article.vues || 0) + 1 })
+    .eq("id", article.id)
+    .then(() => {})
 
   const color = CAT_COLORS[article.categorie] || "#D97757"
   const html = renderMarkdown(article.contenu)

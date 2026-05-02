@@ -47,7 +47,8 @@ function getCookie(name: string): string | null {
 
 function setCookie(name: string, value: string) {
   if (typeof document === "undefined") return
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=2592000;SameSite=Lax`
+  const secure = location.protocol === "https:" ? ";Secure" : ""
+  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=2592000;SameSite=Strict${secure}`
 }
 
 function deleteCookie(name: string) {

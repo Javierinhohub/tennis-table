@@ -1,9 +1,34 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import { NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-export async function GET() {
+const supabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+export async function GET(req: NextRequest) {
+  // Vérification admin obligatoire
+  const authHeader = req.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "")
+  if (!token) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  }
+  const { data: { user }, error: authCheckError } = await supabaseClient.auth.getUser(token)
+  if (authCheckError || !user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  }
+  const { data: profil } = await supabaseAdmin
+    .from("utilisateurs")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  if (!profil || profil.role !== "admin") {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 })
+  }
+
   const [resH, resF] = await Promise.all([
     supabaseAdmin
       .from("joueurs_pro")

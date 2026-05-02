@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { createClient } from "@supabase/supabase-js"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.tt-kip.com"
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "TT-Kip <noreply@tt-kip.com>"
+
+const supabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 function escapeHtml(str: string): string {
   return str
@@ -17,20 +23,41 @@ function escapeHtml(str: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Vérification : l'appelant doit être un utilisateur authentifié
+    const authHeader = req.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "")
+    if (!token) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+    const { data: { user: sender }, error: authError } = await supabaseClient.auth.getUser(token)
+    if (authError || !sender) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+
     const { recipientId, senderPseudo, conversationId, preview } = await req.json()
 
     if (!recipientId || !senderPseudo || !conversationId) {
       return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
     }
 
-    // Récupérer l'email depuis auth.users (source fiable, contourne RLS)
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(recipientId)
-    if (authError || !authUser?.user?.email) {
+    // Vérifier que l'expéditeur est bien participant à cette conversation
+    const { data: conv } = await supabaseAdmin
+      .from("conversations")
+      .select("participant_1, participant_2")
+      .eq("id", conversationId)
+      .single()
+    if (!conv || (conv.participant_1 !== sender.id && conv.participant_2 !== sender.id)) {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 })
+    }
+
+    // Récupérer l'email depuis auth.users
+    const { data: authUser, error: userError } = await supabaseAdmin.auth.admin.getUserById(recipientId)
+    if (userError || !authUser?.user?.email) {
       return NextResponse.json({ ok: true, skipped: true })
     }
     const recipientEmail = authUser.user.email
 
-    // Récupérer le pseudo du destinataire depuis utilisateurs
+    // Récupérer le pseudo du destinataire
     const { data: recipientProfile } = await supabaseAdmin
       .from("utilisateurs")
       .select("pseudo")
@@ -70,8 +97,9 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ ok: true })
-  } catch (err: any) {
-    console.error("notify error:", err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inconnue"
+    console.error("notify error:", message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

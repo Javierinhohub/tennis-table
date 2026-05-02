@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Client avec service_role pour lire auth.users
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// Client pour vérifier la session de l'appelant
+// Client anon pour vérifier le token de l'appelant (ne pas utiliser admin pour ça)
 const supabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -45,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Mode test : envoie uniquement à testEmail
     if (testEmail) {
-      const { data, error } = await resend.emails.send({
+      const { error } = await resend.emails.send({
         from: "TT-Kip <newsletter@tt-kip.com>",
         to: [testEmail],
         subject: `[TEST] ${sujet}`,
@@ -55,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, sent: 1, mode: "test" })
     }
 
-    // 3. Récupère les abonnés (email depuis auth.users + pseudo depuis utilisateurs)
+    // 3. Récupère les abonnés
     const { data: abonnes, error: dbError } = await supabaseAdmin
       .from("utilisateurs")
       .select("id, pseudo")
@@ -66,19 +61,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, sent: 0 })
     }
 
-    // 4. Récupère les emails depuis auth.users
-    const ids = abonnes.map((a: any) => a.id)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers()
-    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
-
+    // 4. Récupère les emails depuis auth.users (avec pagination pour large audiences)
+    const ids = abonnes.map((a: { id: string; pseudo: string }) => a.id)
     const emailMap: Record<string, string> = {}
-    authData.users.forEach((u: any) => {
-      if (ids.includes(u.id) && u.email) emailMap[u.id] = u.email
-    })
+    let page = 1
+    const PER_PAGE = 1000
+    while (true) {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: PER_PAGE,
+      })
+      if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
+      authData.users.forEach((u: { id: string; email?: string }) => {
+        if (ids.includes(u.id) && u.email) emailMap[u.id] = u.email
+      })
+      if (authData.users.length < PER_PAGE) break
+      page++
+    }
 
     const destinataires = abonnes
-      .filter((a: any) => emailMap[a.id])
-      .map((a: any) => ({ email: emailMap[a.id], pseudo: a.pseudo }))
+      .filter((a: { id: string; pseudo: string }) => emailMap[a.id])
+      .map((a: { id: string; pseudo: string }) => ({ email: emailMap[a.id], pseudo: a.pseudo }))
 
     if (destinataires.length === 0) {
       return NextResponse.json({ ok: true, sent: 0 })
@@ -89,7 +92,7 @@ export async function POST(req: NextRequest) {
     let sent = 0
     for (let i = 0; i < destinataires.length; i += BATCH) {
       const batch = destinataires.slice(i, i + BATCH)
-      const emails = batch.map((d: any) => ({
+      const emails = batch.map((d: { email: string; pseudo: string }) => ({
         from: "TT-Kip <newsletter@tt-kip.com>",
         to: [d.email],
         subject: sujet,
@@ -102,13 +105,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, sent })
 
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Erreur inconnue" }, { status: 500 })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inconnue"
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
 function buildHtml(sujet: string, contenu: string, pseudo?: string) {
-  // Convertit les sauts de ligne en paragraphes
   const paragraphes = contenu
     .split("\n")
     .filter((l: string) => l.trim())

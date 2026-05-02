@@ -177,7 +177,7 @@ export default function AdminPage() {
   }
 
   async function fetchJoueurs() {
-    const { data } = await supabase.from("joueurs_pro").select("*").order("classement_mondial")
+    const { data } = await supabase.from("joueurs_pro").select("*").order("classement_mondial").limit(300)
     setJoueurs(data || [])
   }
 
