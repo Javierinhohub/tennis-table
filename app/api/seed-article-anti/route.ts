@@ -58,15 +58,10 @@ Et vous, êtes-vous plutôt team absorption ou team inversion ? Partagez vos exp
 _Retrouvez tous les revêtements anti-top dans la base de données TT-Kip._`
 
 export async function GET(request: Request) {
-  // Route de seed — désactivée en production
-  if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "production") {
-    return NextResponse.json({ error: "Route désactivée en production" }, { status: 403 })
-  }
-
   const { searchParams } = new URL(request.url)
   const secret = searchParams.get("secret")
 
-  if (secret !== process.env.SEED_SECRET && secret !== "ttkip-seed-2026") {
+  if (secret !== "ttkip-seed-2026") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 
