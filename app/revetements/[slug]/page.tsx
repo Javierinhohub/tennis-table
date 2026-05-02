@@ -274,7 +274,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
 
           <VideoSection videos={videosData || []} />
           <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
-          <AvisSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
+          <AvisSection produitId={produit.id} typeRevetement={rev?.type_revetement} />
         </div>
 
         <div style={{ position: "sticky", top: "80px" }}>
