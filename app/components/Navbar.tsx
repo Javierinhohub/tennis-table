@@ -27,7 +27,6 @@ export default function Navbar() {
     { href: "/autre-materiel", label: t("nav", "otherGear"), icon: "+" },
     { href: "/joueurs", label: t("nav", "proPlayers"), icon: "J" },
     { href: "/articles", label: t("nav", "articles"), icon: "A" },
-    { href: "/forum", label: t("nav", "forum"), icon: "F" },
     { href: "/a-propos", label: t("nav", "about"), icon: "?" },
     { href: "/contact", label: t("nav", "contact"), icon: "✉" },
   ]
