@@ -1,4 +1,4 @@
-"use client"
+f"use client"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -13,7 +13,7 @@ const TOOLTIPS: Record<string, string> = {
   effet:        "Capacité du revêtement à générer des rotations sur la balle. 1 = quasi aucune rotation possible, 10 = rotation maximale.",
   controle:     "Facilité à diriger et placer la balle avec précision. 1 = très difficile à contrôler, 10 = contrôle maximal.",
   durabilite:   "Longévité du revêtement avec un usage régulier. 1 = s'use très rapidement (quelques semaines), 10 = dure très longtemps (plus d'un an).",
-  durete:       "Rigidité de l'éponge sous le caoutchouc. 1 = éponge très souple (sensation molle, amorti), 10 = éponge très dure (sensation ferme, puissance).",
+  durete:       "Rigidité de la mousse sous le caoutchouc. 1 = mousse très tendre (sensation molle, amorti), 10 = mousse très dure (sensation ferme, puissance).",
   rejet:        "Angle de trajectoire de la balle après frappe. 1 = rejet bas, balle tendue et directe (rapide, risque de filet). 10 = rejet haut, balle en cloche (idéal topspin, plus facile à contrer).",
   qualite_prix: "Rapport entre la qualité du revêtement et son prix de vente. 1 = mauvais rapport (cher pour ce que c'est), 10 = excellent rapport qualité/prix.",
   adherence:    "Capacité du caoutchouc à accrocher la balle pour générer de l'effet. 1 = très glissant (peu d'accroche), 10 = très adhérent (forte accroche).",

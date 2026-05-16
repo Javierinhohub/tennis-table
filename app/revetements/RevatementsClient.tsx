@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import NoteModal from "@/app/components/NoteModal"
 import ComparaisonModal from "@/app/components/ComparaisonModal"
 import { supabase } from "@/lib/supabase"
@@ -26,6 +26,8 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   notesCount: Record<string, number>
   videoCount: Record<string, number>
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const t = useT()
   const locale = useLocale()
@@ -33,13 +35,15 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
 
   const [produits, setProduits] = useState(initialProduits)
   const [total, setTotal] = useState(initialTotal)
-  const [page, setPage] = useState(0)
-  // Initialiser depuis ?q= (lien "Tout voir" de la page d'accueil)
+
+  // Initialiser tous les filtres depuis l'URL
+  const [page, setPage]               = useState(() => parseInt(searchParams.get("page") || "0"))
   const [searchInput, setSearchInput] = useState(() => searchParams.get("q") || "")
-  const [search, setSearch] = useState(() => searchParams.get("q") || "")
-  const [typeFilter, setTypeFilter] = useState("")
-  const [marqueFilter, setMarqueFilter] = useState("")
-  const [loading, setLoading] = useState(() => !!(searchParams.get("q")))
+  const [search, setSearch]           = useState(() => searchParams.get("q") || "")
+  const [typeFilter, setTypeFilter]   = useState(() => searchParams.get("type") || "")
+  const [marqueFilter, setMarqueFilter] = useState(() => searchParams.get("marque") || "")
+  const [loading, setLoading]         = useState(() => !!(searchParams.get("q") || searchParams.get("type") || searchParams.get("marque")))
+
   const [user, setUser] = useState<any>(null)
   const [produitANoter, setProduitANoter] = useState<any>(null)
   const [selection, setSelection] = useState<any[]>([])
@@ -66,6 +70,17 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
     const timer = setTimeout(() => { setSearch(searchInput); setPage(0) }, 350)
     return () => clearTimeout(timer)
   }, [searchInput])
+
+  // ── Sync filtres → URL (pour que le bouton retour restaure les filtres) ──
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (search)       params.set("q",      search)
+    if (typeFilter)   params.set("type",   typeFilter)
+    if (marqueFilter) params.set("marque", marqueFilter)
+    if (page > 0)     params.set("page",   String(page))
+    const qs = params.toString()
+    router.replace(`${pathname}${qs ? "?" + qs : ""}`, { scroll: false })
+  }, [search, typeFilter, marqueFilter, page])
 
   // ── Auth ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -120,6 +135,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
   const reset = () => {
     setSearchInput(""); setSearch(""); setTypeFilter(""); setMarqueFilter(""); setPage(0)
     setProduits(initialProduits); setTotal(initialTotal)
+    router.replace(pathname, { scroll: false })
   }
 
   const inputStyle: React.CSSProperties = {
@@ -260,7 +276,7 @@ export default function RevatementsClient({ initialProduits, initialTotal, produ
               {produits.map((p: any, i: number) => (
                 <tr
                   key={p.id}
-                  onClick={() => window.location.href = "/revetements/" + p.slug}
+                  onClick={() => router.push("/revetements/" + p.slug)}
                   style={{ borderBottom: i < produits.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
