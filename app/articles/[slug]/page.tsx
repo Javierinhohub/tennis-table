@@ -159,10 +159,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       />
 
       <div style={{ marginTop: "2rem", padding: "1.5rem", background: "var(--bg)", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Cet article vous a été utile ?</span>
-        <a href="/forum" style={{ background: "#D97757", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: 600 }}>
-          En discuter sur le forum
-        </a>
       </div>
 
       <ArticleComments articleId={article.id} />
