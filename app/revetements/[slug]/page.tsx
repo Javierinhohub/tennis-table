@@ -5,6 +5,7 @@ import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"
 import BackButton from "@/app/components/BackButton"
+import JoueursProSection from "./JoueursProSection"
 import VideoSection from "@/app/components/VideoSection"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -247,30 +248,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             )}
           </div>
 
-          {joueursPro && joueursPro.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Joueurs professionnels — matériel actuel</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {joueursPro.map((jp: any) => (
-                  <a key={jp.id} href={"/joueurs/" + jp.id}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--bg)", borderRadius: "8px", textDecoration: "none" }}>
-                    <div>
-                      <p style={{ fontWeight: 600, fontSize: "14px", color: "var(--text)" }}>{jp.nom}</p>
-                      <p style={{ color: "var(--text-muted)", fontSize: "12px" }}>
-                        {jp.pays}
-                        {jp.revetement_cd?.toLowerCase().includes(produit.nom.toLowerCase()) && " · Coup droit"}
-                        {jp.revetement_rv?.toLowerCase().includes(produit.nom.toLowerCase()) && " · Revers"}
-                      </p>
-                    </div>
-                    <div style={{ textAlign: "right" as const }}>
-                      <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Classement mondial</p>
-                      <p style={{ fontWeight: 700, fontSize: "16px", color: "var(--accent)" }}>#{jp.classement_mondial}</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+          <JoueursProSection joueurs={joueursPro || []} produitNom={produit.nom} />
 
           <VideoSection videos={videosData || []} />
           <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
