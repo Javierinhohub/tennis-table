@@ -53,6 +53,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.tt-kip.com'),
   other: {
     'x-fb-no-webview': '1',
+    'google-adsense-account': 'ca-pub-5536128858087793',
   },
 }
 
