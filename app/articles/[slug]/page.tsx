@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import ArticleComments from "./ArticleComments"
 import ArticleEditButton from "./ArticleEditButton"
 import type { Metadata } from "next"
+import sanitizeHtml from "sanitize-html"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -35,7 +36,26 @@ const CAT_COLORS: Record<string, string> = {
 }
 
 function sanitize(str: string) {
-  return str.replace(/<script[^>]*>.*?<\/script>/gis, '').replace(/on\w+="[^"]*"/gi, '').replace(/javascript:/gi, '')
+  return sanitizeHtml(str, {
+    allowedTags: [
+      "h1", "h2", "h3", "h4", "p", "br", "ul", "ol", "li",
+      "strong", "em", "b", "i", "a", "img", "figure", "figcaption",
+      "table", "thead", "tbody", "tr", "th", "td", "hr", "span",
+    ],
+    allowedAttributes: {
+      a: ["href", "target", "rel"],
+      img: ["src", "alt", "style", "loading"],
+      "*": ["style"],
+    },
+    allowedSchemes: ["https", "http", "mailto"],
+    allowedSchemesByTag: { img: ["https", "http", "data"] },
+    transformTags: {
+      a: (tagName, attribs) => ({
+        tagName,
+        attribs: { ...attribs, rel: "noopener noreferrer", target: "_blank" },
+      }),
+    },
+  })
 }
 
 function inlineFormat(t: string) {

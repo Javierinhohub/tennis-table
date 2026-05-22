@@ -108,7 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5536128858087793"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-XGYJKVTVY5" strategy="afterInteractive" />
         <Script id="ga4" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `

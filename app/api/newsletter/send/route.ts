@@ -61,22 +61,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, sent: 0 })
     }
 
-    // 4. Récupère les emails depuis auth.users (avec pagination pour large audiences)
+    // 4. Récupère les emails en ciblant uniquement les abonnés (pas de scan global)
     const ids = abonnes.map((a: { id: string; pseudo: string }) => a.id)
     const emailMap: Record<string, string> = {}
-    let page = 1
-    const PER_PAGE = 1000
-    while (true) {
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage: PER_PAGE,
+    const CHUNK = 10
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      const results = await Promise.all(
+        chunk.map((id: string) => supabaseAdmin.auth.admin.getUserById(id))
+      )
+      results.forEach(({ data }) => {
+        if (data.user?.id && data.user?.email) {
+          emailMap[data.user.id] = data.user.email
+        }
       })
-      if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
-      authData.users.forEach((u: { id: string; email?: string }) => {
-        if (ids.includes(u.id) && u.email) emailMap[u.id] = u.email
-      })
-      if (authData.users.length < PER_PAGE) break
-      page++
     }
 
     const destinataires = abonnes

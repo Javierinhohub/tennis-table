@@ -1,13 +1,27 @@
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { NextRequest, NextResponse } from "next/server"
 
+const ALLOWED_TYPES = ["revetement", "bois"] as const
+type ProductType = typeof ALLOWED_TYPES[number]
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const ids = searchParams.get("ids")?.split(",").filter(Boolean) || []
-  const type = searchParams.get("type") // "revetement" | "bois"
+  const rawIds = searchParams.get("ids")?.split(",").filter(Boolean) || []
+  const type = searchParams.get("type")
 
-  if (!ids.length || !type) {
+  if (!rawIds.length || !type) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
+  }
+
+  // Validation stricte du type
+  if (!ALLOWED_TYPES.includes(type as ProductType)) {
+    return NextResponse.json({ error: "Type invalide" }, { status: 400 })
+  }
+
+  // Limite à 5 produits max pour la comparaison
+  const ids = rawIds.slice(0, 5).filter(id => /^[0-9a-f-]{36}$/.test(id))
+  if (!ids.length) {
+    return NextResponse.json({ error: "IDs invalides" }, { status: 400 })
   }
 
   const table = type === "revetement" ? "notes_revetements" : "notes_bois"
