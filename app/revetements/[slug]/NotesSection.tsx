@@ -186,7 +186,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
 
   async function fetchData() {
     const { data } = await supabase.from("notes_revetements")
-      .select("*").eq("produit_id", produitId)
+      .select("*").eq("produit_id", produitId).eq("valide", true)
     if (!data || data.length === 0) return
     const avg = (f: string) => {
       const vals = data.filter((d: any) => d[f]).map((d: any) => d[f])
@@ -214,7 +214,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
     if (!noteGlobale) return
     setLoading(true)
     try {
-      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale }
+      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale, valide: false }
       criteres.forEach(c => { payload[KEY_TO_DB[c.key]] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
       const { error: err } = maNote
         ? await supabase.from("notes_revetements").update(payload).eq("id", maNote.id)
@@ -224,7 +224,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
       } else {
         setSaved(true); setShowForm(false)
         await fetchData(); await fetchMaNote(user.id)
-        setTimeout(() => setSaved(false), 3000)
+        setTimeout(() => setSaved(false), 5000)
       }
     } catch (ex: any) {
       console.error("handleSubmit exception:", ex)
@@ -290,7 +290,7 @@ export default function NotesSection({ produitId, revetement, typeRev }: { produ
             {revetement.commentaire_marque}
           </div>
         )}
-        {saved && <div style={{ background: "var(--success-light)", color: "var(--success)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>Note enregistrée !</div>}
+        {saved && <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>✓ Votre note sera disponible dans moins de 24H après validation.</div>}
         {user ? (
           <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
             {!showForm ? (

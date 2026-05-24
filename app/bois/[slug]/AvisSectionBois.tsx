@@ -122,7 +122,7 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
           setError("Erreur : " + err.message)
         }
       } else {
-        setMessage("Votre avis a été soumis et sera visible après modération.")
+        setMessage("Votre avis sera disponible dans moins de 24H après validation.")
         setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setShowForm(false)
       }
     } catch (ex: any) {

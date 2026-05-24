@@ -116,6 +116,10 @@ export default function AdminPage() {
   const [liaisonProduitId, setLiaisonProduitId] = useState("")
   const [produitsFiltres, setProduitsFiltres] = useState<any[]>([])
 
+  // ── Notes ──
+  const [notesRev, setNotesRev] = useState<any[]>([])
+  const [notesBois, setNotesBois] = useState<any[]>([])
+
   // ── Tables TT ──
   const [tables, setTables] = useState<any[]>([])
   const [filtreTable, setFiltreTable] = useState("")
@@ -152,13 +156,33 @@ export default function AdminPage() {
     if (!user) { router.push("/auth/login"); return }
     const { data: profil } = await supabase.from("utilisateurs").select("role").eq("id", user.id).single()
     if (!profil || profil.role !== "admin") { router.push("/"); return }
-    await Promise.all([fetchAvis(), fetchProduits(), fetchMarques(), fetchSubcats(), fetchJoueurs(), fetchLiaisons(), fetchTables()])
+    await Promise.all([fetchAvis(), fetchProduits(), fetchMarques(), fetchSubcats(), fetchJoueurs(), fetchLiaisons(), fetchTables(), fetchNotes()])
     setLoading(false)
   }
 
   async function fetchAvis() {
     const { data } = await supabase.from("avis").select("*, utilisateurs(pseudo), produits(nom)").order("cree_le", { ascending: false })
     setAvis(data || [])
+  }
+
+  async function fetchNotes() {
+    const [{ data: rev }, { data: bois }] = await Promise.all([
+      supabase.from("notes_revetements").select("*, utilisateurs(pseudo), produits(nom)").eq("valide", false).order("cree_le", { ascending: false }),
+      supabase.from("notes_bois").select("*, utilisateurs(pseudo), produits(nom)").eq("valide", false).order("cree_le", { ascending: false }),
+    ])
+    setNotesRev(rev || [])
+    setNotesBois(bois || [])
+  }
+
+  async function validerNote(id: string, table: "notes_revetements" | "notes_bois") {
+    await supabase.from(table).update({ valide: true }).eq("id", id)
+    await fetchNotes()
+  }
+
+  async function supprimerNote(id: string, table: "notes_revetements" | "notes_bois") {
+    if (!confirm("Supprimer cette note ?")) return
+    await supabase.from(table).delete().eq("id", id)
+    await fetchNotes()
   }
 
   async function fetchProduits() {
@@ -419,8 +443,11 @@ export default function AdminPage() {
     (t.marque || "").toLowerCase().includes(filtreTable.toLowerCase())
   )
 
+  const notesEnAttente = notesRev.length + notesBois.length
+
   const onglets = [
     { id: "avis", label: "Avis", count: avisEnAttente.length },
+    { id: "notes", label: "Notes", count: notesEnAttente },
     { id: "tables-tt", label: "Tables TT", count: tables.length },
     { id: "ajouter", label: "Ajouter un revêtement" },
     { id: "ajouter-bois", label: "Ajouter un bois" },
@@ -449,6 +476,7 @@ export default function AdminPage() {
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           {avisEnAttente.length > 0 && <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "12px", fontWeight: 600, padding: "4px 10px", borderRadius: "6px" }}>{avisEnAttente.length} avis en attente</span>}
+          {notesEnAttente > 0 && <span style={{ background: "#FFF7ED", color: "#C2410C", fontSize: "12px", fontWeight: 600, padding: "4px 10px", borderRadius: "6px" }}>{notesEnAttente} note{notesEnAttente > 1 ? "s" : ""} en attente</span>}
           <span style={{ background: "var(--accent-light)", color: "var(--accent)", fontSize: "12px", fontWeight: 600, padding: "4px 10px", borderRadius: "6px" }}>{produits.length} produits</span>
         </div>
       </div>
@@ -520,6 +548,105 @@ export default function AdminPage() {
             </div>
           )}
           {avis.length === 0 && <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "3rem" }}>Aucun avis pour le moment.</p>}
+        </div>
+      )}
+
+      {/* ── NOTES ── */}
+      {onglet === "notes" && (
+        <div>
+          {/* Badge résumé */}
+          {notesEnAttente > 0 && (
+            <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: "8px", padding: "10px 16px", marginBottom: "1.5rem", fontSize: "13px", color: "#92400E", fontWeight: 500 }}>
+              {notesEnAttente} note{notesEnAttente > 1 ? "s" : ""} en attente de validation
+            </div>
+          )}
+
+          {/* ─ Revêtements ─ */}
+          {notesRev.length > 0 && (
+            <div style={{ marginBottom: "2rem" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px", color: "var(--text)" }}>
+                Revêtements — En attente ({notesRev.length})
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {notesRev.map((n: any) => (
+                  <div key={n.id} style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px" }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, fontSize: "14px", marginBottom: "2px" }}>
+                          {n.produits?.nom || "—"}
+                          <span style={{ fontWeight: 400, color: "#D97757", marginLeft: "8px" }}>{"★".repeat(n.note_globale || 0)}</span>
+                        </p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "12px", marginBottom: "6px" }}>
+                          Par {n.utilisateurs?.pseudo || "—"} · {new Date(n.cree_le).toLocaleDateString("fr-FR")}
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                          {[
+                            ["Vitesse", n.note_vitesse], ["Effet", n.note_effet], ["Contrôle", n.note_controle],
+                            ["Durabilité", n.note_durabilite], ["Dureté", n.note_durete_mousse],
+                            ["Rejet", n.note_rejet], ["Q/P", n.note_qualite_prix],
+                            ["Adhérence", n.note_adherence], ["Gêne", n.note_gene], ["Inversion", n.note_inversion],
+                          ].filter(([, v]) => v != null).map(([label, val]) => (
+                            <span key={label as string} style={{ fontSize: "11px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "4px", padding: "2px 6px" }}>
+                              {label} <strong>{val}</strong>/10
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                        <button onClick={() => validerNote(n.id, "notes_revetements")} style={btnSuccess}>Valider</button>
+                        <button onClick={() => supprimerNote(n.id, "notes_revetements")} style={btnDanger}>Supprimer</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─ Bois ─ */}
+          {notesBois.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px", color: "var(--text)" }}>
+                Bois — En attente ({notesBois.length})
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {notesBois.map((n: any) => (
+                  <div key={n.id} style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px" }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, fontSize: "14px", marginBottom: "2px" }}>
+                          {n.produits?.nom || "—"}
+                          <span style={{ fontWeight: 400, color: "#D97757", marginLeft: "8px" }}>{"★".repeat(n.note_globale || 0)}</span>
+                        </p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "12px", marginBottom: "6px" }}>
+                          Par {n.utilisateurs?.pseudo || "—"} · {new Date(n.cree_le).toLocaleDateString("fr-FR")}
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                          {[
+                            ["Vitesse", n.note_vitesse], ["Contrôle", n.note_controle],
+                            ["Flexibilité", n.note_flexibilite], ["Dureté", n.note_durete],
+                            ["Q/P", n.note_qualite_prix],
+                          ].filter(([, v]) => v != null).map(([label, val]) => (
+                            <span key={label as string} style={{ fontSize: "11px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "4px", padding: "2px 6px" }}>
+                              {label} <strong>{val}</strong>/10
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                        <button onClick={() => validerNote(n.id, "notes_bois")} style={btnSuccess}>Valider</button>
+                        <button onClick={() => supprimerNote(n.id, "notes_bois")} style={btnDanger}>Supprimer</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {notesEnAttente === 0 && (
+            <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "3rem" }}>Aucune note en attente.</p>
+          )}
         </div>
       )}
 

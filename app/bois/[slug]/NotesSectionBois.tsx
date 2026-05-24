@@ -134,7 +134,7 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
   }, [])
 
   async function fetchData() {
-    const { data } = await supabase.from("notes_bois").select("*").eq("produit_id", produitId)
+    const { data } = await supabase.from("notes_bois").select("*").eq("produit_id", produitId).eq("valide", true)
     if (!data || data.length === 0) return
     const avg = (f: string) => {
       const vals = data.filter((d: any) => d[f] != null).map((d: any) => d[f])
@@ -162,7 +162,7 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
     if (!noteGlobale || noteGlobale < 1) return
     setLoading(true)
     try {
-      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale }
+      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale, valide: false }
       CRITERES.forEach(c => { payload[c.dbKey] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
       const { error: err } = await supabase.from("notes_bois").upsert(payload, { onConflict: "produit_id,user_id" })
       if (err) {
@@ -170,7 +170,7 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
       } else {
         setSaved(true); setShowForm(false)
         await fetchData(); await fetchMaNote(user.id)
-        setTimeout(() => setSaved(false), 3000)
+        setTimeout(() => setSaved(false), 5000)
       }
     } catch (ex: any) {
       console.error("handleSubmit exception:", ex)
@@ -231,8 +231,8 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
 
         {/* Message confirmation */}
         {saved && (
-          <div style={{ background: "#ECFDF5", border: "1px solid #A7F3D0", color: "#065F46", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>
-            Note enregistrée !
+          <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>
+            ✓ Votre note sera disponible dans moins de 24H après validation.
           </div>
         )}
 

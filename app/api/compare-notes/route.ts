@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     : "id, nom, marques(nom), bois(style, nb_plis, poids_g, composition)"
 
   const [{ data: notesRows, error: notesError }, { data: details, error: detailsError }] = await Promise.all([
-    supabaseAdmin.from(table).select(selectCols).in("produit_id", ids),
+    supabaseAdmin.from(table).select(selectCols).in("produit_id", ids).eq("valide", true),
     supabaseAdmin.from("produits").select(detailsSelect).in("id", ids),
   ])
 

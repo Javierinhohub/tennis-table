@@ -110,7 +110,7 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
           setError("Erreur : " + err.message)
         }
       } else {
-        setMessage("Votre avis a été soumis et sera visible après modération.")
+        setMessage("Votre avis sera disponible dans moins de 24H après validation.")
         setNote(0); setTitre(""); setContenu(""); setStyleJeu(""); setMode("")
       }
     } catch (ex: any) {
@@ -141,7 +141,7 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
       if (err) {
         setError("Erreur : " + err.message)
       } else {
-        setMessage("Votre note a été enregistrée !")
+        setMessage("Votre note sera disponible dans moins de 24H après validation.")
         setNoteRapide(0); setNoteVitesse(""); setNoteEffet(""); setNoteControle("")
         setNoteDurabilite(""); setNoteDurete(""); setNoteRejet(""); setNoteQP(""); setMode("")
       }
