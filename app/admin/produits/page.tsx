@@ -150,6 +150,32 @@ export default function AdminProduitsPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!selected) return
+    const confirm1 = window.confirm(`Supprimer "${selected.nom}" ?\n\nToutes les notes et avis associés seront également supprimés.`)
+    if (!confirm1) return
+    const confirm2 = window.confirm(`Confirmation finale : supprimer définitivement "${selected.nom}" ?`)
+    if (!confirm2) return
+
+    setMessage("")
+    // Suppression des données liées avant le produit
+    const table = tab === "revetements" ? "notes_revetements" : "notes_bois"
+    await supabase.from("avis").delete().eq("produit_id", selected.id)
+    await supabase.from(table).delete().eq("produit_id", selected.id)
+    if (tab === "revetements") {
+      await supabase.from("revetements").delete().eq("produit_id", selected.id)
+    } else {
+      await supabase.from("bois").delete().eq("produit_id", selected.id)
+    }
+    const { error } = await supabase.from("produits").delete().eq("id", selected.id)
+    if (error) {
+      setMessage("Erreur : " + error.message)
+    } else {
+      setSelected(null)
+      await fetchProduits()
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!selected) return
@@ -444,6 +470,16 @@ export default function AdminProduitsPage() {
                 style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)", textDecoration: "none" }}>
                 Voir la fiche →
               </a>
+
+              <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
+                <button type="button" onClick={handleDelete}
+                  style={{ width: "100%", background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", borderRadius: "8px", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                  🗑 Supprimer ce {tab === "revetements" ? "revêtement" : "bois"}
+                </button>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "6px" }}>
+                  Supprime le produit et toutes ses données associées (notes, avis).
+                </p>
+              </div>
             </form>
           )}
         </div>
