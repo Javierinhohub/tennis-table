@@ -29,13 +29,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Aucun compte Supabase Auth trouvé pour : ${email}` }, { status: 404 })
   }
 
-  // 2. Mettre à jour (ou insérer) le rôle dans la table utilisateurs
-  const { error: upsertError } = await supabaseAdmin
+  // 2. Mettre à jour uniquement le rôle (la ligne doit déjà exister)
+  const { error: updateError, count } = await supabaseAdmin
     .from("utilisateurs")
-    .upsert({ id: authUser.id, role: "admin" }, { onConflict: "id" })
+    .update({ role: "admin" })
+    .eq("id", authUser.id)
 
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 })
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  if (count === 0) {
+    return NextResponse.json({
+      error: `Utilisateur Auth trouvé (${authUser.id}) mais absent de la table utilisateurs. Le compte doit se connecter une première fois avant d'être promu.`,
+    }, { status: 404 })
   }
 
   return NextResponse.json({
