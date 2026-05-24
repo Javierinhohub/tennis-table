@@ -7,10 +7,11 @@ Fallback : scraping HTML results.ittf.link (top 50 seulement).
 Lancement manuel :
     SUPABASE_URL=... SUPABASE_KEY=... python3 update_rankings.py
 
-Automatique : chaque mardi à 12h via GitHub Actions.
+Automatique : lundi 14h Paris + mardi 10h Paris (si rien le lundi) via GitHub Actions.
 """
 
 import os, sys, time
+from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 from supabase import create_client
@@ -173,10 +174,48 @@ def match_joueur(joueurs_db, nom_ranking):
 
 # ─── Mise à jour ──────────────────────────────────────────────────────────────
 
+# ─── Vérification semaine ISO ─────────────────────────────────────────────────
+
+def current_iso_week():
+    """Retourne (année, numéro_semaine) en UTC."""
+    now = datetime.now(timezone.utc)
+    iso = now.isocalendar()
+    return (iso[0], iso[1])  # (year, week)
+
+def last_update_iso_week():
+    """Cherche la dernière updated_at non nulle dans joueurs_pro."""
+    res = (
+        sb.table("joueurs_pro")
+        .select("updated_at")
+        .not_("classement_mondial", "is", None)
+        .order("updated_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not res.data:
+        return None
+    updated_at = res.data[0].get("updated_at")
+    if not updated_at:
+        return None
+    dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+    iso = dt.isocalendar()
+    return (iso[0], iso[1])
+
+# ─── Mise à jour ──────────────────────────────────────────────────────────────
+
 def run():
     print("\n" + "=" * 60)
     print("  Mise à jour classement WTT — TT-Kip")
     print("=" * 60)
+
+    # Vérification : ne pas refaire une mise à jour déjà effectuée cette semaine
+    current_week = current_iso_week()
+    last_week    = last_update_iso_week()
+    if last_week == current_week:
+        print(f"\n  ✅ Classement déjà à jour cette semaine (semaine {current_week[1]} / {current_week[0]}). Rien à faire.")
+        sys.exit(0)
+    else:
+        print(f"\n  ℹ️  Semaine courante : {current_week[1]}/{current_week[0]} — dernière MAJ : {last_week or 'inconnue'}")
 
     res = sb.table("joueurs_pro").select("id, nom, genre, classement_mondial").eq("actif", True).execute()
     joueurs_db = res.data or []

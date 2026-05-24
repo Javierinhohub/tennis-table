@@ -2,7 +2,8 @@ name: Mise à jour classement ITTF/WTT
 
 on:
   schedule:
-    - cron: '0 10 * * 2'  # Mardi 12h Paris (été = UTC+2)
+    - cron: '0 12 * * 1'  # Lundi 14h Paris (été = UTC+2) — tentative précoce
+    - cron: '0 8 * * 2'   # Mardi 10h Paris (été = UTC+2) — si rien lundi
   workflow_dispatch:
 
 env:
