@@ -120,48 +120,17 @@ export default function JoueursPage() {
   }, [inputValue])
 
   useEffect(() => {
-    // 1. Joueurs pro — deux requêtes séparées H/F pour contourner la limite de lignes Supabase
-    Promise.all([
-      supabase
-        .from("joueurs_pro")
-        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
-        .eq("actif", true)
-        .eq("genre", "H")
-        .not("classement_mondial", "is", null)
-        .order("classement_mondial")
-        .limit(200),
-      supabase
-        .from("joueurs_pro")
-        .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
-        .eq("actif", true)
-        .eq("genre", "F")
-        .not("classement_mondial", "is", null)
-        .order("classement_mondial")
-        .limit(200),
-    ]).then(([resH, resF]) => {
-      setJoueurs([...(resH.data || []), ...(resF.data || [])])
-      setLoading(false)
-    })
-
-    // 2. Noms de marques pour le matching
-    supabase.from("marques").select("nom").then(({ data }) => {
-      setBrandNames((data || []).map((m: any) => m.nom))
-    })
-
-    // 3. Fallback types : nom produit normalisé → type_revetement
-    // Utilisé uniquement quand revetement_cd_type / revetement_rv_type sont null
-    Promise.all([
-      supabase.from("produits").select("nom, revetements!inner(type_revetement)").limit(1000),
-      supabase.from("produits").select("nom, revetements!inner(type_revetement)").range(1000, 1999),
-    ]).then(([res1, res2]) => {
-      const tm = new Map<string, string>()
-      ;[...(res1.data || []), ...(res2.data || [])].forEach((p: any) => {
-        if (!p.nom) return
-        const rev = Array.isArray(p.revetements) ? p.revetements[0] : p.revetements
-        if (rev?.type_revetement) tm.set(normalize(p.nom), rev.type_revetement)
+    fetch("/api/joueurs", { credentials: "same-origin" })
+      .then(r => r.json())
+      .then(({ joueurs: data, marques, typeMap: typeMapRaw }) => {
+        setJoueurs(data || [])
+        setBrandNames(marques || [])
+        const tm = new Map<string, string>()
+        Object.entries(typeMapRaw || {}).forEach(([k, v]) => tm.set(normalize(k), v as string))
+        setTypeMap(tm)
+        setLoading(false)
       })
-      setTypeMap(tm)
-    })
+      .catch(() => setLoading(false))
   }, [])
 
   // Résout le type d'un revêtement : colonne stockée en priorité, sinon lookup par nom
