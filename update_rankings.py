@@ -12,7 +12,6 @@ Note : si updated_at existe dans joueurs_pro, le script saute la semaine déjà 
 """
 
 import os, sys, time
-from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 from supabase import create_client
@@ -175,54 +174,10 @@ def match_joueur(joueurs_db, nom_ranking):
 
 # ─── Mise à jour ──────────────────────────────────────────────────────────────
 
-# ─── Vérification semaine ISO (nécessite la colonne updated_at dans joueurs_pro) ─
-
-def current_iso_week():
-    """Retourne (année, numéro_semaine) en UTC."""
-    now = datetime.now(timezone.utc)
-    iso = now.isocalendar()
-    return (iso[0], iso[1])
-
-def last_update_iso_week():
-    """
-    Cherche la dernière updated_at dans joueurs_pro.
-    Retourne None si la colonne n'existe pas encore.
-    """
-    try:
-        res = (
-            sb.table("joueurs_pro")
-            .select("updated_at")
-            .filter("classement_mondial", "not.is", "null")
-            .order("updated_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        if not res.data:
-            return None
-        updated_at = res.data[0].get("updated_at")
-        if not updated_at:
-            return None
-        dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
-        iso = dt.isocalendar()
-        return (iso[0], iso[1])
-    except Exception:
-        return None  # colonne absente ou erreur → on continue quand même
-
-# ─── Mise à jour ──────────────────────────────────────────────────────────────
-
 def run():
     print("\n" + "=" * 60)
     print("  Mise à jour classement WTT — TT-Kip")
     print("=" * 60)
-
-    # Vérification : ne pas refaire une mise à jour déjà effectuée cette semaine
-    current_week = current_iso_week()
-    last_week    = last_update_iso_week()
-    if last_week is not None and last_week == current_week:
-        print(f"\n  ✅ Classement déjà à jour cette semaine (semaine {current_week[1]} / {current_week[0]}). Rien à faire.")
-        sys.exit(0)
-    else:
-        print(f"\n  ℹ️  Semaine courante : {current_week[1]}/{current_week[0]} — dernière MAJ : {last_week or 'inconnue (colonne updated_at absente)'}")
 
     res = sb.table("joueurs_pro").select("id, nom, genre, classement_mondial").eq("actif", True).execute()
     joueurs_db = res.data or []
