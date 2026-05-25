@@ -1,8 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { getLocale, makeT } from "@/lib/getLocale"
 
-export const revalidate = 60
-
 const CAT_COLORS: Record<string, string> = {
   test: "#1A56DB", conseil: "#0E7F4F", actualite: "#D97757", comparatif: "#7C3AED"
 }

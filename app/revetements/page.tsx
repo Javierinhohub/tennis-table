@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase"
 import RevatementsClient from "./RevatementsClient"
 import type { Metadata } from "next"
 
-export const revalidate = 60
+export const revalidate = 3600 // 1h — inutile de régénérer plus souvent
 
 export const metadata: Metadata = {
   title: "Revêtements de tennis de table — Base de données LARC 2026",

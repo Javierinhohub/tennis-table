@@ -1,8 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { getLocale, makeT } from "@/lib/getLocale"
 
-export const revalidate = 60
-
 export default async function DerniersAvis() {
   const locale = await getLocale()
   const t = makeT(locale)

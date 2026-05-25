@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase"
 import BoisClient from "./BoisClient"
 import type { Metadata } from "next"
 
-export const revalidate = 60
+export const revalidate = 3600 // 1h — inutile de régénérer plus souvent
 
 export const metadata: Metadata = {
   title: "Bois de tennis de table — Catalogue et comparatif",
