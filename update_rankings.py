@@ -187,7 +187,7 @@ def last_update_iso_week():
     res = (
         sb.table("joueurs_pro")
         .select("updated_at")
-        .not_("classement_mondial", "is", None)
+        .filter("classement_mondial", "not.is", "null")
         .order("updated_at", desc=True)
         .limit(1)
         .execute()

@@ -102,6 +102,7 @@ export default function JoueursPage() {
   const TYPE_LABELS = locale === "en" ? TYPE_LABELS_EN : TYPE_LABELS_FR
 
   const [joueurs, setJoueurs]         = useState<any[]>([])
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [loading, setLoading]         = useState(true)
   const [query, setQuery]             = useState("")
   const [inputValue, setInputValue]   = useState("")
@@ -122,8 +123,9 @@ export default function JoueursPage() {
   useEffect(() => {
     fetch("/api/joueurs", { credentials: "same-origin" })
       .then(r => r.json())
-      .then(({ joueurs: data, marques, typeMap: typeMapRaw }) => {
+      .then(({ joueurs: data, marques, typeMap: typeMapRaw, lastUpdated: lu }) => {
         setJoueurs(data || [])
+        setLastUpdated(lu || null)
         setBrandNames(marques || [])
         const tm = new Map<string, string>()
         Object.entries(typeMapRaw || {}).forEach(([k, v]) => tm.set(normalize(k), v as string))
@@ -203,7 +205,14 @@ export default function JoueursPage() {
       {/* En-tête */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>{t("players", "title")}</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>{t("players", "subtitle")}</p>
+        {lastUpdated && (
+          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+            {locale === "en" ? "ITTF world ranking · updated on " : "Classement mondial ITTF · mis à jour le "}
+            <strong style={{ color: "var(--text)" }}>
+              {new Date(lastUpdated).toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            </strong>
+          </p>
+        )}
       </div>
 
       {/* Barre de recherche */}

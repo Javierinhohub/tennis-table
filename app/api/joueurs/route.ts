@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
   const [resH, resF, resBrands] = await Promise.all([
     supabaseAdmin
       .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
+      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, updated_at")
       .eq("actif", true)
       .eq("genre", "H")
       .not("classement_mondial", "is", null)
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       .limit(200),
     supabaseAdmin
       .from("joueurs_pro")
-      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type")
+      .select("id, nom, pays, classement_mondial, genre, style, bois_nom, revetement_cd, revetement_cd_type, revetement_rv, revetement_rv_type, updated_at")
       .eq("actif", true)
       .eq("genre", "F")
       .not("classement_mondial", "is", null)
@@ -95,6 +95,12 @@ export async function GET(req: NextRequest) {
 
   const joueurs = [...(resH.data || []), ...(resF.data || [])]
   const marques = (resBrands.data || []).map((m: any) => m.nom)
+
+  // Date de dernière mise à jour du classement
+  const lastUpdated = joueurs.reduce((max, j) => {
+    if (!j.updated_at) return max
+    return !max || j.updated_at > max ? j.updated_at : max
+  }, null as string | null)
 
   // 5. Map type revêtement (requêtes uniquement si nécessaire)
   const nomsRev = [...new Set(
@@ -117,7 +123,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { joueurs, marques, typeMap },
+    { joueurs, marques, typeMap, lastUpdated },
     {
       headers: {
         "Cache-Control": "private, no-store",
