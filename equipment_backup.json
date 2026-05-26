@@ -70,6 +70,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "a43ac82e-59de-418d-80e6-b922c56eac89",
+    "nom": "Asuka SASAO",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "00411600-90f7-498e-8649-48f702b694af",
     "nom": "Asuka Sasao",
     "genre": "F",
@@ -81,6 +95,20 @@
     "revetement_cd": "Butterfly Dignics 09C — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Victas VO > 102 — Picots courts",
+    "revetement_rv_type": null
+  },
+  {
+    "id": "101466d5-6e1e-4b4e-b08a-f7cbccafb6c6",
+    "nom": "Ayhika MUKHERJEE",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
     "revetement_rv_type": null
   },
   {
@@ -346,7 +374,7 @@
     "bois_nom": "Double Happiness / DHS W968 Hurricane Long 5 National",
     "revetement_cd": "Butterfly Dignics 09C — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": "Butterfly Dignics 05 — Backside",
+    "revetement_rv": "Butterfly Dignics 09C — Backside",
     "revetement_rv_type": null
   },
   {
@@ -1610,6 +1638,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "d76f5b17-8eff-4f9c-8c23-0f4fbab54b56",
+    "nom": "Ankur BHATTACHARJEE",
+    "genre": "H",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "8b858c33-7dd6-4be0-b938-f71d62ca90b7",
     "nom": "Anton Kallberg",
     "genre": "H",
@@ -2702,6 +2744,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "b6752c2e-87f3-4b89-81c8-903b5b11a299",
+    "nom": "Tiago APOLONIA",
+    "genre": "H",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "a7e8c913-c819-4510-95b8-925c8edfd8cb",
     "nom": "Tom Jarvis",
     "genre": "H",
@@ -2937,6 +2993,20 @@
     "revetement_cd": "Butterfly Zyre 03 — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Butterfly Zyre 03 — Backside",
+    "revetement_rv_type": null
+  },
+  {
+    "id": "4b3ddd28-35f9-4bb1-99e6-05645bf15c95",
+    "nom": "Yuto KIZUKURI",
+    "genre": "H",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
     "revetement_rv_type": null
   },
   {
