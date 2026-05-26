@@ -109,6 +109,7 @@ function Etoiles({ note, onChange }: { note: number; onChange?: (n: number) => v
 export default function NotesSectionBois({ produitId, bois }: { produitId: string; bois?: any }) {
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [maNote, setMaNote] = useState<any>(null)
   const [stats, setStats] = useState<any>({})
   const [showForm, setShowForm] = useState(false)
@@ -117,17 +118,23 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
   const [noteGlobale, setNoteGlobale] = useState(0)
   const [notesCriteres, setNotesCriteres] = useState<Record<string, string>>({})
 
+  async function checkAdmin(u: any) {
+    const { data: profil } = await supabase.from("utilisateurs").select("role").eq("id", u.id).single()
+    setIsAdmin(profil?.role === "admin")
+  }
+
   useEffect(() => {
     fetchData()
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
-      if (u) fetchMaNote(u.id)
+      if (u) { fetchMaNote(u.id); checkAdmin(u) }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (u) fetchMaNote(u.id)
+      if (u) { fetchMaNote(u.id); checkAdmin(u) }
+      else setIsAdmin(false)
     })
     return () => subscription.unsubscribe()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,15 +169,35 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
     if (!noteGlobale || noteGlobale < 1) return
     setLoading(true)
     try {
-      const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale, valide: false }
-      CRITERES.forEach(c => { payload[c.dbKey] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
-      const { error: err } = await supabase.from("notes_bois").upsert(payload, { onConflict: "produit_id,user_id" })
-      if (err) {
-        console.error("notes_bois error:", err.message)
+      if (isAdmin) {
+        // Admin → écriture directe dans les champs TT-Kip
+        const { data: { session } } = await supabase.auth.getSession()
+        const critPayload: Record<string, number> = {}
+        CRITERES.forEach(c => { if (notesCriteres[c.key]) critPayload[c.key] = parseInt(notesCriteres[c.key]) })
+        const res = await fetch("/api/admin/set-ttk-note", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+          body: JSON.stringify({ type: "bois", produitId, criteres: critPayload }),
+        })
+        if (res.ok) {
+          setSaved(true); setShowForm(false)
+          setTimeout(() => { setSaved(false); window.location.reload() }, 1500)
+        } else {
+          const err = await res.json()
+          console.error("set-ttk-note error:", err.error)
+        }
       } else {
-        setSaved(true); setShowForm(false)
-        await fetchData(); await fetchMaNote(user.id)
-        setTimeout(() => setSaved(false), 5000)
+        // Utilisateur standard → notes_bois en attente de validation
+        const payload: any = { produit_id: produitId, user_id: user.id, note_globale: noteGlobale, valide: false }
+        CRITERES.forEach(c => { payload[c.dbKey] = notesCriteres[c.key] ? parseInt(notesCriteres[c.key]) : null })
+        const { error: err } = await supabase.from("notes_bois").upsert(payload, { onConflict: "produit_id,user_id" })
+        if (err) {
+          console.error("notes_bois error:", err.message)
+        } else {
+          setSaved(true); setShowForm(false)
+          await fetchData(); await fetchMaNote(user.id)
+          setTimeout(() => setSaved(false), 5000)
+        }
       }
     } catch (ex: any) {
       console.error("handleSubmit exception:", ex)
@@ -231,47 +258,54 @@ export default function NotesSectionBois({ produitId, bois }: { produitId: strin
 
         {/* Message confirmation */}
         {saved && (
-          <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#92400E", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>
-            ✓ Votre note sera disponible dans moins de 24H après validation.
+          <div style={{ background: isAdmin ? "#EFF6FF" : "#FFF7ED", border: `1px solid ${isAdmin ? "#BFDBFE" : "#FED7AA"}`, color: isAdmin ? "#1E40AF" : "#92400E", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, marginBottom: "12px" }}>
+            {isAdmin ? "✅ Note TT-Kip enregistrée — rechargement en cours…" : "✓ Votre note sera disponible dans moins de 24H après validation."}
           </div>
         )}
 
         {/* Formulaire / bouton noter */}
         <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
           {user ? (
-            !showForm ? (
-              <button onClick={() => setShowForm(true)}
-                style={{ width: "100%", background: maNote ? "var(--bg)" : "#D97757", color: maNote ? "var(--text)" : "#fff", border: "1px solid " + (maNote ? "var(--border)" : "#D97757"), borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-                {maNote ? "Modifier ma note" : "Noter ce bois"}
-              </button>
-            ) : (
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" as const, gap: "16px" }}>
-                <div>
-                  <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "8px" }}>Note globale *</p>
-                  <Etoiles note={noteGlobale} onChange={setNoteGlobale} />
+            <>
+              {isAdmin && !showForm && (
+                <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: "6px", padding: "6px 10px", marginBottom: "10px", fontSize: "11px", fontWeight: 600, color: "#1E40AF" }}>
+                  ⚡ Mode admin — votre note sera publiée en tant que TT-Kip
                 </div>
-                <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column" as const, gap: "12px" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>Critères — optionnels</p>
-                  {CRITERES.map(c => (
-                    <SliderNote key={c.key} label={c.label} color={c.color} tooltip={c.tooltip}
-                      value={notesCriteres[c.key] || ""}
-                      onChange={(v: string) => setNotesCriteres(prev => ({ ...prev, [c.key]: v }))}
-                    />
-                  ))}
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "-4px" }}>Glissez un curseur pour l'activer. Les critères non touchés ne seront pas enregistrés.</p>
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button type="button" onClick={() => setShowForm(false)}
-                    style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-                    Annuler
-                  </button>
-                  <button type="submit" disabled={loading || !noteGlobale || noteGlobale < 1}
-                    style={{ flex: 2, background: (!noteGlobale || noteGlobale < 1) ? "var(--border)" : "#D97757", color: (!noteGlobale || noteGlobale < 1) ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: (!noteGlobale || noteGlobale < 1) ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
-                    {loading ? "Enregistrement..." : maNote ? "Mettre à jour" : "Enregistrer"}
-                  </button>
-                </div>
-              </form>
-            )
+              )}
+              {!showForm ? (
+                <button onClick={() => setShowForm(true)}
+                  style={{ width: "100%", background: isAdmin ? "#1A56DB" : maNote ? "var(--bg)" : "#D97757", color: (isAdmin || !maNote) ? "#fff" : "var(--text)", border: "1px solid " + (isAdmin ? "#1A56DB" : maNote ? "var(--border)" : "#D97757"), borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                  {isAdmin ? "✏️ Saisir la note TT-Kip" : maNote ? "Modifier ma note" : "Noter ce bois"}
+                </button>
+              ) : (
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" as const, gap: "16px" }}>
+                  <div>
+                    <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "8px" }}>Note globale *</p>
+                    <Etoiles note={noteGlobale} onChange={setNoteGlobale} />
+                  </div>
+                  <div style={{ background: "var(--bg)", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column" as const, gap: "12px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>Critères — optionnels</p>
+                    {CRITERES.map(c => (
+                      <SliderNote key={c.key} label={c.label} color={c.color} tooltip={c.tooltip}
+                        value={notesCriteres[c.key] || ""}
+                        onChange={(v: string) => setNotesCriteres(prev => ({ ...prev, [c.key]: v }))}
+                      />
+                    ))}
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "-4px" }}>Glissez un curseur pour l'activer. Les critères non touchés ne seront pas enregistrés.</p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button type="button" onClick={() => setShowForm(false)}
+                      style={{ flex: 1, background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                      Annuler
+                    </button>
+                    <button type="submit" disabled={loading || !noteGlobale || noteGlobale < 1}
+                      style={{ flex: 2, background: (!noteGlobale || noteGlobale < 1) ? "var(--border)" : "#D97757", color: (!noteGlobale || noteGlobale < 1) ? "var(--text-muted)" : "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "14px", fontWeight: 600, cursor: (!noteGlobale || noteGlobale < 1) ? "not-allowed" : "pointer", fontFamily: "Poppins, sans-serif" }}>
+                      {loading ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
           ) : (
             <div style={{ textAlign: "center" as const }}>
               <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "10px" }}>Connectez-vous pour noter ce bois</p>
