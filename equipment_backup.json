@@ -1050,6 +1050,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "e7791aa4-2706-453d-b8e4-30b599e5d8bc",
+    "nom": "Sachi AOKI",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "81b7bfb7-ba4d-4ac4-9e88-e541cdd2f2cd",
     "nom": "Saki Shibata",
     "genre": "F",
