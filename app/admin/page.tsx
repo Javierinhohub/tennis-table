@@ -174,15 +174,31 @@ export default function AdminPage() {
     setNotesBois(bois || [])
   }
 
+  async function callNoteAPI(id: string, table: "notes_revetements" | "notes_bois", action: "valider" | "supprimer") {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch("/api/admin/valider-note", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ id, table, action }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      console.error("valider-note error:", err.error)
+      alert("Erreur : " + err.error)
+      return false
+    }
+    return true
+  }
+
   async function validerNote(id: string, table: "notes_revetements" | "notes_bois") {
-    await supabase.from(table).update({ valide: true }).eq("id", id)
-    await fetchNotes()
+    const ok = await callNoteAPI(id, table, "valider")
+    if (ok) await fetchNotes()
   }
 
   async function supprimerNote(id: string, table: "notes_revetements" | "notes_bois") {
     if (!confirm("Supprimer cette note ?")) return
-    await supabase.from(table).delete().eq("id", id)
-    await fetchNotes()
+    const ok = await callNoteAPI(id, table, "supprimer")
+    if (ok) await fetchNotes()
   }
 
   async function fetchProduits() {
