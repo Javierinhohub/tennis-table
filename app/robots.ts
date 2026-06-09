@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/joueurs/"],
-        disallow: ["/admin", "/api", "/auth", "/en/", "/joueurs"],
+        allow: "/",
+        disallow: ["/admin", "/api", "/auth", "/en/", "/profil", "/messages"],
       },
       // Bloquer les crawlers agressifs connus
       {
