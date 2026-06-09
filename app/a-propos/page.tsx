@@ -1,3 +1,11 @@
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "À propos — TT-Kip",
+  description: "Découvrez l'équipe derrière TT-Kip, la référence des équipements de tennis de table.",
+  alternates: { canonical: "https://www.tt-kip.com/a-propos" },
+}
+
 export default function AProposPage() {
   return (
     <main style={{ maxWidth: "720px", margin: "0 auto", padding: "2.5rem 2rem" }}>
