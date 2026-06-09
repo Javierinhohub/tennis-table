@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Logo TT-Kip</title>
+  <rect width="512" height="512" fill="#D97757" rx="48"/>
+  <circle cx="256" cy="256" r="210" fill="#C4623D" opacity="0.35"/>
+  <rect x="130" y="108" width="72" height="14" rx="7" fill="#fff"/>
+  <rect x="242" y="108" width="72" height="14" rx="7" fill="#fff"/>
+  <rect x="241" y="116" width="14" height="100" rx="7" fill="#fff"/>
+  <rect x="130" y="116" width="14" height="100" rx="7" fill="#fff"/>
+  <ellipse cx="256" cy="330" rx="118" ry="110" fill="#fff"/>
+  <ellipse cx="256" cy="330" rx="118" ry="110" fill="none" stroke="#D97757" stroke-width="4"/>
+  <line x1="140" y1="300" x2="372" y2="300" stroke="#D97757" stroke-width="3" stroke-dasharray="8,5"/>
+  <line x1="138" y1="360" x2="374" y2="360" stroke="#D97757" stroke-width="3" stroke-dasharray="8,5"/>
+  <rect x="242" y="428" width="28" height="52" rx="8" fill="#fff"/>
+  <circle cx="374" cy="146" r="32" fill="#fff"/>
+  <circle cx="374" cy="146" r="32" fill="none" stroke="#D97757" stroke-width="3"/>
+  <line x1="360" y1="136" x2="388" y2="136" stroke="#D97757" stroke-width="3"/>
+  <line x1="355" y1="146" x2="393" y2="146" stroke="#D97757" stroke-width="3"/>
+  <line x1="360" y1="156" x2="388" y2="156" stroke="#D97757" stroke-width="3"/>
+  <text x="256" y="352" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="54" font-weight="700" fill="#D97757" letter-spacing="-1">TT-Kip</text>
+</svg>
