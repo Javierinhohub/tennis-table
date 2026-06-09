@@ -1274,6 +1274,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "8f663d64-fb9c-4008-820c-d969b153969b",
+    "nom": "Veronika MATIUNINA",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "3e4f7064-2da3-4422-8616-545dc58b07cb",
     "nom": "Wang Manyu",
     "genre": "F",
