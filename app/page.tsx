@@ -3,8 +3,13 @@ import StatsBar from "./components/StatsBar"
 import DerniersAvis from "./components/DerniersAvis"
 import DerniersArticles from "./components/DerniersArticles"
 import AccueilHero from "./components/AccueilHero"
+import AdBanner from "./components/AdBanner"
 import { getLocale, makeT } from "@/lib/getLocale"
 import type { Metadata } from "next"
+
+// ⚠️ Remplace ces IDs par tes vrais data-ad-slot depuis AdSense → Annonces → Par unité
+const AD_SLOT_HOME_TOP    = "7450712239"  // Accueil - Bannière haut
+const AD_SLOT_HOME_BOTTOM = "6236329767"  // Accueil - Carré milieu
 
 export const dynamic = "force-dynamic"
 
@@ -41,6 +46,10 @@ export default async function Home() {
         <StatsBar />
       </Suspense>
 
+      {/* ── Pub bannière horizontale — très visible après les stats ── */}
+      <AdBanner slot={AD_SLOT_HOME_TOP} format="horizontal"
+        style={{ maxWidth: "900px", margin: "0 auto", padding: "0.5rem 2rem" }} />
+
       <section style={{ maxWidth: "900px", margin: "0 auto", padding: "2rem 2rem" }}>
         <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "1.5rem" }}>{t("home", "quickAccess")}</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "12px" }}>
@@ -58,6 +67,10 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {/* ── Pub rectangle — entre accès rapide et les derniers avis/articles ── */}
+      <AdBanner slot={AD_SLOT_HOME_BOTTOM} format="rectangle"
+        style={{ maxWidth: "900px", margin: "0 auto", padding: "0 2rem 1rem" }} />
 
       <section style={{ maxWidth: "900px", margin: "0 auto", padding: "0 2rem 3rem" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>

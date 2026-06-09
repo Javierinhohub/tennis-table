@@ -5,6 +5,11 @@ import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useLocale } from "@/lib/useLocale"
 import { useT } from "@/lib/useT"
+import AdBanner from "@/app/components/AdBanner"
+
+// ⚠️ Remplace ces IDs par tes vrais data-ad-slot depuis AdSense → Annonces → Par unité
+const AD_SLOT_JOUEURS_TOP    = "8736210453"  // Joueurs - Bannière filtres
+const AD_SLOT_JOUEURS_MIDDLE = "9984003085"  // Joueurs - Carré milieu
 
 const DRAPEAUX: Record<string, string> = {
   "Chine":"🇨🇳","France":"🇫🇷","Allemagne":"🇩🇪","Suède":"🇸🇪","Japon":"🇯🇵",
@@ -281,6 +286,12 @@ export default function JoueursPage() {
         </div>
       )}
 
+      {/* ── Pub sous les filtres — emplacement très visible ── */}
+      {!loading && (
+        <AdBanner slot={AD_SLOT_JOUEURS_TOP} format="horizontal"
+          style={{ marginBottom: "1rem" }} />
+      )}
+
       {/* Bandeau info (masqué pendant filtrage/recherche) */}
       {!recherche && (
         <div style={{ background: "#fff", border: "1px solid var(--border)", borderLeft: "3px solid #D97757", borderRadius: "0 8px 8px 0", padding: "12px 16px", marginBottom: "1.5rem" }}>
@@ -329,6 +340,10 @@ export default function JoueursPage() {
               {hommes.map(j => <CarteJoueur key={j.id} j={j} />)}
             </div>
           </div>
+          {/* ── Pub entre Hommes et Femmes — très efficace sur mobile ── */}
+          <AdBanner slot={AD_SLOT_JOUEURS_MIDDLE} format="rectangle"
+            style={{ alignSelf: "start", position: "sticky", top: "80px" }} />
+
           <div>
             <div style={{ marginBottom: "1.2rem", paddingBottom: "12px", borderBottom: "2px solid #D97757" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.3px" }}>{t("players", "women")}</h2>
