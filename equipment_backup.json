@@ -140,6 +140,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "d656cb02-ac06-4eb3-ac27-e460496d3963",
+    "nom": "Britt EERLAND",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "246e7755-2959-4d10-9f02-153ec3907da6",
     "nom": "Bruna Takahashi",
     "genre": "F",
@@ -245,10 +259,10 @@
     "main": "Droitier",
     "age": null,
     "prise": "Classique",
-    "bois_nom": "Stiga Inspira Hybrid Carbon",
-    "revetement_cd": "Stiga DNA Dragon Power 52.5 — Backside",
+    "bois_nom": "Stiga Clipper Cybershape (7 plis)",
+    "revetement_cd": "Stiga Helix Platinum H — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": "Stiga DNA Platinum XH — Backside",
+    "revetement_rv": "Stiga Helix Platinum H — Backside",
     "revetement_rv_type": null
   },
   {
@@ -627,6 +641,20 @@
     "revetement_cd": "Double Happiness / DHS Hurricane III — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Butterfly Dignics 05 — Backside",
+    "revetement_rv_type": null
+  },
+  {
+    "id": "474aa0f9-80af-43e7-9705-df8af1033fe6",
+    "nom": "Kyoka IDESAWA",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
     "revetement_rv_type": null
   },
   {
@@ -1540,6 +1568,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "54dbf789-b1b3-4f75-a3a5-3c7b7e6128dd",
+    "nom": "Abdel-Kader SALIFOU",
+    "genre": "H",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "4644b652-9852-41c6-85d7-6f14aa637fb7",
     "nom": "Aditya Sareen",
     "genre": "H",
@@ -1960,6 +2002,20 @@
     "revetement_rv_type": null
   },
   {
+    "id": "78cd8339-bc22-4684-9698-5ba91ac3a72b",
+    "nom": "Florian BOURRASSAUD",
+    "genre": "H",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
+    "revetement_rv_type": null
+  },
+  {
     "id": "197e1751-00bf-430d-bb37-119161c4eaba",
     "nom": "Florian Bourrassaud",
     "genre": "H",
@@ -2191,7 +2247,7 @@
     "main": "Droitier",
     "age": null,
     "prise": "Classique",
-    "bois_nom": "Butterfly Timo Boll ALC (7 plis)",
+    "bois_nom": "Butterfly Viscaria Super ALC (7 plis)",
     "revetement_cd": "Butterfly Zyre 03 — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Butterfly Zyre 03 — Backside",
@@ -2723,7 +2779,7 @@
     "main": "Droitier",
     "age": 31,
     "prise": "Classique",
-    "bois_nom": "Andro Synteliac VCO",
+    "bois_nom": "Andro Synteliac VCI OFF Gauzy Edition",
     "revetement_cd": "Andro Nuzn 55 — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Andro Nuzn 55 — Backside",
