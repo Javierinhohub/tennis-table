@@ -27,7 +27,7 @@ export default async function Home() {
     { href: "/autre-materiel", label: t("nav", "otherGear"), description: t("home", "catOtherDesc"), icon: "+" },
     { href: "/joueurs",     label: t("nav", "proPlayers"), description: t("home", "catPlayersDesc"), icon: "J" },
     { href: "/articles",    label: t("nav", "articles"),   description: t("home", "catArticlesDesc"), icon: "A" },
-    { href: "/forum",       label: t("nav", "forum"),      description: t("home", "catForumDesc"),   icon: "F" },
+    { href: "/a-propos",    label: t("nav", "about"),      description: t("home", "catAboutDesc"),   icon: "?" },
   ]
 
   return (
