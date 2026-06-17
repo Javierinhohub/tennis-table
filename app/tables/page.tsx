@@ -32,7 +32,7 @@ export default function TablesPage() {
     setLoading(true)
     let q = supabase
       .from("tables_tt")
-      .select("id, marque, nom, type, niveau", { count: "exact" })
+      .select("id, marque, nom, type, niveau, prix", { count: "exact" })
       .eq("actif", true)
       .order("marque")
       .order("nom")
@@ -146,7 +146,7 @@ export default function TablesPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                {["Marque", "Modèle", "Type", "Niveau"].map(h => (
+                {["Marque", "Modèle", "Type", "Niveau", "Prix"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -175,6 +175,9 @@ export default function TablesPage() {
                       <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
                         {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
                       </span>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: t.prix ? 600 : 400, color: t.prix ? "var(--text)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
+                      {t.prix ? `${Number(t.prix).toLocaleString("fr-FR")} €` : "—"}
                     </td>
                   </tr>
                 )
