@@ -357,12 +357,10 @@ export default function JoueursPage() {
       )}
 
 
-      {/* ── Notice anti-plagiat ── */}
-      <div style={{ marginTop: "2.5rem", borderTop: "1px solid var(--border)", paddingTop: "1.2rem" }}>
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.7, textAlign: "center" }}>
-          © {new Date().getFullYear()} TT-Kip — Toutes les données de cette page (classement, matériel des joueurs professionnels, organisation, présentation) sont la propriété exclusive de TT-Kip et constituent une base de données originale protégée par le droit d&apos;auteur et le droit sui generis des bases de données (articles L.341-1 et suivants du Code de la propriété intellectuelle).<br/>
-          <strong style={{ color: "var(--text)" }}>Toute reproduction, extraction, copie ou réutilisation, même partielle, sans autorisation écrite préalable est strictement interdite et constitue un acte de contrefaçon sévèrement sanctionné en France (jusqu&apos;à 300 000 € d&apos;amende et 3 ans d&apos;emprisonnement).</strong><br/>
-          Contact pour signalement : <a href="/contact" style={{ color: "#D97757", textDecoration: "none", fontWeight: 600 }}>tt-kip.com/contact</a>
+      {/* ── Notice copyright discrète ── */}
+      <div style={{ marginTop: "2.5rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
+        <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center" }}>
+          © {new Date().getFullYear()} TT-Kip — Base de données protégée · Reproduction interdite
         </p>
       </div>
 
