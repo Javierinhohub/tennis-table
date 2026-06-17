@@ -19,6 +19,9 @@ export default function AProposPage() {
         <p style={{ marginTop: "1rem" }}>
           Notre objectif, c&apos;est de partager un maximum d&apos;informations, de manière indépendante, sur la culture du matos de ping : la nôtre, mais surtout la vôtre. Un espace pour échanger librement, pongistiquement et cordialement.
         </p>
+        <p style={{ marginTop: "1rem" }}>
+          Pour les fiches joueurs, on essaie au maximum de contacter directement les joueurs pros afin qu&apos;ils nous confirment leur matériel. On s&apos;appuie aussi sur des sources comme <a href="https://tabletennis.guide" target="_blank" rel="noopener noreferrer" style={{ color: "#D97757", textDecoration: "none", fontWeight: 500 }}>TableTennisLounge</a> et <a href="https://tabletennis-daily.com" target="_blank" rel="noopener noreferrer" style={{ color: "#D97757", textDecoration: "none", fontWeight: 500 }}>TennisTableDaily</a>, ainsi que sur les retours de nos followers Instagram — merci à eux.
+        </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "2rem" }}>

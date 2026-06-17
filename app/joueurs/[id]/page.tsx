@@ -82,8 +82,8 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
   }
 
   const worldLabel = locale === "en"
-    ? `#${j.classement_mondial} ${t("players", "worldRanking")} ${j.genre === "F" ? "🏆 Women" : "🏆 Men"}`
-    : `#${j.classement_mondial} ${t("players", "worldRanking")} ${j.genre === "F" ? "🏆 Femmes" : "🏆 Hommes"}`
+    ? `#${j.classement_mondial} ${t("players", "worldRanking")} — ${j.genre === "F" ? "Women" : "Men"}`
+    : `#${j.classement_mondial} ${t("players", "worldRanking")} — ${j.genre === "F" ? "Femmes" : "Hommes"}`
 
   return (
     <>
@@ -130,19 +130,19 @@ export default async function JoueurPage({ params }: { params: Promise<{ id: str
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
             {j.bois_nom && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🏏 {t("players", "blade")}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>{t("players", "blade")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.bois_nom}</p>
               </div>
             )}
             {j.revetement_cd && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>🔴 {t("players", "forehand")}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>{t("players", "forehand")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_cd}</p>
               </div>
             )}
             {j.revetement_rv && (
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 18px" }}>
-                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>⚫ {t("players", "backhand")}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "4px" }}>{t("players", "backhand")}</p>
                 <p style={{ fontSize: "14px", fontWeight: 600 }}>{j.revetement_rv}</p>
               </div>
             )}
