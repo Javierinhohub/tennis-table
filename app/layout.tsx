@@ -84,7 +84,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             @ttkip.pro
           </a>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif" }}>
-            Copyright TT-Kip 2026 — Tous droits réservés
+            © {new Date().getFullYear()} TT-Kip — Tous droits réservés · Base de données protégée (L.341-1 CPI)
+          </p>
+          <p style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif", marginTop: "4px" }}>
+            <a href="/confidentialite" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Politique de confidentialité</a>
+            {" · "}
+            <a href="/contact" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Contact</a>
+            {" · "}
+            <span>Reproduction interdite sans autorisation — contrefaçon passible de sanctions pénales</span>
           </p>
         </footer>
         {/* Redirection hors WebView Facebook/Instagram → ouvre dans le vrai navigateur */}
