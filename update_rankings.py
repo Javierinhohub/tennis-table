@@ -154,6 +154,18 @@ def normalize(name):
     name = re.sub(r"[^A-Z0-9 ]", "", name)
     return re.sub(r"\s+", " ", name).strip()
 
+def title_case_name(nom: str) -> str:
+    """
+    Convertit "FAN Zhendong" ou "FAN ZHENDONG" en "Fan Zhendong".
+    Gère les tirets : "YUN-JU Lin" → "Yun-Ju Lin".
+    """
+    parts = nom.strip().split()
+    result = []
+    for part in parts:
+        sub = part.split("-")
+        result.append("-".join(p.capitalize() for p in sub))
+    return " ".join(result)
+
 def match_joueur(joueurs_db, nom_ranking):
     nom_n = normalize(nom_ranking)
     tokens = set(nom_n.split())
@@ -166,8 +178,9 @@ def match_joueur(joueurs_db, nom_ranking):
         commun = tokens & j_tokens
         if not commun:
             continue
+        # Seuil abaissé à 0.5 pour mieux gérer les noms composés / accents
         score = len(commun) / max(len(tokens), len(j_tokens))
-        if score > best_score and score >= 0.6:
+        if score > best_score and score >= 0.5:
             best_score = score
             best = j
     return best
@@ -224,12 +237,13 @@ def run():
                     updated += 1
                     time.sleep(0.03)
             else:
+                nom_propre = title_case_name(nom)  # "FAN Zhendong" → "Fan Zhendong"
                 sb.table("joueurs_pro").insert({
-                    "nom": nom, "pays": pays,
+                    "nom": nom_propre, "pays": pays,
                     "classement_mondial": rang,
                     "genre": genre, "actif": True,
                 }).execute()
-                print(f"  ➕  Nouveau #{rang} : {nom} ({pays})")
+                print(f"  ➕  Nouveau #{rang} : {nom_propre} ({pays})")
                 inserted += 1
                 time.sleep(0.05)
 
