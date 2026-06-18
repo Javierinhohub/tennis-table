@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .from("tables_tt")
     .select("marque, nom, type, niveau")
     .eq("slug", slug)
-    .single()
+    .maybeSingle()
 
   if (!t) return { title: "Table introuvable" }
 
@@ -32,17 +32,23 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
     .from("tables_tt")
     .select("id, marque, nom, slug, type, niveau, prix")
     .eq("slug", slug)
-    .eq("actif", true)
-    .single()
+    .maybeSingle()
 
   if (!table) notFound()
 
-  const { data: liens } = await supabase
-    .from("tables_tt_liens")
-    .select("id, revendeur, url")
-    .eq("table_id", table.id)
-    .eq("actif", true)
-    .order("revendeur")
+  // tables_tt_liens peut ne pas encore exister — on gère l'erreur silencieusement
+  let liens: any[] = []
+  try {
+    const { data: l } = await supabase
+      .from("tables_tt_liens")
+      .select("id, revendeur, url")
+      .eq("table_id", table.id)
+      .eq("actif", true)
+      .order("revendeur")
+    liens = l || []
+  } catch {
+    liens = []
+  }
 
   const nc = table.niveau ? (NIVEAU_COLORS[table.niveau] || NIVEAU_COLORS.loisir) : null
 
