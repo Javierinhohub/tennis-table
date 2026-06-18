@@ -743,6 +743,7 @@ export default function AdminPage() {
               <p style={{ fontSize: "14px" }}>Sélectionnez une table dans la liste</p>
             </div>
           ) : (
+            <>
             <form onSubmit={handleSaveTable} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {messageTable && (
                 <div style={{ background: messageTable.startsWith("✅") ? "#ECFDF5" : "#FEF2F2", border: `1px solid ${messageTable.startsWith("✅") ? "#A7F3D0" : "#FECACA"}`, color: messageTable.startsWith("✅") ? "#065F46" : "#DC2626", borderRadius: "8px", padding: "12px 16px", fontSize: "14px", fontWeight: 500 }}>
@@ -862,6 +863,7 @@ export default function AdminPage() {
                 </button>
               </form>
             </div>
+            </>
           )}
         </div>
       )}
