@@ -59,7 +59,7 @@ function AutreMatérielContent() {
       // Données depuis tables_tt
       let q = supabase
         .from("tables_tt")
-        .select("id, marque, nom, type, niveau, prix", { count: "exact" })
+        .select("id, marque, nom, slug, type, niveau, prix", { count: "exact" })
         .eq("actif", true)
         .order("marque").order("nom")
         .limit(500)
