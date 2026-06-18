@@ -1,17 +1,37 @@
+import { unstable_cache } from "next/cache"
 import { supabase } from "@/lib/supabase"
 import { getLocale, makeT } from "@/lib/getLocale"
+
+// Requêtes mises en cache 1h côté serveur — indépendantes de la locale
+const getCachedStats = unstable_cache(
+  async () => {
+    const [r1, r2, r3, r4, r5] = await Promise.all([
+      supabase.from("revetements").select("*", { count: "exact", head: true }),
+      supabase.from("marques").select("*", { count: "exact", head: true }),
+      supabase.from("bois").select("*", { count: "exact", head: true }),
+      supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true),
+      supabase.from("notes_revetements").select("*", { count: "exact", head: true }),
+    ])
+    return { revCount: r1.count, marqCount: r2.count, boisCount: r3.count, avisCount: r4.count, notesCount: r5.count }
+  },
+  ["stats-bar"],
+  { revalidate: 3600 }
+)
 
 export default async function StatsBar() {
   const locale = await getLocale()
   const t = makeT(locale)
 
-  const [r1, r2, r3, r4, r5] = await Promise.all([
-    supabase.from("revetements").select("*", { count: "exact", head: true }),
-    supabase.from("marques").select("*", { count: "exact", head: true }),
-    supabase.from("bois").select("*", { count: "exact", head: true }),
-    supabase.from("avis").select("*", { count: "exact", head: true }).eq("valide", true),
-    supabase.from("notes_revetements").select("*", { count: "exact", head: true }),
-  ])
+  const { revCount, marqCount, boisCount, avisCount, notesCount } = await getCachedStats()
+
+  // Compat avec le reste du composant
+  const [r1, r2, r3, r4, r5] = [
+    { count: revCount },
+    { count: marqCount },
+    { count: boisCount },
+    { count: avisCount },
+    { count: notesCount },
+  ]
 
   const loc = locale === "en" ? "en-US" : "fr-FR"
   const stats = [

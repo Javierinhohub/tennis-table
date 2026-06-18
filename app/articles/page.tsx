@@ -7,7 +7,7 @@ export const metadata = {
 import { supabase } from "@/lib/supabase"
 import ArticlesClient from "./ArticlesClient"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 3600 // ISR 1h — la liste des articles ne change pas à chaque requête
 
 const CAT_LABELS: Record<string, string> = { test: "Test", conseil: "Conseil", actualite: "Actualité", comparatif: "Comparatif" }
 const CAT_COLORS: Record<string, string> = { test: "#1A56DB", conseil: "#0E7F4F", actualite: "#D97757", comparatif: "#7C3AED" }

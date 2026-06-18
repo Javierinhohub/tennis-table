@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+
+export const revalidate = 3600 // ISR 1h — fiche bois statique entre les mises à jour
 import AvisSectionBois from "./AvisSectionBois"
 import NotesSectionBois from "./NotesSectionBois"
 import BackButton from "@/app/components/BackButton"

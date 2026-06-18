@@ -11,7 +11,8 @@ import type { Metadata } from "next"
 const AD_SLOT_HOME_TOP    = "7450712239"  // Accueil - Bannière haut
 const AD_SLOT_HOME_BOTTOM = "6236329767"  // Accueil - Carré milieu
 
-export const dynamic = "force-dynamic"
+// Page dynamique par nature (getLocale() lit les headers de requête).
+// Les données Supabase sont mise en cache via unstable_cache dans chaque composant.
 
 export const metadata: Metadata = {
   alternates: { canonical: "https://www.tt-kip.com" },

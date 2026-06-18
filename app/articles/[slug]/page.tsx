@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { notFound } from "next/navigation"
+
+export const revalidate = 3600 // ISR 1h — article statique entre les mises à jour
 import ArticleComments from "./ArticleComments"
 import ArticleEditButton from "./ArticleEditButton"
 import type { Metadata } from "next"

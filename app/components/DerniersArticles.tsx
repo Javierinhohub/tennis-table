@@ -1,9 +1,25 @@
+import { unstable_cache } from "next/cache"
 import { supabase } from "@/lib/supabase"
 import { getLocale, makeT } from "@/lib/getLocale"
 
 const CAT_COLORS: Record<string, string> = {
   test: "#1A56DB", conseil: "#0E7F4F", actualite: "#D97757", comparatif: "#7C3AED"
 }
+
+// Derniers articles mis en cache 1h — indépendant de la locale
+const getCachedArticles = unstable_cache(
+  async () => {
+    const { data } = await supabase
+      .from("articles")
+      .select("id, titre, slug, extrait, categorie, cree_le")
+      .eq("publie", true)
+      .order("cree_le", { ascending: false })
+      .limit(3)
+    return data
+  },
+  ["derniers-articles"],
+  { revalidate: 3600 }
+)
 
 export default async function DerniersArticles() {
   const locale = await getLocale()
@@ -16,12 +32,7 @@ export default async function DerniersArticles() {
     comparatif: t("home", "catComparative"),
   }
 
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("id, titre, slug, extrait, categorie, cree_le")
-    .eq("publie", true)
-    .order("cree_le", { ascending: false })
-    .limit(3)
+  const articles = await getCachedArticles()
 
   if (!articles || articles.length === 0) return null
 

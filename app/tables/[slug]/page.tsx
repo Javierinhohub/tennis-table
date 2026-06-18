@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+
+export const revalidate = 3600 // ISR 1h
 import Link from "next/link"
 import AvisSection from "@/app/revetements/[slug]/AvisSection"
 

@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+
+export const revalidate = 3600 // ISR 1h — fiche produit statique entre les mises à jour
 import AvisSection from "./AvisSection"
 import MaterialSection from "./MaterialSection"
 import NotesSection from "./NotesSection"

@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase"
 
 const BASE = "https://www.tt-kip.com"
 
-export const revalidate = 3600 // regénéré toutes les heures par Vercel
+export const revalidate = 86400 // regénéré une fois par jour — pas besoin de plus
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 

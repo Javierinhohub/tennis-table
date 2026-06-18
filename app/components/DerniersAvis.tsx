@@ -1,16 +1,27 @@
+import { unstable_cache } from "next/cache"
 import { supabase } from "@/lib/supabase"
 import { getLocale, makeT } from "@/lib/getLocale"
+
+// Derniers avis mis en cache 1h — indépendant de la locale
+const getCachedAvis = unstable_cache(
+  async () => {
+    const { data } = await supabase
+      .from("avis")
+      .select("id, titre, contenu, note, cree_le, utilisateurs(pseudo), produits(nom, slug)")
+      .eq("valide", true)
+      .order("cree_le", { ascending: false })
+      .limit(4)
+    return data
+  },
+  ["derniers-avis"],
+  { revalidate: 3600 }
+)
 
 export default async function DerniersAvis() {
   const locale = await getLocale()
   const t = makeT(locale)
 
-  const { data: avis } = await supabase
-    .from("avis")
-    .select("id, titre, contenu, note, cree_le, utilisateurs(pseudo), produits(nom, slug)")
-    .eq("valide", true)
-    .order("cree_le", { ascending: false })
-    .limit(4)
+  const avis = await getCachedAvis()
 
   if (!avis || avis.length === 0) return (
     <div style={{ textAlign: "center", padding: "3rem", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)" }}>
