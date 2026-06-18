@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 const NIVEAU_COLORS: Record<string, { bg: string; color: string }> = {
@@ -12,6 +13,7 @@ const NIVEAU_COLORS: Record<string, { bg: string; color: string }> = {
 type Lien = { revendeur: string; url: string }
 
 export default function TablesPage() {
+  const router = useRouter()
   const [tables, setTables] = useState<any[]>([])
   const [liens, setLiens] = useState<Record<string, Lien[]>>({})
   const [total, setTotal] = useState(0)
@@ -166,11 +168,12 @@ export default function TablesPage() {
             </thead>
             <tbody>
               {tables.map((t, i) => {
-                const nc = NIVEAU_COLORS[t.niveau] || NIVEAU_COLORS.loisir
+                const nc = t.niveau ? (NIVEAU_COLORS[t.niveau] || NIVEAU_COLORS.loisir) : null
                 const tableLiens = liens[t.id] || []
                 return (
                   <tr key={t.id}
-                    style={{ borderBottom: i < tables.length - 1 ? "1px solid var(--border)" : "none" }}
+                    onClick={() => router.push("/tables/" + t.slug)}
+                    style={{ borderBottom: i < tables.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                   >
@@ -188,7 +191,7 @@ export default function TablesPage() {
                       ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      {t.niveau ? (
+                      {nc ? (
                         <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
                           {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
                         </span>

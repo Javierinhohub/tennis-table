@@ -204,24 +204,29 @@ function AutreMatérielContent() {
             </thead>
             <tbody>
               {cat === "tables" ? items.map((t, i) => {
-                const nc = NIVEAU_COLORS[t.niveau] || NIVEAU_COLORS.loisir
+                const nc = t.niveau ? (NIVEAU_COLORS[t.niveau] || NIVEAU_COLORS.loisir) : null
                 return (
                   <tr key={t.id}
-                    style={{ borderBottom: i < items.length - 1 ? "1px solid var(--border)" : "none" }}
+                    onClick={() => router.push("/tables/" + t.slug)}
+                    style={{ borderBottom: i < items.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg)"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                   >
                     <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "14px", color: "#D97757" }}>{t.marque}</td>
                     <td style={{ padding: "12px 16px", fontWeight: 500, fontSize: "14px" }}>{t.nom}</td>
                     <td style={{ padding: "12px 16px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: t.type === "intérieur" ? "#F5F0FF" : "#FFF0EB", color: t.type === "intérieur" ? "#7C3AED" : "#D97757" }}>
-                        {t.type === "intérieur" ? "Intérieur" : "Extérieur"}
-                      </span>
+                      {t.type ? (
+                        <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: t.type === "intérieur" ? "#F5F0FF" : "#FFF0EB", color: t.type === "intérieur" ? "#7C3AED" : "#D97757" }}>
+                          {t.type === "intérieur" ? "Intérieur" : "Extérieur"}
+                        </span>
+                      ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
-                        {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
-                      </span>
+                      {nc ? (
+                        <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
+                          {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
+                        </span>
+                      ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
                     </td>
                     <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "14px", color: t.prix ? "var(--text)" : "var(--text-muted)" }}>
                       {t.prix ? t.prix.toLocaleString("fr-FR") + " €" : "—"}
