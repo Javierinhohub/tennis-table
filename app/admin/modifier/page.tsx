@@ -36,6 +36,8 @@ export default function ModifierPage() {
 
   // Infos générales
   const [nom, setNom] = useState("")
+  const [description, setDescription] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
   const [couleurs, setCouleurs] = useState("")
   const [numeroLarc, setNumeroLarc] = useState("")
   const [typeRev, setTypeRev] = useState("")
@@ -84,7 +86,7 @@ export default function ModifierPage() {
     setMessage("")
     const { data } = await supabase
       .from("produits")
-      .select("id, nom, marques(nom), revetements(*)")
+      .select("id, nom, description, image_url, marques(nom), revetements(*)")
       .eq("id", p.id)
       .single()
     if (!data) return
@@ -92,6 +94,8 @@ export default function ModifierPage() {
     const r = data.revetements as any
     setRev(r)
     setNom(data.nom || "")
+    setDescription((data as any).description || "")
+    setImageUrl((data as any).image_url || "")
     setNumeroLarc(r?.numero_larc || "")
     setTypeRev(r?.type_revetement || "In")
     setCouleurs(r?.couleurs_dispo || "")
@@ -148,7 +152,7 @@ export default function ModifierPage() {
     e.preventDefault()
     setLoading(true)
     setMessage("")
-    await supabase.from("produits").update({ nom }).eq("id", produit.id)
+    await supabase.from("produits").update({ nom, description: description || null, image_url: imageUrl || null }).eq("id", produit.id)
     await supabase.from("revetements").update({
       numero_larc: numeroLarc || null,
       type_revetement: typeRev,
@@ -289,6 +293,20 @@ export default function ModifierPage() {
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div><label style={labelStyle}>Nom</label><input type="text" value={nom} onChange={e => setNom(e.target.value)} required style={inputStyle} /></div>
+                <div>
+                  <label style={labelStyle}>Image URL</label>
+                  <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} style={inputStyle} placeholder="https://..." />
+                  {imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl} alt="aperçu" style={{ marginTop: "6px", maxHeight: "60px", maxWidth: "100%", objectFit: "contain", borderRadius: "4px", border: "1px solid var(--border)" }} />
+                  )}
+                </div>
+                <div>
+                  <label style={labelStyle}>Description éditoriale</label>
+                  <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+                    style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.6 }}
+                    placeholder="Notre avis sur ce revêtement (affiché sur la fiche produit)..." />
+                </div>
                 <div><label style={labelStyle}>Code LARC</label><input type="text" value={numeroLarc} onChange={e => setNumeroLarc(e.target.value)} style={inputStyle} /></div>
                 <div><label style={labelStyle}>Type</label>
                   <select value={typeRev} onChange={e => setTypeRev(e.target.value)} style={inputStyle}>

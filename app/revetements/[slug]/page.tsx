@@ -66,7 +66,7 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   const { slug } = await params
   const { data: produit } = await supabase
     .from("produits")
-    .select("id, nom, slug, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max, prix, note_marque_vitesse, note_marque_spin, note_marque_controle, note_marque_durete, note_marque_durabilite, note_marque_rejet, note_marque_qualite_prix, note_marque_adherence, note_marque_gene, note_marque_inversion, note_marque_globale, note_ttk_durabilite, note_ttk_durete, note_ttk_rejet, note_ttk_qualite_prix, note_ttk_adherence, note_ttk_gene, note_ttk_inversion, commentaire_marque)")
+    .select("id, nom, slug, description, image_url, marques(nom, pays, site_web), revetements(numero_larc, type_revetement, couleurs_dispo, larc_approuve, vitesse_note, effet_note, controle_note, poids, epaisseur_max, prix, note_marque_vitesse, note_marque_spin, note_marque_controle, note_marque_durete, note_marque_durabilite, note_marque_rejet, note_marque_qualite_prix, note_marque_adherence, note_marque_gene, note_marque_inversion, note_marque_globale, note_ttk_durabilite, note_ttk_durete, note_ttk_rejet, note_ttk_qualite_prix, note_ttk_adherence, note_ttk_gene, note_ttk_inversion, commentaire_marque)")
     .eq("slug", slug)
     .single()
 
@@ -114,10 +114,10 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
-    "image": "https://www.tt-kip.com/og-image.jpg",
+    "image": produit.image_url || "https://www.tt-kip.com/og-image.jpg",
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Revêtement de tennis de table",
-    "description": `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
+    "description": produit.description || `Revêtement ${TYPE_LABELS[rev?.type_revetement] || ""} ${marque?.nom} ${produit.nom}. Vitesse ${rev?.vitesse_note || "—"}/10, Effet ${rev?.effet_note || "—"}/10, Contrôle ${rev?.controle_note || "—"}/10.`,
     "url": `https://www.tt-kip.com/revetements/${slug}`,
     ...(rev?.prix ? {
       "offers": {
@@ -188,6 +188,23 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             <h1 style={{ fontSize: "28px", fontWeight: 700, marginBottom: "4px", letterSpacing: "-0.5px" }}>{produit.nom}</h1>
             <p style={{ color: "var(--text-muted)", fontSize: "16px" }}>{marque?.nom}</p>
           </div>
+
+          {/* Image produit */}
+          {produit.image_url && (
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", justifyContent: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={produit.image_url} alt={`${marque?.nom} ${produit.nom}`}
+                style={{ maxHeight: "220px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+          )}
+
+          {/* Description éditoriale */}
+          {produit.description && (
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Notre avis</h2>
+              <p style={{ fontSize: "15px", lineHeight: 1.75, color: "var(--text)" }}>{produit.description}</p>
+            </div>
+          )}
 
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
             <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "16px" }}>Caractéristiques techniques</h2>

@@ -61,7 +61,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const { data: produit } = await supabase
     .from("produits")
     .select(`
-      id, nom, slug,
+      id, nom, slug, description, image_url,
       marques(nom, site_web),
       bois(
         nb_plis, poids_g, epaisseur_mm, composition,
@@ -129,10 +129,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     "@context": "https://schema.org",
     "@type": "Product",
     "name": `${marque?.nom} ${produit.nom}`,
-    "image": "https://www.tt-kip.com/og-image.jpg",
+    "image": produit.image_url || "https://www.tt-kip.com/og-image.jpg",
     "brand": { "@type": "Brand", "name": marque?.nom },
     "category": "Bois de tennis de table",
-    "description": `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
+    "description": produit.description || `Bois de tennis de table ${marque?.nom} ${produit.nom}${b?.style ? `, style ${b.style}` : ""}${b?.nb_plis ? `, ${b.nb_plis} plis` : ""}.`,
     "url": `https://www.tt-kip.com/bois/${slug}`,
     ...(b?.prix ? {
       "offers": {
@@ -194,9 +194,18 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" as const }}>
-          <div>
-            <h1 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "4px" }}>{produit.nom}</h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px" }}>{marque?.nom}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            {produit.image_url && (
+              <div style={{ flexShrink: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={produit.image_url} alt={`${marque?.nom} ${produit.nom}`}
+                  style={{ width: "90px", height: "90px", objectFit: "contain", borderRadius: "8px", border: "1px solid var(--border)", background: "#fff", padding: "6px" }} />
+              </div>
+            )}
+            <div>
+              <h1 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "4px" }}>{produit.nom}</h1>
+              <p style={{ color: "var(--text-muted)", fontSize: "15px" }}>{marque?.nom}</p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
             {b?.style && (
@@ -215,6 +224,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "2rem", alignItems: "start" }}>
         <div>
+
+          {/* Description éditoriale */}
+          {produit.description && (
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "12px" }}>Notre avis</h2>
+              <p style={{ fontSize: "15px", lineHeight: 1.75, color: "var(--text)" }}>{produit.description}</p>
+            </div>
+          )}
 
           {/* Caractéristiques */}
           <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>

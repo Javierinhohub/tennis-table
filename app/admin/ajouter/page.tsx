@@ -24,6 +24,7 @@ export default function AjouterPage() {
 
   // Champs communs
   const [description, setDescription] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
 
   // Revêtements
   const [numeroLarc, setNumeroLarc] = useState("")
@@ -87,7 +88,7 @@ export default function AjouterPage() {
   const [subcatId, setSubcatId] = useState("")
 
   function resetForm() {
-    setNom(""); setMarqueId(""); setSubcatId(""); setDescription("")
+    setNom(""); setMarqueId(""); setSubcatId(""); setDescription(""); setImageUrl("")
     setNumeroLarc(""); setCouleurs(""); setVitesse(""); setEffet(""); setControle(""); setPoids("")
     setNombrePlis(""); setComposition(""); setTypeJeu(""); setTypeManche(""); setTailleLame(""); setRigidite(""); setBoisVitesse(""); setBoisControle(""); setBoisPoids("")
     setEtoiles(""); setMateriau(""); setCouleurBalle(""); setDiametre(""); setPoidsBalle(""); setCertification(""); setPackQuantite("")
@@ -106,7 +107,7 @@ export default function AjouterPage() {
     const { data: prod, error: prodErr } = await supabase.from("produits").insert({
       subcategory_id: subcatId || null,
       marque_id: marqueId || null,
-      nom, slug, actif: true, description: description || null
+      nom, slug, actif: true, description: description || null, image_url: imageUrl || null
     }).select("id").single()
 
     if (prodErr) { setMessage("Erreur : " + prodErr.message); setLoading(false); return }
@@ -225,6 +226,16 @@ export default function AjouterPage() {
                 </select>
               </div>
             )}
+            <div style={sectionStyle}>
+              <label style={labelStyle}>Image URL</label>
+              <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} style={inputStyle} placeholder="https://..." />
+            </div>
+            <div style={sectionStyle}>
+              <label style={labelStyle}>Description éditoriale</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+                style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.6 }}
+                placeholder="Notre avis sur ce produit (affiché sur la fiche produit)..." />
+            </div>
           </div>
         </div>
 
