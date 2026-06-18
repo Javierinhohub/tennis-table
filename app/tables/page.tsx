@@ -9,20 +9,22 @@ const NIVEAU_COLORS: Record<string, { bg: string; color: string }> = {
   compétition:  { bg: "#FFF0EB", color: "#D97757" },
 }
 
+type Lien = { revendeur: string; url: string }
+
 export default function TablesPage() {
   const [tables, setTables] = useState<any[]>([])
+  const [liens, setLiens] = useState<Record<string, Lien[]>>({})
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
-  const [typeFilter, setTypeFilter] = useState("")   // '' | 'intérieur' | 'extérieur'
+  const [typeFilter, setTypeFilter] = useState("")
   const [niveauFilter, setNiveauFilter] = useState("")
   const [marqueFilter, setMarqueFilter] = useState("")
   const [marques, setMarques] = useState<string[]>([])
 
   useEffect(() => { fetchAll() }, [search, typeFilter, niveauFilter, marqueFilter])
 
-  // Debounce de la recherche texte
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput), 350)
     return () => clearTimeout(t)
@@ -46,6 +48,25 @@ export default function TablesPage() {
     const { data, count } = await q
     setTables(data || [])
     setTotal(count || 0)
+
+    // Charger les liens revendeurs
+    if (data && data.length > 0) {
+      const ids = data.map((r: any) => r.id)
+      const { data: liensData } = await supabase
+        .from("tables_tt_liens")
+        .select("table_id, revendeur, url")
+        .in("table_id", ids)
+        .eq("actif", true)
+        .order("revendeur")
+      if (liensData) {
+        const map: Record<string, Lien[]> = {}
+        for (const l of liensData) {
+          if (!map[l.table_id]) map[l.table_id] = []
+          map[l.table_id].push({ revendeur: l.revendeur, url: l.url })
+        }
+        setLiens(map)
+      }
+    }
 
     // Marques distinctes
     if (!marques.length) {
@@ -84,23 +105,18 @@ export default function TablesPage() {
 
       {/* Filtres */}
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "1.5rem", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        {/* Recherche */}
         <div style={{ flex: 2, minWidth: "200px" }}>
           <input type="text" placeholder="Rechercher une table..." value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             autoComplete="off"
             style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
         </div>
-
-        {/* Type intérieur/extérieur */}
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
           style={{ ...inp, flex: 1, minWidth: "160px" }}>
           <option value="">Intérieur & Extérieur</option>
           <option value="intérieur">Intérieur</option>
           <option value="extérieur">Extérieur</option>
         </select>
-
-        {/* Niveau */}
         <select value={niveauFilter} onChange={e => setNiveauFilter(e.target.value)}
           style={{ ...inp, flex: 1, minWidth: "150px" }}>
           <option value="">Tous les niveaux</option>
@@ -108,14 +124,11 @@ export default function TablesPage() {
           <option value="club">Club</option>
           <option value="compétition">Compétition</option>
         </select>
-
-        {/* Marque */}
         <select value={marqueFilter} onChange={e => setMarqueFilter(e.target.value)}
           style={{ ...inp, flex: 1, minWidth: "160px" }}>
           <option value="">Toutes les marques</option>
           {marques.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
-
         {hasFilter && (
           <button onClick={reset}
             style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--text-muted)", cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
@@ -146,7 +159,7 @@ export default function TablesPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-                {["Marque", "Modèle", "Type", "Niveau", "Prix"].map(h => (
+                {["Marque", "Modèle", "Type", "Niveau", "Prix", "Acheter"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -154,6 +167,7 @@ export default function TablesPage() {
             <tbody>
               {tables.map((t, i) => {
                 const nc = NIVEAU_COLORS[t.niveau] || NIVEAU_COLORS.loisir
+                const tableLiens = liens[t.id] || []
                 return (
                   <tr key={t.id}
                     style={{ borderBottom: i < tables.length - 1 ? "1px solid var(--border)" : "none" }}
@@ -163,21 +177,47 @@ export default function TablesPage() {
                     <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "14px", color: "#D97757" }}>{t.marque}</td>
                     <td style={{ padding: "12px 16px", fontWeight: 500, fontSize: "14px" }}>{t.nom}</td>
                     <td style={{ padding: "12px 16px" }}>
-                      <span style={{
-                        fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px",
-                        background: t.type === "intérieur" ? "#F5F0FF" : "#FFF0EB",
-                        color: t.type === "intérieur" ? "#7C3AED" : "#D97757",
-                      }}>
-                        {t.type === "intérieur" ? "Intérieur" : "Extérieur"}
-                      </span>
+                      {t.type ? (
+                        <span style={{
+                          fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px",
+                          background: t.type === "intérieur" ? "#F5F0FF" : "#FFF0EB",
+                          color: t.type === "intérieur" ? "#7C3AED" : "#D97757",
+                        }}>
+                          {t.type === "intérieur" ? "Intérieur" : "Extérieur"}
+                        </span>
+                      ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
-                        {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
-                      </span>
+                      {t.niveau ? (
+                        <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px", background: nc.bg, color: nc.color }}>
+                          {t.niveau.charAt(0).toUpperCase() + t.niveau.slice(1)}
+                        </span>
+                      ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
                     </td>
                     <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: t.prix ? 600 : 400, color: t.prix ? "var(--text)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
                       {t.prix ? `${Number(t.prix).toLocaleString("fr-FR")} €` : "—"}
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      {tableLiens.length > 0 ? (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {tableLiens.map(l => (
+                            <a key={l.revendeur} href={l.url} target="_blank" rel="noopener noreferrer"
+                              style={{
+                                fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "10px",
+                                background: "#F5F5F5", color: "var(--text)", textDecoration: "none",
+                                border: "1px solid var(--border)", whiteSpace: "nowrap",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#E8E8E8"}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#F5F5F5"}
+                            >
+                              {l.revendeur} ↗
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>—</span>
+                      )}
                     </td>
                   </tr>
                 )

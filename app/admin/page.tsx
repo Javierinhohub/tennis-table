@@ -131,9 +131,14 @@ export default function AdminPage() {
   const [editTableType, setEditTableType] = useState("")
   const [editTableNiveau, setEditTableNiveau] = useState("")
   const [editTablePrix, setEditTablePrix] = useState("")
-
   const [editTableEpaisseur, setEditTableEpaisseur] = useState("")
   const [editTableActif, setEditTableActif] = useState(true)
+
+  // ── Liens revendeurs ──
+  const [tableLiens, setTableLiens] = useState<any[]>([])
+  const [newLienRevendeur, setNewLienRevendeur] = useState("")
+  const [newLienUrl, setNewLienUrl] = useState("")
+  const [savingLien, setSavingLien] = useState(false)
 
   // ── Modification joueur pro ──
   const [joueurSelectionne, setJoueurSelectionne] = useState<any>(null)
@@ -231,6 +236,16 @@ export default function AdminPage() {
     setTables(data || [])
   }
 
+  async function fetchTableLiens(tableId: string) {
+    const { data } = await supabase
+      .from("tables_tt_liens")
+      .select("id, revendeur, url")
+      .eq("table_id", tableId)
+      .eq("actif", true)
+      .order("revendeur")
+    setTableLiens(data || [])
+  }
+
   function selectionnerTable(t: any) {
     setMessageTable("")
     setTableSelectionnee(t)
@@ -239,9 +254,34 @@ export default function AdminPage() {
     setEditTableType(t.type || "intérieur")
     setEditTableNiveau(t.niveau || "loisir")
     setEditTablePrix(t.prix != null ? String(t.prix) : "")
-
     setEditTableEpaisseur(t.epaisseur_plateau != null ? String(t.epaisseur_plateau) : "")
     setEditTableActif(t.actif !== false)
+    setNewLienRevendeur("")
+    setNewLienUrl("")
+    fetchTableLiens(t.id)
+  }
+
+  async function ajouterLien(e: React.FormEvent) {
+    e.preventDefault()
+    if (!tableSelectionnee || !newLienRevendeur.trim() || !newLienUrl.trim()) return
+    setSavingLien(true)
+    const { error } = await supabase.from("tables_tt_liens").insert({
+      table_id: tableSelectionnee.id,
+      revendeur: newLienRevendeur.trim(),
+      url: newLienUrl.trim(),
+      actif: true,
+    })
+    setSavingLien(false)
+    if (!error) {
+      setNewLienRevendeur("")
+      setNewLienUrl("")
+      await fetchTableLiens(tableSelectionnee.id)
+    }
+  }
+
+  async function supprimerLien(id: string) {
+    await supabase.from("tables_tt_liens").update({ actif: false }).eq("id", id)
+    if (tableSelectionnee) await fetchTableLiens(tableSelectionnee.id)
   }
 
   async function handleSaveTable(e: React.FormEvent) {
@@ -772,6 +812,56 @@ export default function AdminPage() {
                 {savingTable ? "Enregistrement..." : "Enregistrer les modifications"}
               </button>
             </form>
+
+            {/* ── Liens revendeurs ── */}
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginTop: "14px" }}>
+              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>Liens revendeurs</p>
+
+              {/* Liste des liens existants */}
+              {tableLiens.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+                  {tableLiens.map(l => (
+                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--bg)", borderRadius: "8px", padding: "8px 12px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 600, minWidth: "100px" }}>{l.revendeur}</span>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: "12px", color: "#D97757", textDecoration: "none", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {l.url}
+                      </a>
+                      <button onClick={() => supprimerLien(l.id)}
+                        style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif" }}>
+                        Supprimer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px" }}>Aucun lien pour cette table.</p>
+              )}
+
+              {/* Formulaire ajout */}
+              <form onSubmit={ajouterLien} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  placeholder="Revendeur (ex: Cornilleau)"
+                  value={newLienRevendeur}
+                  onChange={e => setNewLienRevendeur(e.target.value)}
+                  required
+                  style={{ ...inputStyleAC, flex: "1 1 140px", minWidth: "140px" }}
+                />
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={newLienUrl}
+                  onChange={e => setNewLienUrl(e.target.value)}
+                  required
+                  style={{ ...inputStyleAC, flex: "3 1 240px", minWidth: "200px" }}
+                />
+                <button type="submit" disabled={savingLien}
+                  style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif", opacity: savingLien ? 0.7 : 1 }}>
+                  {savingLien ? "..." : "Ajouter"}
+                </button>
+              </form>
+            </div>
           )}
         </div>
       )}
