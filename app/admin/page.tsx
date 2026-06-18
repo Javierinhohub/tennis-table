@@ -261,8 +261,8 @@ export default function AdminPage() {
     fetchTableLiens(t.id)
   }
 
-  async function ajouterLien(e: React.FormEvent) {
-    e.preventDefault()
+  async function ajouterLien(e?: React.SyntheticEvent) {
+    if (e) e.preventDefault()
     if (!tableSelectionnee || !newLienRevendeur.trim() || !newLienUrl.trim()) return
     setSavingLien(true)
     const { error } = await supabase.from("tables_tt_liens").insert({
@@ -743,8 +743,7 @@ export default function AdminPage() {
               <p style={{ fontSize: "14px" }}>Sélectionnez une table dans la liste</p>
             </div>
           ) : (
-            <>
-            <form onSubmit={handleSaveTable} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {messageTable && (
                 <div style={{ background: messageTable.startsWith("✅") ? "#ECFDF5" : "#FEF2F2", border: `1px solid ${messageTable.startsWith("✅") ? "#A7F3D0" : "#FECACA"}`, color: messageTable.startsWith("✅") ? "#065F46" : "#DC2626", borderRadius: "8px", padding: "12px 16px", fontSize: "14px", fontWeight: 500 }}>
                   {messageTable}
@@ -764,6 +763,7 @@ export default function AdminPage() {
               </div>
 
               {/* Identité */}
+              <form id="edit-table-form" onSubmit={handleSaveTable}>
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px" }}>
                 <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>📋 Informations générales</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -794,7 +794,7 @@ export default function AdminPage() {
               </div>
 
               {/* Caractéristiques techniques */}
-              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px" }}>
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginTop: "14px" }}>
                 <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>🔧 Caractéristiques techniques</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
@@ -807,63 +807,59 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+              </form>
 
-              <button type="submit" disabled={savingTable}
+              {/* ── Liens revendeurs ── */}
+              <div style={{ background: "#fff", border: "2px solid #D97757", borderRadius: "10px", padding: "18px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px", color: "#D97757" }}>Liens revendeurs</p>
+
+                {tableLiens.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+                    {tableLiens.map(l => (
+                      <div key={l.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--bg)", borderRadius: "8px", padding: "8px 12px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 600, minWidth: "100px" }}>{l.revendeur}</span>
+                        <a href={l.url} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: "12px", color: "#D97757", textDecoration: "none", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {l.url}
+                        </a>
+                        <button onClick={() => supprimerLien(l.id)}
+                          style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif" }}>
+                          Supprimer
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px" }}>Aucun lien pour cette table.</p>
+                )}
+
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <input
+                    type="text"
+                    placeholder="Revendeur (ex: Cornilleau)"
+                    value={newLienRevendeur}
+                    onChange={e => setNewLienRevendeur(e.target.value)}
+                    style={{ ...inputStyleAC, flex: "1 1 140px", minWidth: "140px" }}
+                  />
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={newLienUrl}
+                    onChange={e => setNewLienUrl(e.target.value)}
+                    style={{ ...inputStyleAC, flex: "3 1 240px", minWidth: "200px" }}
+                  />
+                  <button onClick={ajouterLien} disabled={savingLien || !newLienRevendeur.trim() || !newLienUrl.trim()}
+                    style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif", opacity: (savingLien || !newLienRevendeur.trim() || !newLienUrl.trim()) ? 0.5 : 1 }}>
+                    {savingLien ? "..." : "Ajouter"}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" form="edit-table-form" disabled={savingTable}
                 style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "12px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", width: "100%", opacity: savingTable ? 0.7 : 1, fontFamily: "Poppins, sans-serif" }}>
                 {savingTable ? "Enregistrement..." : "Enregistrer les modifications"}
               </button>
-            </form>
-
-            {/* ── Liens revendeurs ── */}
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "18px", marginTop: "14px" }}>
-              <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "14px" }}>Liens revendeurs</p>
-
-              {/* Liste des liens existants */}
-              {tableLiens.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
-                  {tableLiens.map(l => (
-                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--bg)", borderRadius: "8px", padding: "8px 12px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 600, minWidth: "100px" }}>{l.revendeur}</span>
-                      <a href={l.url} target="_blank" rel="noopener noreferrer"
-                        style={{ fontSize: "12px", color: "#D97757", textDecoration: "none", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {l.url}
-                      </a>
-                      <button onClick={() => supprimerLien(l.id)}
-                        style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif" }}>
-                        Supprimer
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "14px" }}>Aucun lien pour cette table.</p>
-              )}
-
-              {/* Formulaire ajout */}
-              <form onSubmit={ajouterLien} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <input
-                  type="text"
-                  placeholder="Revendeur (ex: Cornilleau)"
-                  value={newLienRevendeur}
-                  onChange={e => setNewLienRevendeur(e.target.value)}
-                  required
-                  style={{ ...inputStyleAC, flex: "1 1 140px", minWidth: "140px" }}
-                />
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={newLienUrl}
-                  onChange={e => setNewLienUrl(e.target.value)}
-                  required
-                  style={{ ...inputStyleAC, flex: "3 1 240px", minWidth: "200px" }}
-                />
-                <button type="submit" disabled={savingLien}
-                  style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", flexShrink: 0, fontFamily: "Poppins, sans-serif", opacity: savingLien ? 0.7 : 1 }}>
-                  {savingLien ? "..." : "Ajouter"}
-                </button>
-              </form>
             </div>
-            </>
           )}
         </div>
       )}
