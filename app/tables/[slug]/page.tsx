@@ -30,7 +30,7 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
 
   const { data: table } = await supabase
     .from("tables_tt")
-    .select("id, marque, nom, slug, type, niveau, prix")
+    .select("id, marque, nom, slug, type, niveau, prix, image_url")
     .eq("slug", slug)
     .maybeSingle()
 
@@ -60,6 +60,18 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
         style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--text-muted)", textDecoration: "none", marginBottom: "1.5rem" }}>
         ← Retour aux tables
       </Link>
+
+      {/* Image produit */}
+      {table.image_url && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", marginBottom: "1.5rem", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={table.image_url}
+            alt={`${table.marque} ${table.nom}`}
+            style={{ maxHeight: "280px", maxWidth: "100%", objectFit: "contain" }}
+          />
+        </div>
+      )}
 
       {/* En-tête */}
       <div style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", borderRadius: "14px", padding: "24px 28px", color: "#fff", marginBottom: "1.5rem" }}>
