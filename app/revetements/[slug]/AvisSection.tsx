@@ -31,7 +31,7 @@ function Etoiles({ note, onChange, readonly = false }: { note: number, onChange?
   )
 }
 
-export default function AvisSection({ produitId, typeRevetement }: { produitId: string, typeRevetement?: string }) {
+export default function AvisSection({ produitId, tableId, typeRevetement }: { produitId?: string, tableId?: string, typeRevetement?: string }) {
   const pathname = usePathname()
   const [avis, setAvis] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
@@ -72,12 +72,10 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
   }, [])
 
   async function fetchAvis() {
-    const { data } = await supabase
-      .from("avis")
-      .select("*")
-      .eq("produit_id", produitId)
-      .eq("valide", true)
-      .order("cree_le", { ascending: false })
+    let q = supabase.from("avis").select("*").eq("valide", true).order("cree_le", { ascending: false })
+    if (tableId) q = q.eq("table_id", tableId)
+    else q = q.eq("produit_id", produitId!)
+    const { data } = await q
 
     if (!data || data.length === 0) { setAvis([]); return }
 
@@ -99,13 +97,14 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
     if (contenu.length < 20) { setError("L'avis doit contenir au moins 20 caractères."); return }
     setLoading(true)
     try {
-      const { error: err } = await supabase.from("avis").insert({
-        produit_id: produitId, user_id: user.id,
-        note, titre, contenu, style_jeu: styleJeu,
-      })
+      const payload: Record<string, any> = {
+        user_id: user.id, note, titre, contenu, style_jeu: styleJeu,
+        ...(tableId ? { table_id: tableId } : { produit_id: produitId }),
+      }
+      const { error: err } = await supabase.from("avis").insert(payload)
       if (err) {
-        if (err.message.includes("un_avis_par_produit") || err.code === "23505") {
-          setError("Vous avez déjà soumis un avis pour ce revêtement.")
+        if (err.message.includes("un_avis_par_produit") || err.message.includes("un_avis_par_table") || err.code === "23505") {
+          setError(`Vous avez déjà soumis un avis pour ce${tableId ? "tte table" : " produit"}.`)
         } else {
           setError("Erreur : " + err.message)
         }
@@ -190,10 +189,12 @@ export default function AvisSection({ produitId, typeRevetement }: { produitId: 
 
         {user && mode === "" && (
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => setMode("note")}
-              style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
-              Noter
-            </button>
+            {!tableId && (
+              <button onClick={() => setMode("note")}
+                style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                Noter
+              </button>
+            )}
             <button onClick={() => setMode("avis")}
               style={{ background: "#D97757", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
               Laisser un avis

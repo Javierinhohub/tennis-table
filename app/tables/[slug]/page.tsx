@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import Link from "next/link"
+import AvisSection from "@/app/revetements/[slug]/AvisSection"
 
 const NIVEAU_COLORS: Record<string, { bg: string; color: string }> = {
   loisir:      { bg: "#F0FDF4", color: "#0E7F4F" },
@@ -61,18 +62,6 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
         ← Retour aux tables
       </Link>
 
-      {/* Image produit */}
-      {table.image_url && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", marginBottom: "1.5rem", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={table.image_url}
-            alt={`${table.marque} ${table.nom}`}
-            style={{ maxHeight: "280px", maxWidth: "100%", objectFit: "contain" }}
-          />
-        </div>
-      )}
-
       {/* En-tête */}
       <div style={{ background: "linear-gradient(135deg, #D97757 0%, #C4694A 100%)", borderRadius: "14px", padding: "24px 28px", color: "#fff", marginBottom: "1.5rem" }}>
         <p style={{ fontSize: "12px", fontWeight: 600, opacity: 0.8, marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>
@@ -97,6 +86,18 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
           )}
         </div>
       </div>
+
+      {/* Image produit */}
+      {table.image_url && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", marginBottom: "1.5rem", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={table.image_url}
+            alt={`${table.marque} ${table.nom}`}
+            style={{ maxHeight: "280px", maxWidth: "100%", objectFit: "contain" }}
+          />
+        </div>
+      )}
 
       {/* Liens revendeurs */}
       {liens && liens.length > 0 ? (
@@ -123,6 +124,11 @@ export default async function TableDetailPage({ params }: { params: Promise<{ sl
           Aucun lien revendeur disponible pour cette table.
         </div>
       )}
+
+      {/* Avis */}
+      <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px 24px", marginBottom: "1.5rem" }}>
+        <AvisSection tableId={table.id} />
+      </div>
 
       {/* Caractéristiques */}
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px 24px" }}>
