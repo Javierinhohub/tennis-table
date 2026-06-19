@@ -68,6 +68,12 @@ export default function AdminProduitsPage() {
   const [rType, setRType] = useState("")
   const [rLarc, setRLarc] = useState("")
 
+  // Associations TT-Kip
+  const [assocList, setAssocList] = useState<any[]>([])
+  const [assocQuery, setAssocQuery] = useState("")
+  const [assocResults, setAssocResults] = useState<any[]>([])
+  const [assocSearching, setAssocSearching] = useState(false)
+
   // Champs éditables — bois
   const [bPrix, setBPrix] = useState("")
   const [bStyle, setBStyle] = useState("")
@@ -134,9 +140,59 @@ export default function AdminProduitsPage() {
     setLoading(false)
   }
 
+  async function loadAssociations(id: string) {
+    const [{ data: d1 }, { data: d2 }] = await Promise.all([
+      supabase.from("associations_produits").select("id, produit_associe_id").eq("produit_id", id),
+      supabase.from("associations_produits").select("id, produit_id").eq("produit_associe_id", id),
+    ])
+    const items = [
+      ...(d1 || []).map((a: any) => ({ assocId: a.id, otherId: a.produit_associe_id })),
+      ...(d2 || []).map((a: any) => ({ assocId: a.id, otherId: a.produit_id })),
+    ]
+    if (items.length === 0) { setAssocList([]); return }
+    const { data: prods } = await supabase
+      .from("produits")
+      .select("id, nom, slug, image_url, marques(nom), revetements(type_revetement), bois(style)")
+      .in("id", items.map(i => i.otherId))
+    setAssocList(items.map(i => {
+      const p = (prods || []).find((p: any) => p.id === i.otherId)
+      return p ? { ...p, assocId: i.assocId } : null
+    }).filter(Boolean))
+  }
+
+  async function searchAssoc(q: string) {
+    if (!q.trim()) { setAssocResults([]); return }
+    setAssocSearching(true)
+    const { data } = await supabase
+      .from("produits")
+      .select("id, nom, marques(nom), revetements(type_revetement), bois(style)")
+      .ilike("nom", `%${q}%`)
+      .limit(6)
+    // Exclure le produit courant et les associations déjà existantes
+    const excludeIds = new Set([selected?.id, ...assocList.map((a: any) => a.id)])
+    setAssocResults((data || []).filter((r: any) => !excludeIds.has(r.id)))
+    setAssocSearching(false)
+  }
+
+  async function addAssoc(otherId: string) {
+    if (!selected) return
+    const { error } = await supabase
+      .from("associations_produits")
+      .insert({ produit_id: selected.id, produit_associe_id: otherId })
+    if (!error) { setAssocQuery(""); setAssocResults([]); await loadAssociations(selected.id) }
+  }
+
+  async function removeAssoc(assocId: string) {
+    await supabase.from("associations_produits").delete().eq("id", assocId)
+    if (selected) await loadAssociations(selected.id)
+  }
+
   function selectionner(p: any) {
     setSelected(p)
     setMessage("")
+    setAssocQuery("")
+    setAssocResults([])
+    loadAssociations(p.id)
     setImageUrl(p.image_url || "")
     setDescription(p.description || "")
     if (tab === "revetements") {
@@ -564,6 +620,83 @@ export default function AdminProduitsPage() {
                 style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)", textDecoration: "none" }}>
                 Voir la fiche →
               </a>
+
+              {/* ── Associations TT-Kip ── */}
+              <div style={{ marginTop: "16px", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#D97757">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.4px", margin: 0 }}>
+                    Associations TT-Kip
+                  </p>
+                </div>
+
+                {assocList.length === 0 ? (
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px" }}>Aucune association pour l&apos;instant.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: "5px", marginBottom: "12px" }}>
+                    {assocList.map((a: any) => {
+                      const isRev = !!(a.revetements)
+                      return (
+                        <div key={a.assocId} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", background: "var(--bg)", borderRadius: "6px", border: "1px solid var(--border)" }}>
+                          <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "3px", background: isRev ? "#EBF5FF" : "#FFF0EB", color: isRev ? "#1A56DB" : "#D97757", flexShrink: 0 }}>
+                            {isRev ? "REV" : "BOIS"}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: "12px", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{a.nom}</p>
+                            <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: "1px 0 0" }}>{(a.marques as any)?.nom}</p>
+                          </div>
+                          <button type="button" onClick={() => removeAssoc(a.assocId)}
+                            style={{ flexShrink: 0, background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "4px", padding: "3px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                            Retirer
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <div style={{ position: "relative" as const }}>
+                  <input
+                    type="text"
+                    placeholder="Rechercher un bois ou revêtement à associer…"
+                    value={assocQuery}
+                    onChange={e => { setAssocQuery(e.target.value); searchAssoc(e.target.value) }}
+                    style={{ ...inp, fontSize: "12px" }}
+                  />
+                  {assocSearching && (
+                    <span style={{ position: "absolute" as const, right: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "11px", color: "var(--text-muted)" }}>…</span>
+                  )}
+                </div>
+
+                {assocResults.length > 0 && (
+                  <div style={{ marginTop: "4px", border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden", background: "#fff" }}>
+                    {assocResults.map((r: any, i: number) => {
+                      const isRev = !!(r.revetements)
+                      return (
+                        <button key={r.id} type="button" onClick={() => addAssoc(r.id)}
+                          style={{
+                            width: "100%", display: "flex", alignItems: "center", gap: "8px",
+                            padding: "8px 10px", background: "transparent", border: "none",
+                            borderBottom: i < assocResults.length - 1 ? "1px solid var(--border)" : "none",
+                            cursor: "pointer", textAlign: "left" as const, fontFamily: "Poppins, sans-serif",
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "var(--bg)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "3px", background: isRev ? "#EBF5FF" : "#FFF0EB", color: isRev ? "#1A56DB" : "#D97757", flexShrink: 0 }}>
+                            {isRev ? "REV" : "BOIS"}
+                          </span>
+                          <span style={{ fontSize: "12px", fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, color: "var(--text)" }}>{r.nom}</span>
+                          <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>{(r.marques as any)?.nom}</span>
+                          <span style={{ fontSize: "11px", color: "#D97757", fontWeight: 700, flexShrink: 0 }}>+ Ajouter</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
 
               <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
                 <button type="button" onClick={handleDelete}

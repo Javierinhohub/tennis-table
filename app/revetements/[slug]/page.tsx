@@ -9,6 +9,63 @@ import NotesSection from "./NotesSection"
 import BackButton from "@/app/components/BackButton"
 import JoueursProSection from "./JoueursProSection"
 import VideoSection from "@/app/components/VideoSection"
+import FAQAccordion, { FAQItem } from "@/app/components/FAQAccordion"
+
+function generateFaqRevetement(nom: string, marqueNom: string, rev: any): FAQItem[] {
+  const faq: FAQItem[] = []
+  const vitesse  = rev?.vitesse_note  as number | null
+  const effet    = rev?.effet_note    as number | null
+  const controle = rev?.controle_note as number | null
+  const prix     = rev?.prix          as number | null
+  const type     = rev?.type_revetement as string | null
+  const epaisseur = rev?.epaisseur_max as number | null
+
+  // Q1 — Niveau
+  if (controle != null) {
+    faq.push({ q: `Le ${marqueNom} ${nom} convient-il aux débutants ?`,
+      a: controle >= 8
+        ? `Oui, le ${nom} est accessible aux joueurs débutants et intermédiaires. Son contrôle de ${controle}/10 facilite la mise en jeu et pardonne les imprécisions techniques. C'est un bon choix pour progresser sans être freiné par son propre matériel.`
+        : controle < 6
+        ? `Non, le ${nom} est réservé aux joueurs de niveau avancé à expert. Avec un contrôle de seulement ${controle}/10, il exige des frappes propres et une technique solide — une imprécision se paie immédiatement par une balle dans le filet. Les débutants seront mieux servis par un revêtement plus tolérant.`
+        : `Le ${nom} convient principalement aux joueurs de niveau intermédiaire à avancé. Son contrôle de ${controle}/10 requiert une technique déjà établie pour l'exploiter pleinement, même si les joueurs motivés pourront s'y adapter avec de l'entraînement.`
+    })
+  }
+
+  // Q2 — Épaisseur (backside uniquement)
+  if (type === "In" && epaisseur) {
+    faq.push({ q: `Quelle épaisseur choisir pour le ${nom} ?`,
+      a: `Le ${marqueNom} ${nom} est disponible en plusieurs épaisseurs jusqu'à ${epaisseur} mm. Une épaisseur fine (1,5-1,8 mm) apporte plus de sensation et de contrôle, idéale pour le jeu technique et les services. Une épaisseur maximale (${epaisseur} mm) maximise la vitesse et l'effet catapulte pour un jeu offensif. Pour débuter avec ce revêtement ou pour le revers, une épaisseur de 2,0 mm représente souvent le meilleur compromis.`
+    })
+  }
+
+  // Q3 — Topspin / spin
+  if (effet != null && vitesse != null) {
+    faq.push({ q: `Le ${nom} est-il adapté au jeu de topspin ?`,
+      a: `${effet >= 8 ? `Oui, le ${marqueNom} ${nom} est particulièrement adapté au topspin.` : `Le ${marqueNom} ${nom} offre une capacité de topspin correcte.`} Avec un effet de ${effet}/10 et une vitesse de ${vitesse}/10, il génère des rotations ${effet >= 9 ? "puissantes et difficiles à défendre — l'un des meilleurs du marché pour les topspins lourds" : effet >= 7 ? "chargées qui rendent les topspins efficaces avec une bonne technique" : "modérées, ce revêtement privilégiant davantage la vitesse que la rotation maximale"}.`
+    })
+  }
+
+  // Q4 — Prix
+  if (prix != null) {
+    faq.push({ q: `Quel est le prix du ${marqueNom} ${nom} ?`,
+      a: `Le ${marqueNom} ${nom} est vendu aux alentours de ${prix} €. ${prix >= 80 ? "C'est un revêtement haut de gamme — un investissement justifié pour les joueurs qui compétitionnent régulièrement et veulent le meilleur de leur matériel." : prix >= 40 ? "Son positionnement intermédiaire en fait un excellent rapport qualité-performance pour les joueurs de club sérieux." : "Son tarif accessible en fait l'un des meilleurs rapports qualité-prix du marché à son niveau."} Les prix varient selon les revendeurs et les promotions.`
+    })
+  }
+
+  // Q5a — Couleur (backside) ou Q5b — Style (picots)
+  if (type === "In") {
+    faq.push({ q: `Faut-il choisir le ${nom} en rouge ou en noir ?`,
+      a: `Le ${marqueNom} ${nom} est disponible en rouge et en noir conformément aux règles ITTF (les deux faces de la raquette doivent être de couleurs différentes). La différence entre les deux coloris est subtile : le rouge est traditionnellement associé à une légère souplesse supplémentaire, le noir à une dureté légèrement plus marquée. Ces nuances varient selon les marques — sur ce revêtement, le choix dépend avant tout de vos préférences tactiles et de votre stratégie de jeu.`
+    })
+  } else if (type && ["Out","Mid","Long"].includes(type)) {
+    const typeLabel = type === "Out" ? "picots courts" : type === "Mid" ? "picots mi-longs" : "picots longs"
+    faq.push({ q: `Le ${nom} est-il adapté à tous les styles de jeu ?`,
+      a: `Non, le ${marqueNom} ${nom} (${typeLabel}) est un revêtement spécialisé qui ne convient pas à tous. ${type === "Out" ? "Les picots courts sont appréciés pour le jeu rapide près de la table et les retours déstabilisants en revers." : type === "Mid" ? "Les picots mi-longs permettent des effets perturbateurs et une défense active très efficace." : "Les picots longs sont le choix des défenseurs qui souhaitent perturber le rythme adverse avec des renversements d'effet."} Il est conseillé de maîtriser d'abord le jeu offensif classique avant de passer aux picots.`
+    })
+  }
+
+  return faq.slice(0, 5)
+}
 
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
@@ -84,6 +141,19 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     .or(`revetement_cd.ilike.%${produit.nom}%,revetement_rv.ilike.%${produit.nom}%`)
     .eq("actif", true)
     .order("classement_mondial")
+
+  // ── Associations TT-Kip ──────────────────────────────────────────
+  const [{ data: ttDir1 }, { data: ttDir2 }] = await Promise.all([
+    supabase.from("associations_produits").select("produit_associe_id").eq("produit_id", produit.id),
+    supabase.from("associations_produits").select("produit_id").eq("produit_associe_id", produit.id),
+  ])
+  const ttIds = [
+    ...(ttDir1 || []).map((a: any) => a.produit_associe_id),
+    ...(ttDir2 || []).map((a: any) => a.produit_id),
+  ]
+  const ttAssociations: any[] = ttIds.length > 0
+    ? (await supabase.from("produits").select("id, nom, slug, image_url, marques(nom), bois(style)").in("id", ttIds)).data || []
+    : []
 
   // ── Bois recommandés — basés sur le matériel réel des pros ───────
   const MARQUES_LIST = ['Butterfly','Stiga','Donic','Tibhar','Joola','Yasaka','Andro','Xiom','Nittaku','DHS','Victas','Cornilleau','TSP','Spinlord']
@@ -201,9 +271,21 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
       })),
   } : null
 
+  const faq = generateFaqRevetement(produit.nom, marque?.nom || "", rev)
+  const faqJsonLd = faq.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faq.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": { "@type": "Answer", "text": item.a }
+    }))
+  } : null
+
   return (
     <>
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
+      {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
     <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "2.5rem 2rem" }}>
 
       <BackButton fallback="/revetements" label="Retour à la liste" />
@@ -288,6 +370,37 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             )}
           </div>
 
+          {/* ── Sélection TT-Kip ── */}
+          {ttAssociations.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg, #FFFBF8, #FFF7F3)", border: "1px solid #FED7C3", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#D97757">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>
+                  Sélection TT-Kip
+                </h2>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400 }}>— bois recommandés avec ce revêtement</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                {ttAssociations.map((b: any) => (
+                  <a key={b.id} href={`/bois/${b.slug}`} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", border: "1px solid #FED7C3", textDecoration: "none", background: "#fff" }}>
+                    {b.image_url
+                      ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={b.image_url} alt={b.nom} style={{ width: "34px", height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                      : <div style={{ width: "34px", height: "34px", borderRadius: "6px", background: "#FFF0EB", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97757" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                        </div>
+                    }
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{b.nom}</p>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "1px 0 0" }}>{(b.marques as any)?.nom}{(b.bois as any)?.style ? ` · ${(b.bois as any).style}` : ""}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── Associations recommandées ── */}
           {boisAssociations.length > 0 && (
             <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
@@ -327,6 +440,8 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
           <VideoSection videos={videosData || []} />
           <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
           <AvisSection produitId={produit.id} typeRevetement={rev?.type_revetement} />
+
+          <FAQAccordion items={faq} />
         </div>
 
         <div style={{ position: "sticky", top: "80px" }}>
