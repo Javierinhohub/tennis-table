@@ -108,7 +108,8 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
     e.preventDefault()
     setError("")
     if (note === 0) { setError("Veuillez sélectionner une note globale."); return }
-    if (contenu.length < 20) { setError("L'avis doit contenir au moins 20 caractères."); return }
+    if (contenu.length < 20)   { setError("L'avis doit contenir au moins 20 caractères."); return }
+    if (contenu.length > 2000) { setError("L'avis ne peut pas dépasser 2000 caractères."); return }
     setLoading(true)
     try {
       const { error: err } = await supabase.from("avis").insert({
@@ -191,11 +192,11 @@ export default function AvisSectionBois({ produitId }: { produitId: string }) {
             <div>
               <label style={labelStyle}>Votre avis *</label>
               <textarea value={contenu} onChange={e => setContenu(e.target.value)}
-                required rows={5}
+                required rows={5} maxLength={2000}
                 style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
                 placeholder="Décrivez votre expérience avec ce bois (sensations, vitesse, contrôle, combinaisons conseillées...)" />
-              <p style={{ fontSize: "11px", color: contenu.length < 20 ? "var(--text-muted)" : "#16A34A", marginTop: "4px", textAlign: "right" }}>
-                {contenu.length} / 20 min.
+              <p style={{ fontSize: "11px", color: contenu.length < 20 ? "var(--text-muted)" : contenu.length > 2000 ? "#DC2626" : "#16A34A", marginTop: "4px", textAlign: "right" }}>
+                {contenu.length} / 2000
               </p>
             </div>
             <div>

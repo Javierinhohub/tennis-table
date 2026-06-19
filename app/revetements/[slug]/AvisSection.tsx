@@ -94,7 +94,8 @@ export default function AvisSection({ produitId, tableId, typeRevetement }: { pr
     e.preventDefault()
     setError("")
     if (note === 0) { setError("Veuillez sélectionner une note globale."); return }
-    if (contenu.length < 20) { setError("L'avis doit contenir au moins 20 caractères."); return }
+    if (contenu.length < 20)   { setError("L'avis doit contenir au moins 20 caractères."); return }
+    if (contenu.length > 2000) { setError("L'avis ne peut pas dépasser 2000 caractères."); return }
     setLoading(true)
     try {
       const payload: Record<string, any> = {
@@ -260,9 +261,10 @@ export default function AvisSection({ produitId, tableId, typeRevetement }: { pr
             <div>
               <label style={labelStyle}>Votre avis * <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" as const }}>(20 car. min.)</span></label>
               <textarea value={contenu} onChange={e => setContenu(e.target.value)} required rows={5}
+                maxLength={2000}
                 style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.6 }}
                 placeholder="Décrivez votre expérience avec ce revêtement..." />
-              <p style={{ fontSize: "11px", color: contenu.length < 20 ? "var(--text-muted)" : "#16A34A", marginTop: "4px", textAlign: "right" as const }}>{contenu.length} / 20 min.</p>
+              <p style={{ fontSize: "11px", color: contenu.length < 20 ? "var(--text-muted)" : contenu.length > 2000 ? "#DC2626" : "#16A34A", marginTop: "4px", textAlign: "right" as const }}>{contenu.length} / 2000</p>
             </div>
             <div>
               <label style={labelStyle}>Style de jeu</label>
