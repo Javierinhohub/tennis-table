@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
   // S'il est absent, l'utilisateur n'est certainement pas connecté → redirect login.
   // La vérification du rôle admin reste faite côté client dans chaque page admin.
   if (pathname.startsWith("/admin")) {
-    const sessionCookie = request.cookies.get("ttk-auth")
+    const sessionCookie = request.cookies.get("ttk-ok")
     if (!sessionCookie?.value) {
       const loginUrl = new URL("/auth/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)

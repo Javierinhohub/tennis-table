@@ -23,13 +23,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       setItem: (key: string, value: string) => {
         if (typeof window === "undefined") return
         try { window.localStorage.setItem(key, value) } catch {}
-        // Toujours écrire le cookie aussi : le middleware ne peut pas lire localStorage
-        setCookie(key, value)
+        // Cookie léger de présence (≪ 4KB) pour que le middleware puisse détecter
+        // qu'une session existe, sans stocker le gros JSON de session.
+        setCookie("ttk-ok", "1")
       },
       removeItem: (key: string) => {
         if (typeof window === "undefined") return
         try { window.localStorage.removeItem(key) } catch {}
-        deleteCookie(key)
+        deleteCookie("ttk-ok")
       },
     },
   },
