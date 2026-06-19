@@ -54,8 +54,9 @@ export default function AdminProduitsPage() {
   const [selected, setSelected] = useState<any>(null)
   const [saving, setSaving] = useState(false)
 
-  // Champ commun — image
+  // Champs communs — image + description
   const [imageUrl, setImageUrl] = useState("")
+  const [description, setDescription] = useState("")
 
   // Champs éditables — revêtements
   const [rPrix, setRPrix] = useState("")
@@ -137,6 +138,7 @@ export default function AdminProduitsPage() {
     setSelected(p)
     setMessage("")
     setImageUrl(p.image_url || "")
+    setDescription(p.description || "")
     if (tab === "revetements") {
       const r = p.revetements
       setRPrix(r?.prix != null ? String(r.prix) : "")
@@ -195,12 +197,12 @@ export default function AdminProduitsPage() {
     setSaving(true)
     setMessage("")
 
-    // Mise à jour image_url dans produits (commun aux deux types)
+    // Mise à jour image_url + description dans produits (commun aux deux types)
     const { error: imgErr } = await supabase
       .from("produits")
-      .update({ image_url: imageUrl.trim() || null })
+      .update({ image_url: imageUrl.trim() || null, description: description.trim() || null })
       .eq("id", selected.id)
-    if (imgErr) { setMessage("Erreur image : " + imgErr.message); setSaving(false); return }
+    if (imgErr) { setMessage("Erreur image/description : " + imgErr.message); setSaving(false); return }
 
     if (tab === "revetements") {
       const payload: any = {
@@ -458,6 +460,24 @@ export default function AdminProduitsPage() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* ── Description SEO ── */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "12px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "8px" }}>
+                  Description (intro SEO — 150-300 mots)
+                </p>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  rows={6}
+                  maxLength={3000}
+                  placeholder="Présentation du produit (150-300 mots). Affiché en haut de la fiche produit, indexé par Google."
+                  style={{ ...inp, resize: "vertical" as const, lineHeight: 1.6 }}
+                />
+                <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                  {description.length} / 3000 caractères
+                </p>
               </div>
 
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", display: "flex", flexDirection: "column", gap: "14px" }}>

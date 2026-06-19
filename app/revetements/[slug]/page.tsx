@@ -200,11 +200,16 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
             </div>
           )}
 
-          {/* Description éditoriale */}
+          {/* Description / Intro SEO */}
           {produit.description && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>Notre avis</h2>
-              <p style={{ fontSize: "15px", lineHeight: 1.75, color: "var(--text)" }}>{produit.description}</p>
+            <div style={{ background: "linear-gradient(135deg, #FFFBF8, #FFF7F3)", border: "1px solid #FED7C3", borderRadius: "10px", padding: "22px 24px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97757" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>Présentation</h2>
+              </div>
+              <p style={{ fontSize: "15px", lineHeight: 1.8, color: "var(--text)", margin: 0 }}>{produit.description}</p>
             </div>
           )}
 
