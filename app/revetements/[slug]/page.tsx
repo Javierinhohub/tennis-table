@@ -80,10 +80,39 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
   // Cherche les pros qui utilisent ce revêtement (CD ou revers) en matchant le nom du produit
   const { data: joueursPro } = await supabase
     .from("joueurs_pro")
-    .select("id, nom, pays, classement_mondial, genre, revetement_cd, revetement_rv")
+    .select("id, nom, pays, classement_mondial, genre, revetement_cd, revetement_rv, bois_nom")
     .or(`revetement_cd.ilike.%${produit.nom}%,revetement_rv.ilike.%${produit.nom}%`)
     .eq("actif", true)
     .order("classement_mondial")
+
+  // ── Bois recommandés — basés sur le matériel réel des pros ───────
+  const MARQUES_LIST = ['Butterfly','Stiga','Donic','Tibhar','Joola','Yasaka','Andro','Xiom','Nittaku','DHS','Victas','Cornilleau','TSP','Spinlord']
+  const stripMarque = (n: string) => {
+    for (const m of MARQUES_LIST) {
+      if (n.toLowerCase().startsWith(m.toLowerCase() + ' ')) return n.slice(m.length + 1).trim()
+    }
+    return n
+  }
+  const boisFreq: Record<string, number> = {}
+  for (const j of joueursPro || []) {
+    const bn = (j as any).bois_nom
+    if (bn) boisFreq[bn] = (boisFreq[bn] || 0) + 1
+  }
+  const boisAssociations = (await Promise.all(
+    Object.entries(boisFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(async ([boisNom, count]) => {
+        const { data } = await supabase
+          .from("produits")
+          .select("id, nom, slug, image_url, marques(nom), bois(style)")
+          .not("bois", "is", null)
+          .ilike("nom", `%${stripMarque(boisNom)}%`)
+          .limit(1)
+          .maybeSingle()
+        return data ? { ...data, proCount: count } : null
+      })
+  )).filter(Boolean)
 
   const stats = [
     { label: "Vitesse", value: rev?.vitesse_note, color: "#1A56DB" },
@@ -258,6 +287,40 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
               </div>
             )}
           </div>
+
+          {/* ── Associations recommandées ── */}
+          {boisAssociations.length > 0 && (
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "20px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D97757" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>
+                  Bois souvent associés
+                </h2>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400 }}>— d&apos;après le matériel des pros</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                {boisAssociations.map((b: any) => (
+                  <a key={b.id} href={`/bois/${b.slug}`} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)", textDecoration: "none", background: "var(--bg)" }}>
+                    {b.image_url
+                      ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={b.image_url} alt={b.nom} style={{ width: "34px", height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                      : <div style={{ width: "34px", height: "34px", borderRadius: "6px", background: "#FFF0EB", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97757" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                        </div>
+                    }
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{b.nom}</p>
+                      <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "1px 0 0" }}>{(b.marques as any)?.nom}</p>
+                    </div>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#D97757", whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                      {b.proCount} pro{b.proCount > 1 ? "s" : ""}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           <JoueursProSection joueurs={joueursPro || []} produitNom={produit.nom} />
 
