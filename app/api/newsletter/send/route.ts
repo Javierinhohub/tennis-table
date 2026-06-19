@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Client anon pour vérifier le token de l'appelant (ne pas utiliser admin pour ça)
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// ── Rate limiting : 1 envoi newsletter / 10 min par admin ────────────────────
+const WINDOW_MS   = 10 * 60_000
+const nlRateStore = new Map<string, number>() // userId → resetAt
+
+function checkNlRate(userId: string): boolean {
+  const now = Date.now()
+  const resetAt = nlRateStore.get(userId)
+  if (resetAt && now < resetAt) return false
+  nlRateStore.set(userId, now + WINDOW_MS)
+  return true
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +33,7 @@ export async function POST(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
-    const { data: { user }, error: authCheckError } = await supabaseClient.auth.getUser(token)
+    const { data: { user }, error: authCheckError } = await supabaseAdmin.auth.getUser(token)
     if (authCheckError || !user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
@@ -32,7 +46,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 })
     }
 
+    // Rate limiting : 1 envoi / 10 min (hors mode test)
     const { sujet, contenu, testEmail } = await req.json()
+    if (!testEmail && !checkNlRate(user.id)) {
+      return NextResponse.json(
+        { error: "Envoi trop récent. Attendez 10 minutes entre deux newsletters." },
+        { status: 429 }
+      )
+    }
 
     if (!sujet || !contenu) {
       return NextResponse.json({ error: "Sujet et contenu requis" }, { status: 400 })
@@ -110,10 +131,12 @@ export async function POST(req: NextRequest) {
 }
 
 function buildHtml(sujet: string, contenu: string, pseudo?: string) {
+  // H-4 : échapper sujet et chaque ligne de contenu avant injection dans le HTML
+  const sujetEsc = escapeHtml(sujet)
   const paragraphes = contenu
     .split("\n")
     .filter((l: string) => l.trim())
-    .map((l: string) => `<p style="margin:0 0 16px;line-height:1.6;color:#374151;">${l}</p>`)
+    .map((l: string) => `<p style="margin:0 0 16px;line-height:1.6;color:#374151;">${escapeHtml(l)}</p>`)
     .join("")
 
   return `<!DOCTYPE html>
@@ -135,8 +158,8 @@ function buildHtml(sujet: string, contenu: string, pseudo?: string) {
         <!-- Body -->
         <tr>
           <td style="padding:32px;">
-            ${pseudo ? `<p style="margin:0 0 20px;font-size:14px;color:#6B7280;">Bonjour ${pseudo},</p>` : ""}
-            <h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111827;">${sujet}</h1>
+            ${pseudo ? `<p style="margin:0 0 20px;font-size:14px;color:#6B7280;">Bonjour ${escapeHtml(pseudo)},</p>` : ""}
+            <h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111827;">${sujetEsc}</h1>
             ${paragraphes}
           </td>
         </tr>

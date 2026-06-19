@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import { createClient } from "@supabase/supabase-js"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.tt-kip.com"
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "TT-Kip <noreply@tt-kip.com>"
 
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// ── Rate limiting par sender.id : max 5 notifications/minute ─────────────────
+const WINDOW_MS  = 60_000
+const MAX_EMAILS = 5
+const rateStore  = new Map<string, { count: number; resetAt: number }>()
+
+function checkRate(userId: string): boolean {
+  const now = Date.now()
+  const entry = rateStore.get(userId)
+  if (!entry || now > entry.resetAt) {
+    rateStore.set(userId, { count: 1, resetAt: now + WINDOW_MS })
+    return true
+  }
+  if (entry.count >= MAX_EMAILS) return false
+  entry.count++
+  return true
+}
+setInterval(() => {
+  const now = Date.now()
+  for (const [id, e] of rateStore) if (now > e.resetAt) rateStore.delete(id)
+}, 5 * 60_000)
 
 function escapeHtml(str: string): string {
   return str
@@ -23,24 +38,27 @@ function escapeHtml(str: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Vérification : l'appelant doit être un utilisateur authentifié
-    const authHeader = req.headers.get("authorization")
-    const token = authHeader?.replace("Bearer ", "")
-    if (!token) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
-    }
-    const { data: { user: sender }, error: authError } = await supabaseClient.auth.getUser(token)
-    if (authError || !sender) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    // 1. Vérification token
+    const token = req.headers.get("authorization")?.replace("Bearer ", "")
+    if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+
+    const { data: { user: sender }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    if (authError || !sender) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+
+    // 2. Rate limiting
+    if (!checkRate(sender.id)) {
+      return NextResponse.json(
+        { error: "Trop de notifications envoyées. Réessayez dans une minute." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      )
     }
 
-    const { recipientId, senderPseudo, conversationId, preview } = await req.json()
-
-    if (!recipientId || !senderPseudo || !conversationId) {
+    const { recipientId, conversationId, preview } = await req.json()
+    if (!recipientId || !conversationId) {
       return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
     }
 
-    // Vérifier que l'expéditeur est bien participant à cette conversation
+    // 3. Vérifier que le sender est bien participant à la conversation
     const { data: conv } = await supabaseAdmin
       .from("conversations")
       .select("participant_1, participant_2")
@@ -50,14 +68,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 })
     }
 
-    // Récupérer l'email depuis auth.users
+    // 4. H-3 : récupérer le pseudo du sender depuis la DB (pas du body de requête)
+    const { data: senderProfile } = await supabaseAdmin
+      .from("utilisateurs")
+      .select("pseudo")
+      .eq("id", sender.id)
+      .single()
+    const senderPseudo = senderProfile?.pseudo || "Un utilisateur"
+
+    // 5. Récupérer l'email du destinataire
     const { data: authUser, error: userError } = await supabaseAdmin.auth.admin.getUserById(recipientId)
-    if (userError || !authUser?.user?.email) {
-      return NextResponse.json({ ok: true, skipped: true })
-    }
+    if (userError || !authUser?.user?.email) return NextResponse.json({ ok: true, skipped: true })
     const recipientEmail = authUser.user.email
 
-    // Récupérer le pseudo du destinataire
+    // 6. Récupérer le pseudo du destinataire
     const { data: recipientProfile } = await supabaseAdmin
       .from("utilisateurs")
       .select("pseudo")
@@ -81,7 +105,7 @@ export async function POST(req: NextRequest) {
             </p>
             ${preview ? `
             <div style="background: #F9FAFB; border-left: 3px solid #D97757; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px;">
-              <p style="font-size: 13px; color: #374151; margin: 0; font-style: italic;">"${escapeHtml(preview.slice(0, 120))}${preview.length > 120 ? "…" : ""}"</p>
+              <p style="font-size: 13px; color: #374151; margin: 0; font-style: italic;">"${escapeHtml(String(preview).slice(0, 120))}${String(preview).length > 120 ? "…" : ""}"</p>
             </div>` : ""}
             <a href="${SITE_URL}/messages/${conversationId}"
               style="display: inline-block; background: #D97757; color: #fff; text-decoration: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 600;">
