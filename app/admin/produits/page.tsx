@@ -46,6 +46,10 @@ export default function AdminProduitsPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
 
+  // Filtre marque
+  const [brands, setBrands] = useState<{ id: string; nom: string }[]>([])
+  const [filterBrand, setFilterBrand] = useState<string | null>(null)
+
   // Produit sélectionné pour édition
   const [selected, setSelected] = useState<any>(null)
   const [saving, setSaving] = useState(false)
@@ -83,17 +87,20 @@ export default function AdminProduitsPage() {
     if (!user) { router.push("/auth/login"); return }
     const { data: profil } = await supabase.from("utilisateurs").select("role").eq("id", user.id).single()
     if (!profil || profil.role !== "admin") { router.push("/"); return }
+    // Charger la liste des marques une seule fois
+    const { data: marqData } = await supabase.from("marques").select("id, nom").order("nom")
+    setBrands(marqData || [])
     fetchProduits()
   }
 
   useEffect(() => {
     setPage(0)
     setSelected(null)
-  }, [tab, search])
+  }, [tab, search, filterBrand])
 
   useEffect(() => {
     fetchProduits()
-  }, [tab, page, search])
+  }, [tab, page, search, filterBrand])
 
   async function fetchProduits() {
     setLoading(true)
@@ -106,6 +113,7 @@ export default function AdminProduitsPage() {
         .order("nom")
         .range(from, from + PAGE_SIZE - 1)
       if (search) q = q.ilike("nom", `%${search}%`)
+      if (filterBrand) q = q.eq("marque_id", filterBrand)
       const { data, count } = await q
       setProduits(data || [])
       setTotal(count || 0)
@@ -117,6 +125,7 @@ export default function AdminProduitsPage() {
         .order("nom")
         .range(from, from + PAGE_SIZE - 1)
       if (search) q = q.ilike("nom", `%${search}%`)
+      if (filterBrand) q = q.eq("marque_id", filterBrand)
       const { data, count } = await q
       setProduits(data || [])
       setTotal(count || 0)
@@ -264,8 +273,8 @@ export default function AdminProduitsPage() {
 
         {/* ── Liste produits ── */}
         <div>
-          {/* Recherche */}
-          <div style={{ position: "relative", marginBottom: "1rem" }}>
+          {/* Recherche + filtre marque */}
+          <div style={{ position: "relative", marginBottom: "10px" }}>
             <input
               type="text"
               placeholder={`Rechercher un ${tab === "revetements" ? "revêtement" : "bois"}...`}
@@ -280,6 +289,30 @@ export default function AdminProduitsPage() {
               OK
             </button>
           </div>
+
+          {/* Filtre par marque */}
+          {brands.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "5px", marginBottom: "12px" }}>
+              {filterBrand && (
+                <button onClick={() => setFilterBrand(null)}
+                  style={{ padding: "3px 10px", borderRadius: "20px", border: "1px solid #FECACA", background: "#FEF2F2", color: "#DC2626", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                  ✕ Effacer
+                </button>
+              )}
+              {brands.map(b => (
+                <button key={b.id} onClick={() => setFilterBrand(filterBrand === b.id ? null : b.id)}
+                  style={{
+                    padding: "3px 10px", borderRadius: "20px", border: "1px solid", fontSize: "11px", fontWeight: 600,
+                    cursor: "pointer", fontFamily: "Poppins, sans-serif",
+                    background: filterBrand === b.id ? "#D97757" : "#fff",
+                    color: filterBrand === b.id ? "#fff" : "var(--text-muted)",
+                    borderColor: filterBrand === b.id ? "#D97757" : "var(--border)",
+                  }}>
+                  {b.nom}
+                </button>
+              ))}
+            </div>
+          )}
 
           {loading ? (
             <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)", background: "#fff", borderRadius: "10px", border: "1px solid var(--border)" }}>

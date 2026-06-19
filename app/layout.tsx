@@ -90,8 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/confidentialite" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Politique de confidentialité</a>
             {" · "}
             <a href="/contact" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Contact</a>
-            {" · "}
-            <span>Reproduction interdite sans autorisation — contrefaçon passible de sanctions pénales</span>
+
           </p>
         </footer>
         {/* Redirection hors WebView Facebook/Instagram → ouvre dans le vrai navigateur */}
