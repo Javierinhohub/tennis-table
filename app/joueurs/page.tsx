@@ -78,6 +78,72 @@ function getBrand(nom: string | null, brandNames: string[]): string | null {
   return best
 }
 
+// Nom du revêtement sans marque ni suffixe type : "Butterfly Tenergy 05 — Backside" → "Tenergy 05"
+function getRubberName(nom: string | null, brandNames: string[]): string | null {
+  if (!nom) return null
+  let clean = nom.replace(/\s*—\s*.+$/, "").trim()
+  const brand = getBrand(clean, brandNames)
+  if (brand) clean = clean.slice(brand.length).trim()
+  return clean || null
+}
+
+// Nom du bois sans marque ni parenthèses : "Butterfly Viscaria (5 plis)" → "Viscaria"
+function getBladeName(nom: string | null, brandNames: string[]): string | null {
+  if (!nom) return null
+  let clean = nom.replace(/\s*\([^)]+\)\s*$/, "").trim()
+  const brand = getBrand(clean, brandNames)
+  if (brand) clean = clean.slice(brand.length).trim()
+  return clean || null
+}
+
+
+// ── StatBars : barres horizontales pour la section statistiques ──────────────
+type StatItem = { label: string; value: number; extra?: string }
+
+function StatBars({ data, total, subtitle }: {
+  data: StatItem[]
+  total: number
+  subtitle?: string
+}) {
+  if (!data.length) return <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Aucune donnée disponible.</p>
+  const max = data[0]?.value || 1
+  return (
+    <div>
+      {subtitle && <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "16px", lineHeight: 1.5 }}>{subtitle}</p>}
+      <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px" }}>
+        {data.map((item, i) => (
+          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#D97757", minWidth: "18px", textAlign: "right" as const, flexShrink: 0 }}>
+              {i + 1}
+            </span>
+            <span title={item.label} style={{ fontSize: "12px", fontWeight: 500, color: "var(--text)", minWidth: "130px", maxWidth: "180px", flexShrink: 0, lineHeight: 1.3, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>
+              {item.label}
+            </span>
+            <div style={{ flex: 1, background: "var(--bg)", borderRadius: "4px", height: "8px", overflow: "hidden", minWidth: "40px" }}>
+              <div style={{
+                width: `${(item.value / max) * 100}%`,
+                height: "100%",
+                background: i === 0 ? "#D97757" : i < 3 ? "#E08B68" : "#EDAA86",
+                borderRadius: "4px",
+              }} />
+            </div>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text)", minWidth: "22px", textAlign: "right" as const, flexShrink: 0 }}>
+              {item.value}
+            </span>
+            {total > 0 && (
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", minWidth: "34px", flexShrink: 0 }}>
+                {Math.round((item.value / total) * 100)}%
+              </span>
+            )}
+            {item.extra && (
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>{item.extra}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function CarteJoueur({ j }: { j: any }) {
   return (
@@ -221,6 +287,84 @@ export default function JoueursPage() {
   const femmes    = filtered.filter(j => j.genre === "F")
   const recherche = query.trim().length > 0 || !!filterBrand || !!filterType
   const nbFiltres = (filterBrand ? 1 : 0) + (filterType ? 1 : 0)
+
+  // ── Stats matériel ─────────────────────────────────────────────────────────
+  const [statTab,   setStatTab]   = useState<"marques"|"bois"|"revetements"|"pays"|"style">("marques")
+  const [statGenre, setStatGenre] = useState<"tous"|"H"|"F">("tous")
+
+  const statJoueurs = useMemo(() =>
+    statGenre === "tous" ? joueursEnrichis : joueursEnrichis.filter((j: any) => j.genre === statGenre),
+    [joueursEnrichis, statGenre]
+  )
+
+  const stats = useMemo(() => {
+    const total = statJoueurs.length
+
+    // Marques : nb de joueurs utilisant au moins un produit de la marque
+    const brandInfo: Record<string, { ids: Set<string>; bois: number; rev: number }> = {}
+    statJoueurs.forEach((j: any) => {
+      const bBois = getBrand(j.bois_nom, brandNames)
+      const bCd   = getBrand(j.revetement_cd ? j.revetement_cd.replace(/\s*—\s*.+$/, "") : null, brandNames)
+      const bRv   = getBrand(j.revetement_rv ? j.revetement_rv.replace(/\s*—\s*.+$/, "") : null, brandNames)
+      const seenB = new Set<string>()
+      if (bBois) seenB.add(bBois)
+      if (bCd)   seenB.add(bCd)
+      if (bRv)   seenB.add(bRv)
+      seenB.forEach(b => {
+        if (!brandInfo[b]) brandInfo[b] = { ids: new Set(), bois: 0, rev: 0 }
+        brandInfo[b].ids.add(j.id)
+      })
+      if (bBois) brandInfo[bBois].bois++
+      if (bCd)   brandInfo[bCd].rev++
+      if (bRv)   brandInfo[bRv].rev++
+    })
+    const topBrands: StatItem[] = Object.entries(brandInfo)
+      .map(([name, v]) => ({ label: name, value: v.ids.size, extra: `${v.bois}🪵 ${v.rev}⚡` }))
+      .sort((a, b) => b.value - a.value).slice(0, 10)
+
+    // Bois les plus utilisés
+    const bladeMap: Record<string, number> = {}
+    statJoueurs.forEach((j: any) => {
+      const name = getBladeName(j.bois_nom, brandNames)
+      if (name) bladeMap[name] = (bladeMap[name] || 0) + 1
+    })
+    const topBlades: StatItem[] = Object.entries(bladeMap)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value).slice(0, 12)
+    const totalWithBlade = statJoueurs.filter((j: any) => j.bois_nom).length
+
+    // Revêtements les plus utilisés (CD + RV confondus)
+    const rubberMap: Record<string, number> = {}
+    statJoueurs.forEach((j: any) => {
+      ;[j.revetement_cd, j.revetement_rv].forEach((rev: string | null) => {
+        const name = getRubberName(rev, brandNames)
+        if (name) rubberMap[name] = (rubberMap[name] || 0) + 1
+      })
+    })
+    const topRubbers: StatItem[] = Object.entries(rubberMap)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value).slice(0, 12)
+    const totalWithRubber = statJoueurs.filter((j: any) => j.revetement_cd || j.revetement_rv).length
+
+    // Pays les plus représentés
+    const countryMap: Record<string, number> = {}
+    statJoueurs.forEach((j: any) => { if (j.pays) countryMap[j.pays] = (countryMap[j.pays] || 0) + 1 })
+    const topCountries: StatItem[] = Object.entries(countryMap)
+      .map(([pays, value]) => ({ label: `${DRAPEAUX[pays] || ""}  ${pays}`, value }))
+      .sort((a, b) => b.value - a.value).slice(0, 12)
+
+    // Style de jeu
+    const styleMap: Record<string, number> = {}
+    statJoueurs.forEach((j: any) => {
+      const s = (j.style as string | null) || "Non renseigné"
+      styleMap[s] = (styleMap[s] || 0) + 1
+    })
+    const topStyles: StatItem[] = Object.entries(styleMap)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+
+    return { topBrands, topBlades, totalWithBlade, topRubbers, totalWithRubber, topCountries, topStyles, total }
+  }, [statJoueurs, brandNames])
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem 1rem" }}>
@@ -374,6 +518,98 @@ export default function JoueursPage() {
         </div>
       )}
 
+
+      {/* ── Section Statistiques matériel ── */}
+      {!loading && joueursEnrichis.length > 0 && (
+        <section style={{ marginTop: "3rem", borderTop: "2px solid var(--border)", paddingTop: "2rem" }}>
+
+          {/* En-tête + toggle genre */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" as const, gap: "12px", marginBottom: "1.5rem" }}>
+            <div>
+              <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}>Statistiques matériel</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                Analyse du matériel utilisé par {stats.total} joueurs pros
+                {statGenre !== "tous" && <> · {statGenre === "H" ? "Hommes" : "Femmes"}</>}
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {(["tous", "H", "F"] as const).map(g => (
+                <button key={g} onClick={() => setStatGenre(g)}
+                  style={{
+                    padding: "6px 14px", borderRadius: "20px", border: "1px solid",
+                    fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif",
+                    background: statGenre === g ? "#D97757" : "#fff",
+                    color: statGenre === g ? "#fff" : "var(--text-muted)",
+                    borderColor: statGenre === g ? "#D97757" : "var(--border)",
+                  }}>
+                  {g === "tous" ? "Tous" : g === "H" ? "Hommes" : "Femmes"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Onglets */}
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" as const, marginBottom: "1.2rem" }}>
+            {([
+              { key: "marques",     label: "🏷️ Marques" },
+              { key: "bois",        label: "🪵 Bois" },
+              { key: "revetements", label: "⚡ Revêtements" },
+              { key: "pays",        label: "🌍 Nationalité" },
+              { key: "style",       label: "🎯 Style de jeu" },
+            ] as const).map(({ key, label }) => (
+              <button key={key} onClick={() => setStatTab(key)}
+                style={{
+                  padding: "7px 15px", borderRadius: "8px", border: "1px solid",
+                  fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif",
+                  background: statTab === key ? "#D97757" : "#fff",
+                  color: statTab === key ? "#fff" : "var(--text)",
+                  borderColor: statTab === key ? "#D97757" : "var(--border)",
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Contenu */}
+          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px 24px" }}>
+            {statTab === "marques" && (
+              <StatBars
+                subtitle="Nombre de joueurs utilisant au moins un produit de la marque (bois ou revêtement)"
+                data={stats.topBrands}
+                total={stats.total}
+              />
+            )}
+            {statTab === "bois" && (
+              <StatBars
+                subtitle={`Bois les plus utilisés parmi les ${stats.totalWithBlade} joueurs avec données matériel`}
+                data={stats.topBlades}
+                total={stats.totalWithBlade}
+              />
+            )}
+            {statTab === "revetements" && (
+              <StatBars
+                subtitle={`Coup droit et revers confondus — parmi les ${stats.totalWithRubber} joueurs avec données revêtements`}
+                data={stats.topRubbers}
+                total={stats.totalWithRubber * 2}
+              />
+            )}
+            {statTab === "pays" && (
+              <StatBars
+                subtitle="Nationalités les plus représentées dans le classement mondial"
+                data={stats.topCountries}
+                total={stats.total}
+              />
+            )}
+            {statTab === "style" && (
+              <StatBars
+                subtitle="Répartition des styles de jeu parmi les joueurs classés"
+                data={stats.topStyles}
+                total={stats.total}
+              />
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── Notice copyright discrète ── */}
       <div style={{ marginTop: "2.5rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
