@@ -220,6 +220,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 {b.nb_plis} plis
               </span>
             )}
+            {joueursPro && joueursPro.length > 0 && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 700, padding: "4px 12px", borderRadius: "6px", background: "#0F172A", color: "#F8FAFC", letterSpacing: "0.2px" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+                Utilisé par {joueursPro.length} pro{joueursPro.length > 1 ? "s" : ""}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -227,11 +235,16 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "2rem", alignItems: "start" }}>
         <div>
 
-          {/* Description éditoriale */}
+          {/* Description / Intro SEO */}
           {produit.description && (
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: "12px" }}>Notre avis</h2>
-              <p style={{ fontSize: "15px", lineHeight: 1.75, color: "var(--text)" }}>{produit.description}</p>
+            <div style={{ background: "linear-gradient(135deg, #FFFBF8, #FFF7F3)", border: "1px solid #FED7C3", borderRadius: "12px", padding: "22px 24px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97757" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>Présentation</h2>
+              </div>
+              <p style={{ fontSize: "15px", lineHeight: 1.8, color: "var(--text)", margin: 0 }}>{produit.description}</p>
             </div>
           )}
 

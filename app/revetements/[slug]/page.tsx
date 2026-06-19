@@ -183,9 +183,17 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
 
         <div>
           <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", flexWrap: "wrap" as const }}>
               <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 8px", borderRadius: "4px", background: "var(--success-light)", color: "var(--success)", letterSpacing: "0.3px" }}>APPROUVE LARC 2026</span>
               <span style={{ fontSize: "12px", padding: "3px 8px", borderRadius: "4px", background: "var(--accent-light)", color: "var(--accent)", fontWeight: 500 }}>{TYPE_LABELS[rev?.type_revetement] || rev?.type_revetement}</span>
+              {joueursPro && joueursPro.length > 0 && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 700, padding: "3px 10px", borderRadius: "4px", background: "#0F172A", color: "#F8FAFC", letterSpacing: "0.2px" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  </svg>
+                  Utilisé par {joueursPro.length} pro{joueursPro.length > 1 ? "s" : ""}
+                </span>
+              )}
             </div>
             <h1 style={{ fontSize: "28px", fontWeight: 700, marginBottom: "4px", letterSpacing: "-0.5px" }}>{produit.nom}</h1>
             <p style={{ color: "var(--text-muted)", fontSize: "16px" }}>{marque?.nom}</p>
