@@ -136,6 +136,175 @@ WHERE nom ILIKE '%Rhyzm%'
   AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Joola');
 
 -- ══════════════════════════════════════════════════════════════════
+-- AJOUTS : Tibhar · Stiga · Donic · Butterfly Zyre 03
+-- ══════════════════════════════════════════════════════════════════
+
+-- ─── Tibhar Evolution MX-S ───────────────────────────────────────
+UPDATE produits SET description =
+'Le Tibhar Evolution MX-S est la version orientée spin de la gamme Evolution, conçue pour les joueurs qui privilégient la rotation et la régularité sur la vitesse brute. Fabriqué en Allemagne avec la technologie ProTension signature de Tibhar, il partage avec le MX-P la même architecture de mousse à grandes cellules, mais avec une topsheet spécifiquement retravaillée pour maximiser l''adhérence et l''enroulement autour de la balle.
+
+Avec une dureté légèrement inférieure au MX-P, l''Evolution MX-S offre une sensation plus douce et un temps de contact balle-raquette plus long, ce qui le rend idéal pour les topspins construits avec technique, notamment au revers. La mousse absorbe mieux les variations d''impact et tolère les frappes imprécises, un avantage notable pour les joueurs en progression ou cherchant plus de consistance dans les échanges.
+
+Sa particularité réside dans sa capacité à produire des effets intenses même sur des balles basses ou difficiles, grâce à une adhérence topsheet supérieure à celle du MX-P. C''est le revêtement de la gamme Evolution recommandé pour le revers des joueurs offensifs, notamment ceux qui construisent leur jeu autour du topspin croisé et des ouvertures sécurisées.
+
+En termes de rapport qualité-prix, l''Evolution MX-S se situe dans le même segment haut de gamme que son frère MX-P, à un prix comparable. Un choix excellent pour les attaquants qui souhaitent maîtriser leurs effets sans sacrifier la vitesse de leur jeu global.'
+WHERE nom ILIKE '%Evolution MX-S%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Tibhar');
+
+-- ─── Tibhar Evolution EL-P ───────────────────────────────────────
+UPDATE produits SET description =
+'Le Tibhar Evolution EL-P est le modèle le plus équilibré de la gamme Evolution, conçu pour combler le fossé entre la puissance brute du MX-P et la souplesse du FX-P. Son sigle "EL" (Extra Large) fait référence à sa géométrie de picots inédite, avec des têtes plus larges qui augmentent la surface de contact avec la balle.
+
+Cette architecture originale confère à l''Evolution EL-P une polyvalence rare : il se montre aussi à l''aise sur les topspins puissants à mi-distance que sur les blocs actifs et les frappes directes près de la table. La mousse de dureté intermédiaire (entre 45° et 47°) procure une excellente élasticité sans le côté "canon" du MX-P, rendant le jeu plus lisible et plus facile à contrôler dans les échanges rapides.
+
+Selon Tibhar, l''EL-P permet une frappe précise et puissante depuis toutes les positions, avec une capacité à générer autant de rotation que le MX-P tout en offrant davantage de marge à l''erreur. Sa réponse est linéaire et rassurante, ce qui en fait un choix idéal pour les joueurs qui montent en niveau et cherchent un revêtement capable d''évoluer avec leur technique.
+
+Recommandé aussi bien en coup droit qu''au revers, l''Evolution EL-P est sans doute le revêtement de la gamme Evolution qui conviendra au plus large éventail de joueurs. Un excellent point d''entrée pour découvrir le niveau de performance Tibhar.'
+WHERE nom ILIKE '%Evolution EL-P%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Tibhar');
+
+-- ─── Stiga Calibra LT Sound ──────────────────────────────────────
+UPDATE produits SET description =
+'Le Stiga Calibra LT Sound est l''un des revêtements les plus emblématiques de la marque suédoise Stiga, reconnu pour son sponge ultra-souple et sa sonorité caractéristique à l''impact — d''où le suffixe "Sound". Appartenant à la famille Calibra (LT = Long Trajectory), ce revêtement a été conçu pour les joueurs offensifs jouant loin de la table, qui misent sur des topspins liftés avec une trajectoire très haute et profonde.
+
+Sa mousse très souple (autour de 32-35°) est l''une des plus tendres du marché dans cette catégorie offensive. Cette douceur offre une sensation de contrôle exceptionnelle et une grande tolérance aux frappes imprécises, tout en générant des effets importants grâce à l''enroulement prononcé de la balle dans le topsheet. Le Calibra LT Sound reproduit fidèlement l''effet de la colle rapide interdite depuis 2008, avec des trajectoires basses au départ puis plongeantes sur la table adverse.
+
+Particulièrement apprécié au revers, ce revêtement permet de construire des topspins réguliers et spinés depuis la mi-distance ou loin de la table, avec une facilité déconcertante. Sa relative lenteur par rapport aux revêtements tensor actuels est compensée par une sécurité de jeu très élevée.
+
+Idéal pour les joueurs de niveau intermédiaire à avancé qui privilégient la régularité et les effets sur la vitesse, le Calibra LT Sound reste une valeur sûre chez Stiga. Sa longévité reconnue et son prix accessible en font également un revêtement d''entraînement très prisé.'
+WHERE nom ILIKE '%Calibra LT Sound%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+-- ─── Stiga Mantra M ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Stiga Mantra M est le revêtement de référence de la gamme Mantra, la série haut de gamme de la marque suédoise Stiga. La déclinaison "M" (Medium) représente le point d''équilibre parfait entre vitesse, rotation et contrôle, en faisant le choix le plus polyvalent de la trilogie H/M/S.
+
+Conçu pour les joueurs offensifs modernes jouant des deux côtés, le Mantra M intègre un topsheet très adhérent associé à une mousse de dureté intermédiaire qui assure un temps de contact idéal pour les topspins construits. Sa réponse est dynamique sans être brutale, ce qui le rend efficace aussi bien sur les frappes de puissance en coup droit que sur les ouvertures techniques au revers.
+
+L''architecture du Mantra M a été pensée pour compenser les caractéristiques du ballon plastique 40+, notamment en maintenant un niveau de rotation élevé malgré la surface moins réactive de la balle moderne. Le topsheet haute friction s''accroche parfaitement à la balle même lors de contacts partiels ou obliques.
+
+Recommandé pour les joueurs de compétition de niveau régional à national, le Mantra M s''installe aussi bien en coup droit qu''au revers, et peut être monté sur des lames de puissances variées. Son rapport qualité-prix compétitif par rapport aux revêtements Butterfly ou aux dernières générations Tibhar en fait l''une des meilleures propositions de la marque scandinave.'
+WHERE nom ILIKE '%Mantra M%'
+  AND nom NOT ILIKE '%Mantra H%'
+  AND nom NOT ILIKE '%Mantra S%'
+  AND nom NOT ILIKE '%Pro%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+-- ─── Stiga Mantra H ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Stiga Mantra H est la version la plus puissante et la plus rapide de la gamme Mantra, conçue pour les joueurs offensifs agressifs qui cherchent à dominer l''échange par la vitesse et la puissance de leurs topspins. Le "H" (Hard) désigne la dureté accrue de la mousse par rapport au Mantra M, ce qui lui confère une réponse plus directe et plus explosive.
+
+Avec sa mousse plus dure, le Mantra H est taillé pour les frappes franches et engagées, notamment en coup droit lors des contre-topspins et des smashes. La sensation à l''impact est plus ferme et plus directe, récompensant les joueurs qui frappent fort et avec technique. Les topspins générés avec le Mantra H sont rapides et pénétrants, avec une trajectoire plus tendue que celle du Mantra M.
+
+Ce revêtement est particulièrement adapté aux joueurs de haut niveau qui pratiquent un jeu explosif proche à mi-distance de la table, avec une préférence pour les frappes directes sur les balles semi-longues. Sa vitesse élevée exige cependant une technique solide, car les frappes imprécises ou molles sont moins bien absorbées que sur les versions plus souples.
+
+Pour les joueurs cherchant à maximiser leur puissance offensive tout en restant dans l''univers Stiga, le Mantra H représente le meilleur choix de la gamme. Sa dureté plus élevée le prédestine davantage au coup droit, tandis qu''une version plus souple comme le Mantra M conviendra mieux au revers.'
+WHERE nom ILIKE '%Mantra H%'
+  AND nom NOT ILIKE '%Pro%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+-- ─── Stiga Mantra S ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Stiga Mantra S est la version la plus souple et la plus contrôlée de la gamme Mantra de Stiga. Le "S" (Soft) indique une mousse plus tendre, offrant une sensation plus confortable et une tolérance accrue qui en font le meilleur choix pour le revers ou pour les joueurs préférant un jeu basé sur la régularité et les effets plutôt que sur la vitesse brute.
+
+Grâce à sa mousse douce, le Mantra S offre un excellent dwell time (temps de contact) qui maximise la rotation générée sur chaque frappe. Les topspins sont liftés et consistants, avec une trajectoire haute qui oblige l''adversaire à reculer. Ce profil le rend idéal pour les joueurs qui construisent leurs points progressivement, en utilisant les effets pour déstabiliser plutôt que la vitesse pour conclure.
+
+Sa légèreté et sa douceur en font également un excellent revêtement pour les joueurs en développement qui souhaitent s''approprier le jeu de topspin moderne sans les exigences techniques d''une mousse dure. Le topsheet très adhérent du Mantra S assure une adhérence constante sur les balles difficiles, en service ou en réception.
+
+Polyvalent et durable, le Stiga Mantra S se distingue par sa résistance à l''usure, qualité reconnue de la gamme Mantra. C''est un choix particulièrement recommandé en position de revers pour les attaquants complets, ou comme revêtement principal pour les joueurs cherchant le maximum d''effets avec le minimum de risque.'
+WHERE nom ILIKE '%Mantra S%'
+  AND nom NOT ILIKE '%Mantra H%'
+  AND nom NOT ILIKE '%Mantra M%'
+  AND nom NOT ILIKE '%Pro%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+-- ─── Donic Bluefire M1 (standard) ───────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire M1 est le revêtement premium de la série Bluefire, avec une mousse bleue à 47,5° qui en fait la version de référence entre le très dur M1 Turbo et le plus équilibré M2. Fabriqué en Allemagne par Donic, il bénéficie de la même architecture de mousse haute performance que toute la gamme : grandes cellules à parois fines pour une élasticité maximale et un transfert d''énergie optimal à l''impact.
+
+Son topsheet très adhérent aux picots fins et allongés confère au Bluefire M1 une rotation élevée dans toutes les situations de jeu. Contrairement au M1 Turbo dont les picots sont légèrement plus larges, le M1 standard offre une sensation plus souple et un meilleur ressenti sur les balles à mi-vitesse, le rendant légèrement plus polyvalent et accessible.
+
+Recommandé pour les joueurs offensifs de niveau avancé à élite, le Bluefire M1 excelle dans les topspins construits à mi-distance, les contre-topspins accélérés et les services très chargés. Il offre un équilibre remarquable entre puissance et contrôle, permettant de varier les angles et les vitesses tout en maintenant un niveau d''effets constant.
+
+Avec un positionnement prix légèrement inférieur au M1 Turbo, le Donic Bluefire M1 standard représente un excellent investissement pour les joueurs de compétition cherchant un revêtement de coup droit performant et fiable. Sa mousse bleue est devenue iconique dans le monde du ping-pong européen.'
+WHERE nom ILIKE '%Bluefire M1%'
+  AND nom NOT ILIKE '%Turbo%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Bluefire M2 ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire M2 est le revêtement polyvalent par excellence de la gamme Bluefire, avec sa mousse bleue à 45°. Situé entre le M1 (47,5°) et le M3 (40°), il s''adresse aux joueurs qui recherchent un compromis idéal entre vitesse, rotation et contrôle, sans les exigences techniques des versions plus dures.
+
+Son architecture de mousse à grandes cellules élastiques offre un effet catapulte bien dosé, permettant des topspins réguliers et consistants sans nécessiter une frappe très engagée. Le topsheet très adhérent assure une bonne rotation même sur les balles basses ou les récupérations techniques, là où les revêtements plus durs perdent en efficacité.
+
+Le Bluefire M2 brille particulièrement au revers, où sa dureté intermédiaire permet de bloquer activement, de topspin-er les balles semi-rapides et de varier les rythmes sans risque de perte de contrôle. Il est également très efficace sur les coups de contre, grâce à la réactivité naturelle de la mousse bleue Donic.
+
+Apprécié des joueurs de tous niveaux compétitifs, du régional au national, le Donic Bluefire M2 est souvent cité comme l''un des meilleurs revêtements polyvalents du marché pour son prix. Sa durabilité supérieure à la moyenne et ses performances constantes en font un choix sécurisant pour les joueurs qui ne veulent pas changer de revêtement tous les deux mois.'
+WHERE nom ILIKE '%Bluefire M2%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Bluefire M3 ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire M3 est la version la plus souple et la plus accessible de la série Bluefire, avec une mousse bleue à 40°. Conçu pour les joueurs qui cherchent les caractéristiques premium de la gamme Bluefire — notamment le topsheet très adhérent et la mousse grande cellule à haute élasticité — dans un format plus doux et plus facile à maîtriser.
+
+Sa mousse à 40° offre une tolérance élevée à l''erreur : même les frappes imprécises ou légères bénéficient de la réactivité naturelle de la structure Bluefire. Les topspins générés avec le M3 sont réguliers et spinés, avec une trajectoire relativement haute qui passe facilement le filet et plonge ensuite sur la table adverse.
+
+Recommandé en position de revers pour les attaquants modernes, ou comme revêtement principal pour les joueurs en développement souhaitant bénéficier d''une technologie haut de gamme sans les contraintes techniques des mousses très dures, le Bluefire M3 est aussi excellent pour les joueurs cherchant à maximiser leurs effets de service et de récupération.
+
+Sa légèreté et sa douceur en font un revêtement confortable à l''entraînement comme en compétition, moins fatigant sur le long terme qu''une mousse dure. Le Donic Bluefire M3 offre une porte d''entrée idéale dans l''univers des revêtements haut de gamme allemands, avec des performances très au-dessus de son positionnement prix.'
+WHERE nom ILIKE '%Bluefire M3%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Acuda S1 Turbo ────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Acuda S1 Turbo est le fleuron de la série Acuda, une gamme de revêtements haut de gamme développée par Donic en alternative à la série Bluefire. Avec sa mousse plus dure et encore plus tendue que le S1 standard, l''Acuda S1 Turbo est le choix des joueurs les plus agressifs qui jouent près de la table et misent sur la vitesse et la précision.
+
+Sa mousse très réactive offre un effet catapulte prononcé qui récompense les frappes directes et les counter-loops à pleine vitesse. Couplée à un topsheet très grip, la structure du S1 Turbo génère des rotations intenses sur les topspins appuyés, des balles rapides en smash et des services très chargés difficiles à lire pour l''adversaire.
+
+Ce revêtement est conçu pour les joueurs d''élite ou de haut niveau compétitif qui maîtrisent leur technique et cherchent à maximiser l''impact de chaque frappe. Sa réactivité élevée rend les coups passifs moins fiables, mais récompense au-delà de l''imaginable les frappes engagées avec bonne intention.
+
+Le Donic Acuda S1 Turbo se distingue des revêtements Bluefire par une sensation plus directe et une trajectoire plus tendue, le rapprochant dans l''esprit des revêtements très durs comme le Dignics 05 de Butterfly. Un outil d''expert, réservé aux joueurs qui savent exactement ce qu''ils cherchent dans leur matériel et qui ne transigent pas sur la performance pure.'
+WHERE nom ILIKE '%Acuda S1 Turbo%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Acuda S1 ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Acuda S1 est le revêtement phare de la gamme Acuda, une série développée par Donic pour les joueurs offensifs exigeants jouant proche de la table. Conçu comme alternative haut de gamme aux revêtements européens premium, l''Acuda S1 combine une mousse de dureté intermédiaire à un topsheet très adhérent pour un jeu agressif et précis.
+
+Sa mousse offre une élasticité bien dosée qui se prête aussi bien aux topspins construits avec topspin qu''aux frappes directes accélérées. Le topsheet spin-optimisé génère d''excellents effets en service et en troisième balle, deux phases de jeu essentielles à la tactique offensive moderne. La balle sort rapidement et tendue de ce revêtement, rendant les retours difficiles à gérer pour l''adversaire.
+
+L''Acuda S1 est particulièrement efficace en position de coup droit pour les joueurs qui jouent entre la table et la mi-distance, avec une prédilection pour les frappes directes et les topspins rapides. Comparé au S1 Turbo, il offre davantage de confort et de tolérance, le rendant accessible à un panel plus large de joueurs sans sacrifier les performances.
+
+Reconnu pour sa précision et sa réponse franche à chaque impact, le Donic Acuda S1 s''est constitué une solide réputation en compétition européenne. Son excellent rapport qualité-prix par rapport aux revêtements Butterfly ou Tibhar équivalents en fait une option très sérieuse pour les joueurs de division nationale et internationale.'
+WHERE nom ILIKE '%Acuda S1%'
+  AND nom NOT ILIKE '%Turbo%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Acuda S2 ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Acuda S2 est la version intermédiaire de la gamme Acuda, positionnée entre le très agressif S1 et le plus souple S3. Avec une mousse de dureté légèrement réduite par rapport au S1, l''Acuda S2 offre un équilibre remarquable entre rotation, vitesse et contrôle, le rendant particulièrement adapté aux joueurs polyvalents qui jouent sur toute la table.
+
+Sa structure de mousse optimisée pour le topspin lui confère une bonne capacité à générer des effets importants même sur les frappes à vitesse modérée, ce qui le rend efficace aussi bien en coup droit qu''en revers. Le topsheet très adhérent assure une excellente accroche sur les balles courtes et les récupérations techniques, deux situations où les revêtements plus durs perdent parfois en efficacité.
+
+L''Acuda S2 est apprécié des joueurs de niveau avancé cherchant un revêtement de compétition fiable et régulier, sans l''exigence technique des versions plus dures. Il permet d''exploiter pleinement les qualités de la gamme Acuda — rapidité, rotation, sensation directe — avec une marge d''erreur supplémentaire appréciable lors des matchs sous pression.
+
+Sa polyvalence en fait un excellent choix en position de revers pour les attaquants complets, ou comme revêtement de coup droit pour les joueurs préférant une mousse un peu plus souple que le S1. Un revêtement honnête et performant dans la belle tradition Donic.'
+WHERE nom ILIKE '%Acuda S2%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Butterfly Zyre 03 ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Butterfly Zyre 03 est le dernier-né des revêtements premium de Butterfly et marque une rupture technologique majeure avec les gammes Tenergy et Dignics. Lancé pour les joueurs cherchant à pousser encore plus loin les limites de la rotation et de la puissance, il intègre deux innovations inédites : le topsheet "Ricosheet" et la mousse Spring Sponge X dans son épaisseur maximale.
+
+Le Ricosheet est un topsheet révolutionnaire aux picots extrêmement courts, denses et serrés, atteignant la densité maximale autorisée par les règles internationales. Cette architecture génère une surface de contact balle-raquette inédite, maximisant le grip et la transmission d''énergie rotationnelle à chaque impact. Selon les tests internes de Butterfly, le Zyre 03 affiche une résistance à l''abrasion supérieure de 40 % à celle du Dignics 05, promettant une durabilité nettement améliorée.
+
+La mousse Spring Sponge X, plus épaisse que dans les gammes précédentes (jusqu''à 2,7 mm), réduit la déformation de la balle à l''impact, conservant mieux l''énergie et propulsant la balle avec une trajectoire fortement arquée et profonde dans le camp adverse. Le Code de picots n°303 adopté — Power + Spin — caractérise une frappe qui combine vitesse et rotation de manière rarement atteinte auparavant.
+
+Destiné aux joueurs de haut niveau pratiquant des topspins puissants en coup droit, le Zyre 03 représente l''état de l''art de la technologie Butterfly en 2024-2025. Un choix pour les compétiteurs qui ne veulent aucun compromis.'
+WHERE nom ILIKE '%Zyre 03%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Butterfly');
+
+-- ══════════════════════════════════════════════════════════════════
 -- Vérification : produits mis à jour avec une description
 -- ══════════════════════════════════════════════════════════════════
 SELECT p.nom, m.nom AS marque, LEFT(p.description, 80) AS extrait
