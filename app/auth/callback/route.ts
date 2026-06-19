@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirige vers la page d'origine (revetement, bois...) ou l'accueil
-  const destination = redirect.startsWith('/') ? redirect : '/'
+  // M-6 : rejeter les redirects de type "//evil.com" (protocol-relative)
+  const destination = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
   return NextResponse.redirect(`${origin}${destination}`)
 }
