@@ -41,6 +41,15 @@ const TYPE_LABELS_EN: Record<string, string> = {
   "Anti": "Anti-spin",
 }
 
+// Inverse : label affiché → code type (pour parser le suffixe "— Backside" stocké en base)
+const TYPE_LABEL_TO_CODE: Record<string, string> = {
+  "Backside": "In",
+  "Picots courts": "Out", "Short pips": "Out",
+  "Picots mi-longs": "Mid", "Medium pips": "Mid",
+  "Picots longs": "Long", "Long pips": "Long",
+  "Anti-spin": "Anti",
+}
+
 
 function normalize(s: string) {
   return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -140,15 +149,24 @@ export default function JoueursPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  // Résout le type d'un revêtement : colonne stockée en priorité, sinon lookup par nom
+  // Résout le type d'un revêtement : 3 niveaux de fallback
   function resolveType(nomEquip: string | null, storedType: string | null): string | null {
+    // 1. Colonne revetement_cd_type / revetement_rv_type (source la plus fiable)
     if (storedType) return storedType
     if (!nomEquip) return null
-    // Nettoyer le nom (enlever " — Backside" etc. ajouté par l'affichage admin)
+
+    // 2. Parser le suffixe " — Backside" inclus dans le nom formaté par l'admin
+    //    Format stocké : "Butterfly Tenergy 05 — Backside"
+    const suffixMatch = nomEquip.match(/—\s*(.+)$/)
+    if (suffixMatch) {
+      const code = TYPE_LABEL_TO_CODE[suffixMatch[1].trim()]
+      if (code) return code
+    }
+
+    // 3. Lookup typeMap DB (fallback si le nom n'a pas de suffixe)
     const nomPropre = nomEquip.replace(/\s*—\s*.+$/, "").trim()
     const n = normalize(nomPropre)
     if (typeMap.has(n)) return typeMap.get(n)!
-    // Recherche partielle : cherche le nom du produit dans le nom de l'équipement
     for (const [key, type] of typeMap.entries()) {
       if (key.length >= 5 && n.includes(key)) return type
     }

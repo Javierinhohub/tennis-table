@@ -103,8 +103,23 @@ export async function GET(req: NextRequest) {
   }, null as string | null)
 
   // 5. Map type revêtement (requêtes uniquement si nécessaire)
+  // Les noms stockés ont le format "Butterfly Tenergy 05 — Backside" :
+  // on retire le suffixe " — Type" ET le préfixe de marque pour matcher produits.nom
+  const rawNoms = joueurs.flatMap(j => [j.revetement_cd, j.revetement_rv].filter(Boolean))
   const nomsRev = [...new Set(
-    joueurs.flatMap(j => [j.revetement_cd, j.revetement_rv].filter(Boolean))
+    rawNoms.map(nom => {
+      // 1. Retire le suffixe " — Backside"
+      let clean = (nom as string).replace(/\s*—\s*.+$/, "").trim()
+      // 2. Retire le préfixe de marque (ex: "Butterfly ")
+      for (const marque of marques) {
+        const prefix = marque + " "
+        if (clean.toLowerCase().startsWith(marque.toLowerCase() + " ")) {
+          clean = clean.slice(prefix.length).trim()
+          break
+        }
+      }
+      return clean
+    })
   )]
   let typeMap: Record<string, string> = {}
   if (nomsRev.length > 0) {
