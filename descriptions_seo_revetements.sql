@@ -305,6 +305,185 @@ WHERE nom ILIKE '%Zyre 03%'
   AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Butterfly');
 
 -- ══════════════════════════════════════════════════════════════════
+-- AJOUTS 2 : Donic JP · Tibhar K3 · Xiom Jekyll & Hyde
+--            Andro NUZN · Yasaka Rakza · Joola Dynaryz
+-- ══════════════════════════════════════════════════════════════════
+
+-- ─── Donic Bluefire JP01 Turbo ───────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire JP01 Turbo est le revêtement le plus rapide et le plus agressif de la série Bluefire JP, une gamme distincte de la série M qui privilégie la vitesse linéaire et les frappes directes. Avec sa mousse bleue à très haute dureté et son topsheet ultra-adhérent, le JP01 Turbo est conçu pour les attaquants qui veulent conclure l''échange en un minimum de frappes.
+
+Le "JP" de la gamme fait référence à une géométrie de picots différente de la série M, optimisée pour un transfert d''énergie plus direct et une trajectoire plus tendue. La version Turbo pousse cette philosophie à l''extrême : la mousse est encore plus réactive que le JP01 standard, offrant un effet catapulte immédiat dès le contact et une vitesse de sortie de balle dévastatrice.
+
+Ce revêtement est taillé pour les joueurs d''élite pratiquant un jeu explosif très proche de la table — counter-loop, smash en première balle, ouvertures directes sur balles mi-longues. Sa réactivité exige une technique solide et des frappes franches ; les coups mous ou approximatifs sont peu récompensés. C''est en cela qu''il diffère du M1 Turbo : là où le M1 Turbo conserve un peu plus de dwell time, le JP01 Turbo est encore plus immédiat et catapultant.
+
+Reconnu comme l''un des revêtements les plus rapides du catalogue Donic, le Bluefire JP01 Turbo s''adresse aux joueurs de compétition haut niveau cherchant le maximum de vitesse sans compromis. Un outil d''expert par excellence.'
+WHERE nom ILIKE '%Bluefire JP01 Turbo%' OR nom ILIKE '%Bluefire JP 01 Turbo%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Bluefire JP01 ─────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire JP01 est le revêtement de référence de la série Bluefire JP, positionné comme le choix des joueurs offensifs de haut niveau qui recherchent un équilibre entre vitesse explosive et sensation de jeu. Sa mousse bleue dure, moins extrême que la version Turbo, lui confère une légère marge de tolérance supplémentaire tout en conservant les caractéristiques directes et percutantes de la famille JP.
+
+Le topsheet très adhérent du JP01 génère d''excellentes rotations sur les topspins en coup droit et permet des services très chargés difficiles à contrer. Sa géométrie de picots spécifique à la série JP produit une trajectoire tendue et pénétrante, très différente du profil plus arqué de la série M — un atout majeur pour déborder l''adversaire en vitesse pure.
+
+Le JP01 brille particulièrement dans les échanges rapprochés et les phases de contre-attaque, où sa réactivité permet de reprendre l''initiative rapidement. Comparé au JP01 Turbo, il offre un peu plus de confort dans les situations défensives et les blocs actifs, sans sacrifier l''essentiel de la puissance offensive.
+
+Recommandé pour les joueurs de niveau régional à national pratiquant un topspin direct et rapide, avec une préférence pour les échanges courts et décisifs. La série Bluefire JP est souvent comparée aux revêtements Butterfly pour son niveau de performance, à un prix légèrement plus accessible. Le JP01 en est le meilleur ambassadeur.'
+WHERE (nom ILIKE '%Bluefire JP01%' OR nom ILIKE '%Bluefire JP 01%')
+  AND nom NOT ILIKE '%Turbo%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Bluefire JP02 ─────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire JP02 est le revêtement polyvalent de la série Bluefire JP, conçu pour combler le fossé entre l''agressivité du JP01 et la douceur du JP03. Avec une mousse bleue de dureté intermédiaire, le JP02 offre ce que Donic décrit comme le "compromis parfait" : suffisamment rapide pour les joueurs offensifs, suffisamment contrôlé pour les phases de jeu passive et de placement.
+
+Son topsheet très adhérent assure d''excellentes rotations dans toutes les situations de jeu — service, troisième balle, récupération, contre-topspin. La mousse intermédiaire absorbe mieux les variations d''impact que le JP01, ce qui le rend plus facile à maîtriser lors des échanges rapides ou des balles décentrées. Le JP02 excelle particulièrement au revers, où un revêtement trop dur peut nuire à la précision.
+
+La différence principale avec la série M réside dans la géométrie des picots : les JP produisent une trajectoire plus tendue et plus directe que les M, qui ont tendance à générer une courbe plus arquée. Le JP02 est donc idéal pour les joueurs qui veulent vitesse et pénétration sans la dureté extrême du JP01.
+
+Très apprécié des joueurs de niveau intermédiaire à avancé, le Donic Bluefire JP02 est souvent recommandé comme premier revêtement haut de gamme pour les joueurs qui montent en niveau compétitif. Son rapport qualité-prix et sa polyvalence en font l''un des choix les plus cohérents de la gamme Donic.'
+WHERE (nom ILIKE '%Bluefire JP02%' OR nom ILIKE '%Bluefire JP 02%')
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Donic Bluefire JP03 ─────────────────────────────────────────
+UPDATE produits SET description =
+'Le Donic Bluefire JP03 est la version la plus souple et la plus contrôlée de la série Bluefire JP, avec une mousse bleue douce qui en fait le choix privilégié des joueurs allround offensifs et des attaquants cherchant une sécurité maximale dans leur jeu. Sa douceur de mousse lui confère un excellent ressenti et une tolérance à l''erreur supérieure aux autres membres de la famille JP.
+
+Sa mousse souple allonge le temps de contact balle-raquette, offrant une sensation très "vivante" et un contrôle remarquable sur les balles difficiles, les récupérations et les blocs actifs. Les topspins générés avec le JP03 sont réguliers et spinés, avec une trajectoire arquée que l''adversaire doit gérer avec soin. Ce profil le rend particulièrement efficace au revers pour les joueurs qui construisent leur jeu progressivement.
+
+Comparé aux autres revêtements souples du marché, le JP03 conserve les qualités distinctives de la gamme Bluefire JP — topsheet très adhérent, trajectoire directe — tout en les rendant accessibles aux joueurs qui n''ont pas encore la technique pour exploiter des mousses plus dures. Sa durabilité reconnue et sa facilité de prise en main en font également un excellent revêtement d''entraînement.
+
+Recommandé pour les joueurs de niveau intermédiaire ou pour les joueurs avancés en position de revers, le Donic Bluefire JP03 est la porte d''entrée idéale dans l''univers des revêtements JP. Une valeur sûre dans le catalogue Donic.'
+WHERE (nom ILIKE '%Bluefire JP03%' OR nom ILIKE '%Bluefire JP 03%')
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Donic');
+
+-- ─── Tibhar Hybrid K3 ────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Tibhar Hybrid K3 est l''un des revêtements les plus singuliers du catalogue Tibhar : un revêtement "hybride" qui combine un topsheet collant (tacky) à la manière des revêtements chinois avec la technologie de mousse haute performance caractéristique des fabricants européens. Ce mariage inédit offre un profil de jeu unique, à mi-chemin entre les deux grandes écoles du tennis de table mondial.
+
+Avec sa mousse très dure (53°) et son topsheet à forte adhérence, le Hybrid K3 génère des niveaux de rotation extrêmes — comparables aux meilleurs revêtements chinois de type Hurricane — tout en bénéficiant d''un effet catapulte puissant grâce à l''élasticité européenne de sa mousse. La sensation à l''impact est ferme et directe, avec une réponse immédiate et percutante typique des joueurs qui recherchent la domination par la rotation.
+
+Sa dureté élevée de 53° en fait un revêtement exigeant, réservé aux joueurs possédant une technique solide et habitués aux mousses dures. Les frappes doivent être franches et engagées pour exploiter pleinement la réactivité de la mousse. En contrepartie, les topspins générés sont dévastateurs de lourdeur et de vitesse, les services sont quasi-illisibles et le jeu court est d''une précision chirurgicale.
+
+Particulièrement recommandé en coup droit pour les joueurs qui veulent explorer les avantages du jeu "chinois" sans quitter l''univers des grandes marques européennes, le Tibhar Hybrid K3 est un revêtement d''exception pour les compétiteurs ambitieux et techniquement avancés.'
+WHERE nom ILIKE '%Hybrid K3%'
+  AND nom NOT ILIKE '%FX%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Tibhar');
+
+-- ─── Xiom Jekyll & Hyde (générique — variantes V/C/Z) ────────────
+UPDATE produits SET description =
+'La série Xiom Jekyll & Hyde représente une nouvelle génération de revêtements "hybrides" qui abolit la frontière traditionnelle entre revêtements européens tensors et revêtements asiatiques collants. Inspirée du personnage littéraire de Robert Louis Stevenson — tantôt raffiné, tantôt brutal — cette gamme incarne la dualité entre contrôle précis et attaque dévastatrice.
+
+La technologie Dual Tension intégrée à la Jekyll & Hyde combine un topsheet à haute adhérence (légèrement collant selon les variantes) avec une mousse à haute élasticité, éliminant le besoin de boostage externe. Les picots plus courts et plus denses que dans les revêtements tensor classiques maximisent la surface de contact balle-raquette, générant des effets intenses même à faible vitesse d''impact.
+
+La gamme se décline en trois familles : les versions V (Viscous), aux topsheets légèrement tackys inspirés des revêtements asiatiques ; les versions C (Chinese), plus collantes, imitant directement le style DHS ou Butterfly 09C ; et les versions Z (Zero glue), tensors purs sans tacky. Chaque famille existe en plusieurs duretés (47,5° à 57,5°) pour couvrir tous les profils de joueurs.
+
+Recommandée aux joueurs offensifs modernes souhaitant exploiter la rotation maximale sans la complexité du boostage, la série Jekyll & Hyde convient aussi bien au coup droit qu''au revers. C''est l''un des choix les plus innovants du marché actuel pour les joueurs qui veulent dépasser les limites des revêtements tensors classiques.'
+WHERE nom ILIKE '%Jekyll%' AND nom ILIKE '%Hyde%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Xiom');
+
+-- ─── Andro NUZN (toutes variantes) ──────────────────────────────
+UPDATE produits SET description =
+'La série Andro NUZN (prononcer "new zone") représente l''aboutissement de la démarche data-driven du laboratoire Andro : pour la première fois, les paramètres de performance du revêtement ont été définis à l''aide de l''outil d''analyse Spinsight, qui mesure et quantifie objectivement la rotation, la vitesse et la précision générées par chaque configuration de picots et de mousse.
+
+Le résultat est une gamme de revêtements "hybrides" qui combinent un topsheet extrêmement adhérent à une mousse innovante à gestion d''énergie optimisée au niveau moléculaire. Cette mousse offre une élasticité supérieure à celle des revêtements conventionnels tout en conservant une fermeté qui favorise les frappes directes et les topspins pénétrants. La formulation améliorée du topsheet garantit également une durabilité nettement supérieure à la moyenne, un argument fort pour les joueurs qui s''entraînent intensivement.
+
+La gamme NUZN est déclinée en quatre duretés : 45° (le plus accessible, équilibre parfait puissance-contrôle), 48° (polyvalent et précis), 50° (ultra-moderne, pour le jeu topspin de précision) et 55° (le plus dur, pour un jeu implacable et maximaliste). Chaque version conserve la même philosophie de rotation maximale et de trajectoire arquée.
+
+Comparé aux Rasanter, le NUZN est encore plus orienté spin et durée de vie. Pour les joueurs qui veulent un revêtement de nouvelle génération, fondé sur des données mesurables plutôt que sur une tradition marketing, Andro NUZN est une réponse sérieuse.'
+WHERE nom ILIKE '%NUZN%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Andro');
+
+-- ─── Yasaka Rakza 7 ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Yasaka Rakza 7 est le revêtement phare de la marque suédoise Yasaka, et l''un des revêtements offensifs les plus appréciés des joueurs de compétition cherchant équilibre et régularité. Depuis son lancement, le Rakza 7 s''est imposé comme une alternative solide aux revêtements allemands et japonais dans le segment intermédiaire-haut de gamme.
+
+Sa caractéristique principale est l''incorporation d''une proportion accrue de caoutchouc naturel dans la composition du topsheet, ce qui lui confère une durabilité exceptionnelle — la surface conserve ses propriétés d''adhérence bien plus longtemps que la majorité des revêtements concurrents. Cette robustesse est couplée à un excellent grip qui assure des rotations constantes tout au long de la durée de vie du revêtement.
+
+La mousse de dureté intermédiaire offre une réponse équilibrée : suffisamment rapide pour les attaques directes en coup droit, suffisamment douce pour les topspins construits au revers et les récupérations techniques. Le Rakza 7 excelle particulièrement dans les échanges réguliers à vitesse modérée, où sa grande consistance fait la différence dans les matchs longs et intenses.
+
+Plébiscité par les joueurs de niveau régional à national qui souhaitent un revêtement fiable et durable, le Yasaka Rakza 7 représente un excellent rapport qualité-prix. Sa longévité le rend particulièrement économique sur la durée. Un choix classique et éprouvé pour tous les joueurs qui privilégient la constance à l''extrême performance.'
+WHERE nom ILIKE '%Rakza 7%'
+  AND nom NOT ILIKE '%Soft%'
+  AND nom NOT ILIKE '%Extra%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Yasaka');
+
+-- ─── Yasaka Rakza 7 Soft ─────────────────────────────────────────
+UPDATE produits SET description =
+'Le Yasaka Rakza 7 Soft est la déclinaison souple du célèbre Rakza 7, pensée pour les joueurs qui souhaitent les qualités de durabilité et de spin caractéristiques de la gamme Rakza dans un format plus confortable et plus tolérant. Sa mousse plus douce que le Rakza 7 standard allonge le temps de contact balle-raquette, favorisant les topspins réguliers et spinés au détriment de la vitesse brute.
+
+Son profil de jeu est idéal pour le revers ou pour les joueurs qui ne pratiquent pas encore un jeu très engagé. La mousse souple absorbe mieux les variations d''impact — particulièrement les balles décentrées ou reçues sur le bord de la raquette — ce qui réduit le nombre de fautes directes et améliore la constance globale du jeu. Les services sont efficaces et réguliers, les récupérations sous pression plus sécurisées.
+
+Comme le Rakza 7, il bénéficie de la formule enrichie en caoutchouc naturel de Yasaka, qui lui confère une durabilité bien supérieure à la moyenne des revêtements de cette catégorie. Cette longévité est un argument de poids pour les joueurs en développement qui s''entraînent souvent et souhaitent ne pas changer de revêtement trop fréquemment.
+
+Recommandé pour les joueurs de niveau intermédiaire à avancé cherchant un revêtement souple de qualité, en position de revers ou comme choix principal pour un jeu basé sur le contrôle et les effets. Un revêtement qui dure et qui ne déçoit jamais.'
+WHERE nom ILIKE '%Rakza 7 Soft%' OR nom ILIKE '%Rakza 7 S%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Yasaka');
+
+-- ─── Yasaka Rakza Z ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Yasaka Rakza Z est la version collante et ultra-spinée de la famille Rakza, intégrant un topsheet à forte adhérence (tacky) associé à une mousse "Power Sponge" plus dure que le Rakza 7. Ce mariage d''une surface collante et d''une mousse dynamique produit des niveaux de rotation parmi les plus élevés du marché, dans un revêtement homologué LARC accessible à un large public.
+
+Son topsheet tacky accroche la balle de manière très prononcée, permettant des services extrêmement variés et difficiles à lire, des topspins très lourds même à faible vitesse d''impact, et une grande précision dans le jeu court. La mousse Power Sponge ajoute à cela la réactivité nécessaire pour conclure les échanges avec vitesse — un compromis réussi entre l''école chinoise (topsheet collant) et l''élasticité européenne.
+
+La trajectoire générée par le Rakza Z est caractéristique : très arquée en topspin, avec une balle qui plonge fortement sur la table adverse et rebondit bas, rendant les retours très difficiles. Cette trajectoire convient parfaitement aux joueurs pratiquant un jeu rapproché de la table, avec des services liftés et des ouvertures en premier engagement.
+
+Idéal pour les joueurs qui souhaitent explorer les avantages des revêtements collants sans la complexité du boostage ou le prix des revêtements chinois premium, le Yasaka Rakza Z est l''une des meilleures options du marché dans cette niche. Un revêtement moderne, original et très performant.'
+WHERE nom ILIKE '%Rakza Z%'
+  AND nom NOT ILIKE '%Extra%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Yasaka');
+
+-- ─── Yasaka Rakza X ──────────────────────────────────────────────
+UPDATE produits SET description =
+'Le Yasaka Rakza X est la version la plus rapide et la plus dure de la famille Rakza, conçue pour les joueurs offensifs de haut niveau qui cherchent le maximum de vitesse sans renoncer à la rotation et à la sensation caractéristiques de la gamme. Avec sa mousse dure et son topsheet très adhérent, le Rakza X se positionne dans le segment des revêtements tensor premium les plus performants.
+
+Sa mousse plus dure que le Rakza 7 génère un effet catapulte plus prononcé et une sortie de balle plus rapide, idéale pour les frappes directes, les contre-topspins accélérés et les smashes décisifs. Le topsheet conserve l''excellente adhérence et la durabilité supérieure de la gamme Rakza, grâce à sa formule enrichie en caoutchouc naturel, assurant des performances constantes tout au long de la vie du revêtement.
+
+Le Rakza X excelle particulièrement en position de coup droit pour les joueurs pratiquant un topspin puissant et direct à mi-distance. Sa réponse ferme et linéaire convient aux joueurs qui ont confiance dans leur technique et qui cherchent à accélérer le jeu plutôt qu''à le contrôler. Comparé au Rakza Z, il est moins collant et plus rapide — un profil plus européen, plus catapultant.
+
+Recommandé pour les compétiteurs de niveau avancé à élite, le Yasaka Rakza X offre un excellent positionnement prix face à des concurrents comme le Tibhar Evolution MX-P ou le Donic Bluefire M1. Une valeur sûre et performante dans le catalogue Yasaka.'
+WHERE nom ILIKE '%Rakza X%'
+  AND nom NOT ILIKE '%Soft%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Yasaka');
+
+-- ─── Joola Dynaryz AGR ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Joola Dynaryz AGR est le revêtement le plus agressif et le plus rapide de la gamme Dynaryz, la série premium de la marque allemande Joola. Le sigle AGR — pour "Aggressive" — résume parfaitement sa philosophie : maximiser la vitesse et la puissance de frappe au service d''un jeu offensif implacable.
+
+Son sponge HYPER BOUNCE à 50° est l''un des plus durs de la gamme Joola, offrant un effet catapulte très prononcé et une sortie de balle explosive. Couplé au topsheet ADVANCED TRACTION extrêmement adhérent, développé spécifiquement pour compenser les caractéristiques du ballon plastique 40+, le Dynaryz AGR génère des rotations intenses sur chaque topspin engagé, rendant les retours adverses très difficiles à contrôler.
+
+Ce revêtement brille particulièrement dans les phases d''ouverture agressive, les contre-topspins à pleine vitesse et les troisièmes balles décisives. Sa réponse directe et percutante récompense les joueurs qui frappent fort et avec intention. Sa dureté élevée le réserve aux joueurs possédant une technique solide, capables d''exploiter la réactivité de la mousse sans subir de pertes de contrôle.
+
+Le Dynaryz AGR est souvent cité comme l''une des meilleures alternatives aux revêtements Butterfly Dignics dans sa catégorie de prix. Pour les joueurs de compétition cherchant un revêtement de niveau international sans le prix de la marque japonaise, c''est une option de premier choix qui n''a rien à envier aux références du marché.'
+WHERE nom ILIKE '%Dynaryz AGR%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Joola');
+
+-- ─── Joola Dynaryz ACC ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Joola Dynaryz ACC est le revêtement de référence de la gamme Dynaryz, représentant l''équilibre idéal entre les trois qualités essentielles d''un revêtement moderne : vitesse, rotation et contrôle. Le sigle ACC — pour "Accurate" — traduit la priorité donnée à la précision et à la polyvalence dans la conception de ce revêtement.
+
+Sa mousse HYPER BOUNCE à 47,5° offre une dureté intermédiaire qui convient à la majorité des situations de jeu — des topspins construits aux frappes directes, des récupérations sous pression aux services variés. Le topsheet ADVANCED TRACTION garantit une adhérence élevée sur le ballon plastique, assurant des rotations constantes et puissantes sans les contraintes d''un revêtement ultra-dur.
+
+Le Dynaryz ACC excelle dans les échanges à vitesse variable, où sa réponse équilibrée permet de s''adapter rapidement aux changements de rythme imposés par l''adversaire. C''est un revêtement "intelligent", qui s''adapte au style du joueur plutôt que de l''imposer — une qualité rare qui en fait un choix idéal aussi bien en coup droit qu''au revers pour les joueurs complets.
+
+Recommandé pour les joueurs de niveau régional à national cherchant un revêtement haut de gamme polyvalent, le Joola Dynaryz ACC représente une des meilleures propositions de la marque. Son rapport qualité-prix face aux revêtements Tibhar ou Butterfly de même niveau en fait l''un des incontournables du marché actuel.'
+WHERE nom ILIKE '%Dynaryz ACC%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Joola');
+
+-- ─── Joola Dynaryz CMD ───────────────────────────────────────────
+UPDATE produits SET description =
+'Le Joola Dynaryz CMD est la version la plus douce et la plus contrôlée de la gamme Dynaryz, pensée pour les joueurs qui cherchent le confort de jeu, la sensation précise et la régularité dans les échanges. Le sigle CMD — pour "Comfortable" — reflète une approche centrée sur le plaisir de jeu et la maîtrise technique.
+
+Avec sa mousse HYPER BOUNCE à 43°, le Dynaryz CMD est nettement plus souple que ses homologues AGR et ACC, ce qui lui confère une tolérance à l''erreur supérieure et une sensation très agréable à l''impact — ce que Joola décrit comme un "toucher plaisant et un son impressionnant". Ce dwell time allongé facilite la construction des topspins et le travail des effets sur les balles difficiles.
+
+Malgré sa douceur, le Dynaryz CMD conserve la technologie ADVANCED TRACTION et HYPER BOUNCE qui caractérisent la gamme, offrant des performances bien au-dessus de ce que l''on pourrait attendre d''une mousse à 43°. La topsheet très adhérente assure des rotations constantes et efficaces, particulièrement appréciables au service et lors des ouvertures sur balle courte.
+
+Recommandé pour le revers des joueurs offensifs, pour les joueurs de niveau intermédiaire cherchant à progresser avec un revêtement confortable, ou pour les joueurs plus âgés qui souhaitent réduire la fatigue sans sacrifier la performance, le Joola Dynaryz CMD est un choix éminemment polyvalent et accessible. Un excellent ambassadeur de la marque Joola.'
+WHERE nom ILIKE '%Dynaryz CMD%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Joola');
+
+-- ══════════════════════════════════════════════════════════════════
 -- Vérification : produits mis à jour avec une description
 -- ══════════════════════════════════════════════════════════════════
 SELECT p.nom, m.nom AS marque, LEFT(p.description, 80) AS extrait
