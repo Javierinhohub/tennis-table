@@ -551,11 +551,11 @@ export default function JoueursPage() {
           {/* Onglets */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" as const, marginBottom: "1.2rem" }}>
             {([
-              { key: "marques",     label: "🏷️ Marques" },
-              { key: "bois",        label: "🪵 Bois" },
-              { key: "revetements", label: "⚡ Revêtements" },
-              { key: "pays",        label: "🌍 Nationalité" },
-              { key: "style",       label: "🎯 Style de jeu" },
+              { key: "marques",     label: "Marques" },
+              { key: "bois",        label: "Bois" },
+              { key: "revetements", label: "Revêtements" },
+              { key: "pays",        label: "Nationalité" },
+              { key: "style",       label: "Style de jeu" },
             ] as const).map(({ key, label }) => (
               <button key={key} onClick={() => setStatTab(key)}
                 style={{
