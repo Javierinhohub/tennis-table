@@ -17,6 +17,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Protection /admin/* côté serveur (H-1)
+  // Le cookie "ttk-auth" est écrit par lib/supabase.ts à chaque setItem de session.
+  // S'il est absent, l'utilisateur n'est certainement pas connecté → redirect login.
+  // La vérification du rôle admin reste faite côté client dans chaque page admin.
+  if (pathname.startsWith("/admin")) {
+    const sessionCookie = request.cookies.get("ttk-auth")
+    if (!sessionCookie?.value) {
+      const loginUrl = new URL("/auth/login", request.url)
+      loginUrl.searchParams.set("redirect", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
   // Detect if URL has /en/ prefix
   const pathnameLocale = LOCALES.find(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`

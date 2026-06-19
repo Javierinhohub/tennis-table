@@ -22,11 +22,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       },
       setItem: (key: string, value: string) => {
         if (typeof window === "undefined") return
-        try {
-          window.localStorage.setItem(key, value)
-          return // localStorage OK, pas besoin du cookie
-        } catch {}
-        // Fallback cookie uniquement si localStorage échoue
+        try { window.localStorage.setItem(key, value) } catch {}
+        // Toujours écrire le cookie aussi : le middleware ne peut pas lire localStorage
         setCookie(key, value)
       },
       removeItem: (key: string) => {
