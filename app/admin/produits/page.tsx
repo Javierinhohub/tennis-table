@@ -50,6 +50,9 @@ export default function AdminProduitsPage() {
   const [selected, setSelected] = useState<any>(null)
   const [saving, setSaving] = useState(false)
 
+  // Champ commun — image
+  const [imageUrl, setImageUrl] = useState("")
+
   // Champs éditables — revêtements
   const [rPrix, setRPrix] = useState("")
   const [rPoids, setRPoids] = useState("")
@@ -98,7 +101,7 @@ export default function AdminProduitsPage() {
     if (tab === "revetements") {
       let q = supabase
         .from("produits")
-        .select("id, nom, slug, actif, marques(id, nom), revetements!inner(id, type_revetement, prix, vitesse_note, effet_note, controle_note, poids, epaisseur_max, numero_larc)", { count: "exact" })
+        .select("id, nom, slug, actif, image_url, marques(id, nom), revetements!inner(id, type_revetement, prix, vitesse_note, effet_note, controle_note, poids, epaisseur_max, numero_larc)", { count: "exact" })
         .eq("actif", true)
         .order("nom")
         .range(from, from + PAGE_SIZE - 1)
@@ -109,7 +112,7 @@ export default function AdminProduitsPage() {
     } else {
       let q = supabase
         .from("produits")
-        .select("id, nom, slug, actif, marques(id, nom), bois!inner(id, style, nb_plis, poids_g, epaisseur_mm, composition, prix, note_vitesse, note_controle, note_flexibilite, note_durete, note_qualite_prix)", { count: "exact" })
+        .select("id, nom, slug, actif, image_url, marques(id, nom), bois!inner(id, style, nb_plis, poids_g, epaisseur_mm, composition, prix, note_vitesse, note_controle, note_flexibilite, note_durete, note_qualite_prix)", { count: "exact" })
         .eq("actif", true)
         .order("nom")
         .range(from, from + PAGE_SIZE - 1)
@@ -124,6 +127,7 @@ export default function AdminProduitsPage() {
   function selectionner(p: any) {
     setSelected(p)
     setMessage("")
+    setImageUrl(p.image_url || "")
     if (tab === "revetements") {
       const r = p.revetements
       setRPrix(r?.prix != null ? String(r.prix) : "")
@@ -181,6 +185,13 @@ export default function AdminProduitsPage() {
     if (!selected) return
     setSaving(true)
     setMessage("")
+
+    // Mise à jour image_url dans produits (commun aux deux types)
+    const { error: imgErr } = await supabase
+      .from("produits")
+      .update({ image_url: imageUrl.trim() || null })
+      .eq("id", selected.id)
+    if (imgErr) { setMessage("Erreur image : " + imgErr.message); setSaving(false); return }
 
     if (tab === "revetements") {
       const payload: any = {
@@ -385,6 +396,36 @@ export default function AdminProduitsPage() {
                   {message}
                 </div>
               )}
+
+              {/* ── Image ── */}
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", marginBottom: "12px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#D97757", textTransform: "uppercase" as const, letterSpacing: "0.4px", marginBottom: "10px" }}>Photo produit</p>
+                <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                  {/* Miniature */}
+                  <div style={{ width: "64px", height: "64px", flexShrink: 0, border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
+                    ) : (
+                      <span style={{ fontSize: "10px", color: "var(--text-muted)", textAlign: "center" as const }}>Pas d'image</span>
+                    )}
+                  </div>
+                  {/* Champ URL */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={lbl}>URL de l'image</label>
+                    <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)}
+                      placeholder="https://…"
+                      style={{ ...inp, fontSize: "12px" }} />
+                    {imageUrl && (
+                      <button type="button" onClick={() => setImageUrl("")}
+                        style={{ marginTop: "6px", fontSize: "11px", color: "#DC2626", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "Poppins, sans-serif" }}>
+                        Supprimer l'image
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px", display: "flex", flexDirection: "column", gap: "14px" }}>
 
