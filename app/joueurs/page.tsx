@@ -319,7 +319,7 @@ export default function JoueursPage() {
       if (bRv)   brandInfo[bRv].rev++
     })
     const topBrands: StatItem[] = Object.entries(brandInfo)
-      .map(([name, v]) => ({ label: name, value: v.ids.size, extra: `${v.bois}🪵 ${v.rev}⚡` }))
+      .map(([name, v]) => ({ label: name, value: v.ids.size, extra: `${v.bois} bois · ${v.rev} rev.` }))
       .sort((a, b) => b.value - a.value).slice(0, 10)
 
     // Bois les plus utilisés
