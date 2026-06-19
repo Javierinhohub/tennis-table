@@ -330,6 +330,30 @@ UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/
 WHERE nom ILIKE '%Clipper%'
   AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
 
+UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/8/1/8150_8150_59d3557f2be153_96755918_IMG_4916-infinity_jpg_1.jpg'
+WHERE nom ILIKE '%Infinity VPS%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/s/t/stiga_carbonado_45_24372.jpg'
+WHERE nom ILIKE '%Carbonado 45%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/4/5/4582_Carbonado-145_jpg.jpg'
+WHERE nom ILIKE '%Carbonado 145%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/4/5/4577_Carbonado-190_jpg.jpg'
+WHERE nom ILIKE '%Carbonado 190%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
+-- ══════════════════════════════════════════════════════════════════
+-- STIGA — revêtements (source : tabletennis11.com)
+-- ══════════════════════════════════════════════════════════════════
+
+UPDATE produits SET image_url = 'https://static.tabletennis11.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/9/6/9653_BLMIoPoOaXv8_jpg_1.jpg'
+WHERE nom ILIKE '%Calibra LT Sound%'
+  AND marque_id = (SELECT id FROM marques WHERE nom ILIKE 'Stiga');
+
 
 -- ══════════════════════════════════════════════════════════════════
 -- VÉRIFICATION GLOBALE
