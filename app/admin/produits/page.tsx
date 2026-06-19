@@ -74,6 +74,14 @@ export default function AdminProduitsPage() {
   const [assocResults, setAssocResults] = useState<any[]>([])
   const [assocSearching, setAssocSearching] = useState(false)
 
+  // FAQ produit
+  const [faqList, setFaqList] = useState<any[]>([])
+  const [faqNewQ, setFaqNewQ] = useState("")
+  const [faqNewA, setFaqNewA] = useState("")
+  const [faqEditId, setFaqEditId] = useState<string | null>(null)
+  const [faqEditQ, setFaqEditQ] = useState("")
+  const [faqEditA, setFaqEditA] = useState("")
+
   // Champs éditables — bois
   const [bPrix, setBPrix] = useState("")
   const [bStyle, setBStyle] = useState("")
@@ -140,6 +148,42 @@ export default function AdminProduitsPage() {
     setLoading(false)
   }
 
+  async function loadFaq(produitId: string) {
+    const { data } = await supabase
+      .from("faq_produits")
+      .select("id, question, reponse, ordre")
+      .eq("produit_id", produitId)
+      .order("ordre")
+    setFaqList(data || [])
+  }
+
+  async function addFaqItem() {
+    if (!selected || !faqNewQ.trim() || !faqNewA.trim()) return
+    const { error } = await supabase.from("faq_produits").insert({
+      produit_id: selected.id,
+      question: faqNewQ.trim(),
+      reponse: faqNewA.trim(),
+      ordre: faqList.length,
+    })
+    if (!error) { setFaqNewQ(""); setFaqNewA(""); await loadFaq(selected.id) }
+  }
+
+  async function deleteFaqItem(id: string) {
+    await supabase.from("faq_produits").delete().eq("id", id)
+    if (selected) await loadFaq(selected.id)
+  }
+
+  function startEditFaq(f: any) {
+    setFaqEditId(f.id); setFaqEditQ(f.question); setFaqEditA(f.reponse)
+  }
+
+  async function saveEditFaq(id: string) {
+    if (!faqEditQ.trim() || !faqEditA.trim()) return
+    await supabase.from("faq_produits").update({ question: faqEditQ.trim(), reponse: faqEditA.trim() }).eq("id", id)
+    setFaqEditId(null)
+    if (selected) await loadFaq(selected.id)
+  }
+
   async function loadAssociations(id: string) {
     const [{ data: d1 }, { data: d2 }] = await Promise.all([
       supabase.from("associations_produits").select("id, produit_associe_id").eq("produit_id", id),
@@ -192,7 +236,11 @@ export default function AdminProduitsPage() {
     setMessage("")
     setAssocQuery("")
     setAssocResults([])
+    setFaqNewQ("")
+    setFaqNewA("")
+    setFaqEditId(null)
     loadAssociations(p.id)
+    loadFaq(p.id)
     setImageUrl(p.image_url || "")
     setDescription(p.description || "")
     if (tab === "revetements") {
@@ -696,6 +744,97 @@ export default function AdminProduitsPage() {
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* ── FAQ ── */}
+              <div style={{ marginTop: "16px", background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0E7F4F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#0E7F4F", textTransform: "uppercase" as const, letterSpacing: "0.4px", margin: 0 }}>
+                    FAQ — Questions fréquentes
+                  </p>
+                </div>
+
+                {/* Liste des questions existantes */}
+                {faqList.length === 0 ? (
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px" }}>Aucune question pour l&apos;instant.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: "6px", marginBottom: "14px" }}>
+                    {faqList.map((f: any) => (
+                      faqEditId === f.id ? (
+                        <div key={f.id} style={{ background: "var(--bg)", borderRadius: "8px", padding: "10px", border: "1px solid #BEF264" }}>
+                          <input
+                            value={faqEditQ} onChange={e => setFaqEditQ(e.target.value)}
+                            style={{ ...inp, marginBottom: "6px", fontSize: "12px" }}
+                            placeholder="Question"
+                          />
+                          <textarea
+                            value={faqEditA} onChange={e => setFaqEditA(e.target.value)}
+                            rows={4} style={{ ...inp, resize: "vertical" as const, fontSize: "12px" }}
+                            placeholder="Réponse"
+                          />
+                          <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
+                            <button type="button" onClick={() => saveEditFaq(f.id)}
+                              style={{ flex: 1, background: "#0E7F4F", color: "#fff", border: "none", borderRadius: "6px", padding: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                              Sauvegarder
+                            </button>
+                            <button type="button" onClick={() => setFaqEditId(null)}
+                              style={{ background: "var(--border)", border: "none", borderRadius: "6px", padding: "7px 12px", fontSize: "12px", cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div key={f.id} style={{ background: "var(--bg)", borderRadius: "8px", padding: "9px 10px", border: "1px solid var(--border)" }}>
+                          <p style={{ fontSize: "12px", fontWeight: 700, margin: "0 0 3px", color: "var(--text)" }}>{f.question}</p>
+                          <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0, lineHeight: 1.5,
+                            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
+                            {f.reponse}
+                          </p>
+                          <div style={{ display: "flex", gap: "5px", marginTop: "7px" }}>
+                            <button type="button" onClick={() => startEditFaq(f)}
+                              style={{ flex: 1, background: "#EBF5FF", color: "#1A56DB", border: "none", borderRadius: "4px", padding: "4px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                              ✏ Modifier
+                            </button>
+                            <button type="button" onClick={() => deleteFaqItem(f.id)}
+                              style={{ background: "#FEF2F2", color: "#DC2626", border: "none", borderRadius: "4px", padding: "4px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif" }}>
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+
+                {/* Ajouter une question */}
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px" }}>
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.4px", margin: "0 0 8px" }}>
+                    Ajouter une question
+                  </p>
+                  <input
+                    value={faqNewQ} onChange={e => setFaqNewQ(e.target.value)}
+                    style={{ ...inp, marginBottom: "6px", fontSize: "12px" }}
+                    placeholder="Ex : Ce revêtement convient-il aux débutants ?"
+                  />
+                  <textarea
+                    value={faqNewA} onChange={e => setFaqNewA(e.target.value)}
+                    rows={4} style={{ ...inp, resize: "vertical" as const, fontSize: "12px" }}
+                    placeholder="Réponse complète…"
+                  />
+                  <button type="button" onClick={addFaqItem}
+                    disabled={!faqNewQ.trim() || !faqNewA.trim()}
+                    style={{
+                      width: "100%", marginTop: "6px", background: "#0E7F4F", color: "#fff",
+                      border: "none", borderRadius: "6px", padding: "8px", fontSize: "12px",
+                      fontWeight: 600, cursor: "pointer", fontFamily: "Poppins, sans-serif",
+                      opacity: (!faqNewQ.trim() || !faqNewA.trim()) ? 0.45 : 1,
+                    }}>
+                    + Ajouter cette question
+                  </button>
+                </div>
               </div>
 
               <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>

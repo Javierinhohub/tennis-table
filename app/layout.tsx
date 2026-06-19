@@ -83,6 +83,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </span>
             @ttkip.pro
           </a>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif", marginBottom: "6px" }}>
+            Pour connaître le matériel des numérotés français, ça se passe sur Instagram 👆
+          </p>
           <p style={{ fontSize: "12px", color: "var(--text-muted)", fontFamily: "Poppins, sans-serif" }}>
             © {new Date().getFullYear()} TT-Kip — Tous droits réservés · Base de données protégée (L.341-1 CPI)
           </p>

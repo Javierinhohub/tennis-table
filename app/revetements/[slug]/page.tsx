@@ -12,62 +12,6 @@ import VideoSection from "@/app/components/VideoSection"
 import FAQAccordion, { FAQItem } from "@/app/components/FAQAccordion"
 import CompareButton from "@/app/components/CompareButton"
 
-function generateFaqRevetement(nom: string, marqueNom: string, rev: any): FAQItem[] {
-  const faq: FAQItem[] = []
-  const vitesse  = rev?.vitesse_note  as number | null
-  const effet    = rev?.effet_note    as number | null
-  const controle = rev?.controle_note as number | null
-  const prix     = rev?.prix          as number | null
-  const type     = rev?.type_revetement as string | null
-  const epaisseur = rev?.epaisseur_max as number | null
-
-  // Q1 — Niveau
-  if (controle != null) {
-    faq.push({ q: `Le ${marqueNom} ${nom} convient-il aux débutants ?`,
-      a: controle >= 8
-        ? `Oui, le ${nom} est accessible aux joueurs débutants et intermédiaires. Son contrôle de ${controle}/10 facilite la mise en jeu et pardonne les imprécisions techniques. C'est un bon choix pour progresser sans être freiné par son propre matériel.`
-        : controle < 6
-        ? `Non, le ${nom} est réservé aux joueurs de niveau avancé à expert. Avec un contrôle de seulement ${controle}/10, il exige des frappes propres et une technique solide — une imprécision se paie immédiatement par une balle dans le filet. Les débutants seront mieux servis par un revêtement plus tolérant.`
-        : `Le ${nom} convient principalement aux joueurs de niveau intermédiaire à avancé. Son contrôle de ${controle}/10 requiert une technique déjà établie pour l'exploiter pleinement, même si les joueurs motivés pourront s'y adapter avec de l'entraînement.`
-    })
-  }
-
-  // Q2 — Épaisseur (backside uniquement)
-  if (type === "In" && epaisseur) {
-    faq.push({ q: `Quelle épaisseur choisir pour le ${nom} ?`,
-      a: `Le ${marqueNom} ${nom} est disponible en plusieurs épaisseurs jusqu'à ${epaisseur} mm. Une épaisseur fine (1,5-1,8 mm) apporte plus de sensation et de contrôle, idéale pour le jeu technique et les services. Une épaisseur maximale (${epaisseur} mm) maximise la vitesse et l'effet catapulte pour un jeu offensif. Pour débuter avec ce revêtement ou pour le revers, une épaisseur de 2,0 mm représente souvent le meilleur compromis.`
-    })
-  }
-
-  // Q3 — Topspin / spin
-  if (effet != null && vitesse != null) {
-    faq.push({ q: `Le ${nom} est-il adapté au jeu de topspin ?`,
-      a: `${effet >= 8 ? `Oui, le ${marqueNom} ${nom} est particulièrement adapté au topspin.` : `Le ${marqueNom} ${nom} offre une capacité de topspin correcte.`} Avec un effet de ${effet}/10 et une vitesse de ${vitesse}/10, il génère des rotations ${effet >= 9 ? "puissantes et difficiles à défendre — l'un des meilleurs du marché pour les topspins lourds" : effet >= 7 ? "chargées qui rendent les topspins efficaces avec une bonne technique" : "modérées, ce revêtement privilégiant davantage la vitesse que la rotation maximale"}.`
-    })
-  }
-
-  // Q4 — Prix
-  if (prix != null) {
-    faq.push({ q: `Quel est le prix du ${marqueNom} ${nom} ?`,
-      a: `Le ${marqueNom} ${nom} est vendu aux alentours de ${prix} €. ${prix >= 80 ? "C'est un revêtement haut de gamme — un investissement justifié pour les joueurs qui compétitionnent régulièrement et veulent le meilleur de leur matériel." : prix >= 40 ? "Son positionnement intermédiaire en fait un excellent rapport qualité-performance pour les joueurs de club sérieux." : "Son tarif accessible en fait l'un des meilleurs rapports qualité-prix du marché à son niveau."} Les prix varient selon les revendeurs et les promotions.`
-    })
-  }
-
-  // Q5a — Couleur (backside) ou Q5b — Style (picots)
-  if (type === "In") {
-    faq.push({ q: `Faut-il choisir le ${nom} en rouge ou en noir ?`,
-      a: `Le ${marqueNom} ${nom} est disponible en rouge et en noir conformément aux règles ITTF (les deux faces de la raquette doivent être de couleurs différentes). La différence entre les deux coloris est subtile : le rouge est traditionnellement associé à une légère souplesse supplémentaire, le noir à une dureté légèrement plus marquée. Ces nuances varient selon les marques — sur ce revêtement, le choix dépend avant tout de vos préférences tactiles et de votre stratégie de jeu.`
-    })
-  } else if (type && ["Out","Mid","Long"].includes(type)) {
-    const typeLabel = type === "Out" ? "picots courts" : type === "Mid" ? "picots mi-longs" : "picots longs"
-    faq.push({ q: `Le ${nom} est-il adapté à tous les styles de jeu ?`,
-      a: `Non, le ${marqueNom} ${nom} (${typeLabel}) est un revêtement spécialisé qui ne convient pas à tous. ${type === "Out" ? "Les picots courts sont appréciés pour le jeu rapide près de la table et les retours déstabilisants en revers." : type === "Mid" ? "Les picots mi-longs permettent des effets perturbateurs et une défense active très efficace." : "Les picots longs sont le choix des défenseurs qui souhaitent perturber le rythme adverse avec des renversements d'effet."} Il est conseillé de maîtriser d'abord le jeu offensif classique avant de passer aux picots.`
-    })
-  }
-
-  return faq.slice(0, 5)
-}
-
 const TYPE_LABELS: Record<string, string> = {
   In: "Backside", Out: "Picots courts", Mid: "Picots mi-longs", Long: "Picots longs", Anti: "Anti-spin"
 }
@@ -302,8 +246,18 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
     }
   }
 
-  const faq = generateFaqRevetement(produit.nom, marque?.nom || "", rev)
-  const faqJsonLd = faq.length > 0 ? {
+  // ── FAQ depuis la base de données ────────────────────────────────
+  const { data: faqData } = await supabase
+    .from("faq_produits")
+    .select("question, reponse, ordre")
+    .eq("produit_id", produit.id)
+    .order("ordre")
+
+  const faq: FAQItem[] = faqData && faqData.length > 0
+    ? faqData.map(f => ({ q: f.question, a: f.reponse }))
+    : [{ q: "En cours de construction", a: "En cours de construction." }]
+
+  const faqJsonLd = faqData && faqData.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": faq.map(item => ({

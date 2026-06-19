@@ -6,7 +6,7 @@ export const revalidate = 3600 // 1h — inutile de régénérer plus souvent
 
 export const metadata: Metadata = {
   title: "Bois de tennis de table — Catalogue et comparatif",
-  description: "Comparez les bois et lames de tennis de table : composition, vitesse, style de jeu. Trouvez le bois idéal pour votre niveau.",
+  description: "Comparez les bois de tennis de table : composition, vitesse, style de jeu. Trouvez le bois idéal pour votre niveau.",
   alternates: { canonical: "https://www.tt-kip.com/bois" },
   openGraph: { url: "https://www.tt-kip.com/bois" },
 }

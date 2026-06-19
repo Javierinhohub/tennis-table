@@ -270,7 +270,7 @@ export default function AjouterPage() {
                 <div><label style={labelStyle}>Type de manche</label><input type="text" value={typeManche} onChange={e => setTypeManche(e.target.value)} style={inputStyle} placeholder="Ex: Flared" /></div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <div><label style={labelStyle}>Taille de lame</label><input type="text" value={tailleLame} onChange={e => setTailleLame(e.target.value)} style={inputStyle} placeholder="Ex: 157x150mm" /></div>
+                <div><label style={labelStyle}>Taille du bois</label><input type="text" value={tailleLame} onChange={e => setTailleLame(e.target.value)} style={inputStyle} placeholder="Ex: 157x150mm" /></div>
                 <div><label style={labelStyle}>Rigidité</label><input type="text" value={rigidite} onChange={e => setRigidite(e.target.value)} style={inputStyle} placeholder="Ex: Rigide" /></div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>

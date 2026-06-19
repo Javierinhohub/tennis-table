@@ -9,64 +9,6 @@ import BackButton from "@/app/components/BackButton"
 import VideoSection from "@/app/components/VideoSection"
 import FAQAccordion, { FAQItem } from "@/app/components/FAQAccordion"
 
-function generateFaqBois(nom: string, marqueNom: string, b: any): FAQItem[] {
-  const faq: FAQItem[] = []
-  const style       = b?.style         as string | null
-  const nbPlis      = b?.nb_plis       as number | null
-  const composition = b?.composition   as string | null
-  const poids       = b?.poids_g       as number | null
-  const prix        = b?.prix          as number | null
-  const vitesse     = b?.note_vitesse  as number | null
-
-  // Q1 — Niveau
-  if (style) {
-    const isOff = style.startsWith("OFF")
-    const isAll = style.startsWith("ALL")
-    faq.push({ q: `Le ${marqueNom} ${nom} convient-il aux débutants ?`,
-      a: isOff
-        ? `Le ${nom} est un bois de style ${style}, destiné aux joueurs de niveau avancé à expert. Sa vitesse élevée exige une technique solide et des frappes propres pour maîtriser la trajectoire. Les débutants auront du mal à contrôler sa puissance et seront mieux servis par un bois de style ALL ou OFF-.`
-        : isAll
-        ? `Oui, le ${nom} de style ${style} est un excellent choix pour les joueurs de niveau intermédiaire à confirmé. Son profil équilibré facilite l'apprentissage du jeu offensif sans brider les joueurs plus avancés — c'est souvent la lame idéale pour progresser durablement.`
-        : `Le ${nom} de style ${style} est adapté aux joueurs défenseurs ou souhaitant un jeu très contrôlé. Ce profil convient à des niveaux variés, des débutants qui travaillent leur placement jusqu'aux défenseurs confirmés.`
-    })
-  }
-
-  // Q2 — Style de jeu
-  if (style || vitesse != null) {
-    const jeuDesc = style?.startsWith("OFF+") ? "l'attaque pure, les topspins puissants des deux côtés et les frappes directes décisives"
-      : style?.startsWith("OFF-") ? "l'attaque construite, le jeu à mi-distance et les variations de rythme"
-      : style?.startsWith("OFF") ? "le jeu offensif basé sur le topspin et les accélérations directes"
-      : style?.startsWith("ALL") ? "un jeu complet alternant attaque, blocs actifs et variations"
-      : "la défense, le lobbing et les retours déstabilisants"
-    faq.push({ q: `Quel style de jeu favorise le ${nom} ?`,
-      a: `Le ${marqueNom} ${nom} est conçu pour ${jeuDesc}. ${vitesse != null ? `Avec une vitesse de ${vitesse}/10, il ${vitesse >= 9 ? "propulse la balle très rapidement — idéal pour dominer l'échange par la vitesse pure" : vitesse >= 7 ? "offre une bonne puissance offensive tout en restant maniable" : "privilégie le placement et la précision sur la vitesse brute"}.` : ""} ${composition ? `Sa composition ${composition} contribue directement à ce profil.` : ""}`
-    })
-  }
-
-  // Q3 — Composition
-  if (nbPlis || composition) {
-    const plisDesc = nbPlis === 5 ? "5 plis est la configuration offensive standard, offrant un bon équilibre entre sensation de balle et puissance de frappe"
-      : nbPlis === 7 ? "7 plis favorise la rigidité et la stabilité, typique des lames allround à haut contrôle"
-      : nbPlis ? `${nbPlis} plis est une configuration qui offre un profil de jeu spécifique` : ""
-    faq.push({ q: `Quelle est la composition du ${nom} ?`,
-      a: `${composition ? `Le ${nom} est construit avec ${composition}.` : `Le ${nom} est composé de ${nbPlis} plis de bois sélectionnés.`} ${plisDesc ? plisDesc + "." : ""} ${poids != null ? `Son poids d'environ ${poids} g le rend ${poids < 82 ? "très léger, ce qui favorise la récupération rapide et réduit la fatigue en longue session" : poids < 92 ? "bien équilibré entre stabilité et légèreté" : "conséquent — la stabilité supplémentaire compense le poids dans les frappes puissantes"}.` : ""}`
-    })
-  }
-
-  // Q4 — Prix
-  if (prix != null) {
-    faq.push({ q: `Quel est le prix du ${marqueNom} ${nom} ?`,
-      a: `Le ${marqueNom} ${nom} est disponible aux alentours de ${prix} €. ${prix >= 200 ? "C'est une lame premium dont le prix reflète l'excellence des matériaux et la précision de fabrication — un investissement pour ceux qui visent le très haut niveau." : prix >= 100 ? "Son positionnement haut de gamme correspond à un investissement sérieux pour les compétiteurs de niveau national et régional." : prix >= 50 ? "Son rapport qualité-prix est excellent pour une lame de ce niveau, accessible aux joueurs de club sérieux." : "C'est l'une des lames les plus abordables dans sa catégorie, idéale pour les joueurs en progression."} Les prix varient selon les revendeurs.`
-    })
-  }
-
-  // Q5 — Durabilité
-  faq.push({ q: `Quelle est la durée de vie du ${nom} ?`,
-    a: `Une lame comme le ${marqueNom} ${nom} est conçue pour durer des années, voire une décennie, avec un entretien approprié. Contrairement aux revêtements qui se dégradent après quelques mois d'utilisation intensive, la lame ne perd pratiquement pas ses propriétés dans le temps. Pour maximiser sa durée de vie : conservez-la dans un étui rigide, évitez l'humidité et les températures extrêmes. Un choc sur le bord peut provoquer une fissure irréparable — l'utilisation d'un protège-chant est fortement recommandée.`
-  })
-
-  return faq.slice(0, 5)
-}
 
 function getYoutubeId(url: string): string | null {
   const patterns = [
@@ -321,8 +263,18 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     }
   }
 
-  const faq = generateFaqBois(produit.nom, marque?.nom || "", b)
-  const faqJsonLd = faq.length > 0 ? {
+  // ── FAQ depuis la base de données ────────────────────────────────
+  const { data: faqData } = await supabase
+    .from("faq_produits")
+    .select("question, reponse, ordre")
+    .eq("produit_id", produit.id)
+    .order("ordre")
+
+  const faq: FAQItem[] = faqData && faqData.length > 0
+    ? faqData.map(f => ({ q: f.question, a: f.reponse }))
+    : [{ q: "En cours de construction", a: "En cours de construction." }]
+
+  const faqJsonLd = faqData && faqData.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": faq.map(item => ({

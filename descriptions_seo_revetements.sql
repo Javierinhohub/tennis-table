@@ -183,7 +183,7 @@ Conçu pour les joueurs offensifs modernes jouant des deux côtés, le Mantra M 
 
 L''architecture du Mantra M a été pensée pour compenser les caractéristiques du ballon plastique 40+, notamment en maintenant un niveau de rotation élevé malgré la surface moins réactive de la balle moderne. Le topsheet haute friction s''accroche parfaitement à la balle même lors de contacts partiels ou obliques.
 
-Recommandé pour les joueurs de compétition de niveau régional à national, le Mantra M s''installe aussi bien en coup droit qu''au revers, et peut être monté sur des lames de puissances variées. Son rapport qualité-prix compétitif par rapport aux revêtements Butterfly ou aux dernières générations Tibhar en fait l''une des meilleures propositions de la marque scandinave.'
+Recommandé pour les joueurs de compétition de niveau régional à national, le Mantra M s''installe aussi bien en coup droit qu''au revers, et peut être monté sur des bois de puissances variées. Son rapport qualité-prix compétitif par rapport aux revêtements Butterfly ou aux dernières générations Tibhar en fait l''une des meilleures propositions de la marque scandinave.'
 WHERE nom ILIKE '%Mantra M%'
   AND nom NOT ILIKE '%Mantra H%'
   AND nom NOT ILIKE '%Mantra S%'
