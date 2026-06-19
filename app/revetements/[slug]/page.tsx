@@ -10,6 +10,7 @@ import BackButton from "@/app/components/BackButton"
 import JoueursProSection from "./JoueursProSection"
 import VideoSection from "@/app/components/VideoSection"
 import FAQAccordion, { FAQItem } from "@/app/components/FAQAccordion"
+import CompareButton from "@/app/components/CompareButton"
 
 function generateFaqRevetement(nom: string, marqueNom: string, rev: any): FAQItem[] {
   const faq: FAQItem[] = []
@@ -271,6 +272,36 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
       })),
   } : null
 
+  // ── Revêtements similaires — même type, pour la section "Voir aussi" ──
+  let similaires: any[] = []
+  if (rev?.type_revetement) {
+    const { data: simRevs } = await supabase
+      .from("revetements")
+      .select("produit_id, vitesse_note, effet_note, controle_note, prix, type_revetement")
+      .eq("type_revetement", rev.type_revetement)
+      .neq("produit_id", produit.id)
+      .not("vitesse_note", "is", null)
+      .order("vitesse_note", { ascending: false })
+      .limit(8)
+
+    if (simRevs && simRevs.length > 0) {
+      const simIds = simRevs.map(r => r.produit_id)
+      const { data: simProds } = await supabase
+        .from("produits")
+        .select("id, nom, slug, image_url, marques(nom)")
+        .in("id", simIds)
+        .eq("actif", true)
+
+      similaires = (simProds || [])
+        .map(p => {
+          const r = simRevs.find(r => r.produit_id === p.id)
+          return r ? { ...p, rev: r } : null
+        })
+        .filter(Boolean)
+        .slice(0, 5)
+    }
+  }
+
   const faq = generateFaqRevetement(produit.nom, marque?.nom || "", rev)
   const faqJsonLd = faq.length > 0 ? {
     "@context": "https://schema.org",
@@ -441,10 +472,75 @@ export default async function RevetementPage({ params }: { params: Promise<{ slu
           <NotesSection produitId={produit.id} revetement={rev} typeRev={rev?.type_revetement} />
           <AvisSection produitId={produit.id} typeRevetement={rev?.type_revetement} />
 
+          {/* ── Voir aussi — revêtements similaires ── */}
+          {similaires.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>
+                  Voir aussi
+                </h2>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400 }}>— même type de revêtement</span>
+              </div>
+              <div style={{ display: "flex", gap: "10px", overflowX: "auto" as const, paddingBottom: "8px", scrollbarWidth: "none" as const }}>
+                {similaires.map((p: any) => {
+                  const r = p.rev as any
+                  return (
+                    <a key={p.id} href={`/revetements/${p.slug}`} style={{
+                      flexShrink: 0, width: "152px", background: "#fff", border: "1px solid var(--border)",
+                      borderRadius: "10px", padding: "14px 12px", textDecoration: "none",
+                      display: "flex", flexDirection: "column" as const, gap: "8px",
+                      transition: "border-color 0.15s",
+                    }}>
+                      <div style={{ height: "58px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {p.image_url
+                          ? /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={p.image_url} alt={p.nom} style={{ maxHeight: "58px", maxWidth: "100%", objectFit: "contain" }} />
+                          : <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#FFF0EB" }} />
+                        }
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{p.nom}</p>
+                        <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: "2px 0 0" }}>{(p.marques as any)?.nom}</p>
+                      </div>
+                      {(r?.vitesse_note || r?.effet_note || r?.controle_note) && (
+                        <div style={{ display: "flex", flexDirection: "column" as const, gap: "4px" }}>
+                          {[
+                            { label: "V", value: r?.vitesse_note, color: "#1A56DB" },
+                            { label: "E", value: r?.effet_note, color: "#0E7F4F" },
+                            { label: "C", value: r?.controle_note, color: "#B45309" },
+                          ].filter(s => s.value != null).map(s => (
+                            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              <span style={{ fontSize: "9px", color: "var(--text-muted)", width: "8px", flexShrink: 0 }}>{s.label}</span>
+                              <div style={{ flex: 1, height: "4px", background: "var(--border)", borderRadius: "2px" }}>
+                                <div style={{ height: "100%", borderRadius: "2px", background: s.color, width: (s.value / 10 * 100) + "%" }} />
+                              </div>
+                              <span style={{ fontSize: "9px", color: "var(--text-muted)", width: "14px", textAlign: "right" as const }}>{s.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {r?.prix && (
+                        <p style={{ fontSize: "12px", fontWeight: 700, color: "#D97757", margin: 0 }}>{r.prix} €</p>
+                      )}
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <FAQAccordion items={faq} />
         </div>
 
         <div style={{ position: "sticky", top: "80px" }}>
+          {/* ── Bouton comparateur ── */}
+          <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px", marginBottom: "12px" }}>
+            <p style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "0 0 8px" }}>Comparateur</p>
+            <CompareButton produit={{ id: produit.id, nom: produit.nom, slug: produit.slug }} />
+          </div>
           <MaterialSection produitId={produit.id} produitNom={produit.nom} />
         </div>
 

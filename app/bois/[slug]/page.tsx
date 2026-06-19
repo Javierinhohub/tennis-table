@@ -290,6 +290,37 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       })),
   } : null
 
+  // ── Bois similaires — même catégorie de style ─────────────────────
+  let similairesBois: any[] = []
+  if (b?.style) {
+    const stylePrefix = (b.style as string).substring(0, 3) // "OFF", "ALL", "DEF"
+    const { data: simBoisData } = await supabase
+      .from("bois")
+      .select("produit_id, style, note_vitesse, note_controle, prix, nb_plis")
+      .ilike("style", stylePrefix + "%")
+      .neq("produit_id", produit.id)
+      .not("note_vitesse", "is", null)
+      .order("note_vitesse", { ascending: false })
+      .limit(8)
+
+    if (simBoisData && simBoisData.length > 0) {
+      const simIds = simBoisData.map(r => r.produit_id)
+      const { data: simProds } = await supabase
+        .from("produits")
+        .select("id, nom, slug, image_url, marques(nom)")
+        .in("id", simIds)
+        .eq("actif", true)
+
+      similairesBois = (simProds || [])
+        .map(p => {
+          const bd = simBoisData.find(r => r.produit_id === p.id)
+          return bd ? { ...p, boisData: bd } : null
+        })
+        .filter(Boolean)
+        .slice(0, 5)
+    }
+  }
+
   const faq = generateFaqBois(produit.nom, marque?.nom || "", b)
   const faqJsonLd = faq.length > 0 ? {
     "@context": "https://schema.org",
@@ -521,6 +552,64 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
           {/* Section avis écrits */}
           <AvisSectionBois produitId={produit.id} />
+
+          {/* ── Voir aussi — bois similaires ── */}
+          {similairesBois.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <h2 style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: 0 }}>
+                  Voir aussi
+                </h2>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400 }}>— même style de jeu</span>
+              </div>
+              <div style={{ display: "flex", gap: "10px", overflowX: "auto" as const, paddingBottom: "8px", scrollbarWidth: "none" as const }}>
+                {similairesBois.map((p: any) => {
+                  const bd = p.boisData as any
+                  const STYLE_LABELS: Record<string, string> = { "OFF+": "Off+", "OFF": "Offensif", "OFF-": "Off-", "ALL+": "All+", "ALL": "Allround", "ALL-": "All-", "DEF": "Défensif", "DEF+": "Def+" }
+                  return (
+                    <a key={p.id} href={`/bois/${p.slug}`} style={{
+                      flexShrink: 0, width: "152px", background: "#fff", border: "1px solid var(--border)",
+                      borderRadius: "10px", padding: "14px 12px", textDecoration: "none",
+                      display: "flex", flexDirection: "column" as const, gap: "8px",
+                    }}>
+                      <div style={{ height: "58px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {p.image_url
+                          ? /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={p.image_url} alt={p.nom} style={{ maxHeight: "58px", maxWidth: "100%", objectFit: "contain" }} />
+                          : <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#FFF0EB" }} />
+                        }
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{p.nom}</p>
+                        <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: "2px 0 0" }}>{(p.marques as any)?.nom}</p>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" as const, gap: "4px" }}>
+                        {[
+                          { label: "V", value: bd?.note_vitesse, color: "#1A56DB" },
+                          { label: "C", value: bd?.note_controle, color: "#B45309" },
+                        ].filter(s => s.value != null).map(s => (
+                          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ fontSize: "9px", color: "var(--text-muted)", width: "8px", flexShrink: 0 }}>{s.label}</span>
+                            <div style={{ flex: 1, height: "4px", background: "var(--border)", borderRadius: "2px" }}>
+                              <div style={{ height: "100%", borderRadius: "2px", background: s.color, width: (s.value / 10 * 100) + "%" }} />
+                            </div>
+                            <span style={{ fontSize: "9px", color: "var(--text-muted)", width: "14px", textAlign: "right" as const }}>{s.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        {bd?.style && <span style={{ fontSize: "9px", fontWeight: 700, color: "#D97757" }}>{STYLE_LABELS[bd.style] || bd.style}</span>}
+                        {bd?.prix && <span style={{ fontSize: "11px", fontWeight: 700, color: "#D97757" }}>{bd.prix} €</span>}
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <FAQAccordion items={faq} />
         </div>
