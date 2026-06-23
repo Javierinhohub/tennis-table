@@ -71,7 +71,7 @@
   },
   {
     "id": "a43ac82e-59de-418d-80e6-b922c56eac89",
-    "nom": "Asuka SASAO",
+    "nom": "Asuka Sasao",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -99,7 +99,7 @@
   },
   {
     "id": "101466d5-6e1e-4b4e-b08a-f7cbccafb6c6",
-    "nom": "Ayhika MUKHERJEE",
+    "nom": "Ayhika Mukherjee",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -141,7 +141,7 @@
   },
   {
     "id": "d656cb02-ac06-4eb3-ac27-e460496d3963",
-    "nom": "Britt EERLAND",
+    "nom": "Britt Eerland",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -220,7 +220,7 @@
     "bois_nom": "Double Happiness / DHS W968 Hurricane Long 5 National",
     "revetement_cd": "Double Happiness / DHS Hurricane III — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": "Butterfly Dignics 09C — Backside",
+    "revetement_rv": "Butterfly Zyre 03 — Backside",
     "revetement_rv_type": null
   },
   {
@@ -393,7 +393,7 @@
   },
   {
     "id": "0ae77371-1fed-468a-a588-1ae8e4297028",
-    "nom": "Giorgia PICCOLIN",
+    "nom": "Giorgia Piccolin",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -645,7 +645,7 @@
   },
   {
     "id": "474aa0f9-80af-43e7-9705-df8af1033fe6",
-    "nom": "Kyoka IDESAWA",
+    "nom": "Kyoka Idesawa",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -889,10 +889,10 @@
     "main": "Droitier",
     "age": null,
     "prise": "Classique",
-    "bois_nom": "Tibhar Felix Lebrun Hyper Carbon Inner (7 plis)",
+    "bois_nom": "Tibhar Bingo (Miyuu Kihara)",
     "revetement_cd": "Tibhar Hybrid K3 — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": "Tibhar Grass D. TecS — Picots longs",
+    "revetement_rv": "Tibhar Speedy Soft D. TecS — Picots courts",
     "revetement_rv_type": null
   },
   {
@@ -966,20 +966,6 @@
     "revetement_rv_type": null
   },
   {
-    "id": "234e6421-b5a9-4cdb-9009-b087eb58f07f",
-    "nom": "PENG Yu-Han",
-    "genre": "F",
-    "style": null,
-    "main": "Droitier",
-    "age": null,
-    "prise": "Classique",
-    "bois_nom": null,
-    "revetement_cd": null,
-    "revetement_cd_type": null,
-    "revetement_rv": null,
-    "revetement_rv_type": null
-  },
-  {
     "id": "c7f6ac99-c77a-42e9-802f-1143ea8baecf",
     "nom": "Park Gahyeon",
     "genre": "F",
@@ -991,6 +977,20 @@
     "revetement_cd": "Butterfly Dignics 09C — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Butterfly Dignics 09C — Backside",
+    "revetement_rv_type": null
+  },
+  {
+    "id": "234e6421-b5a9-4cdb-9009-b087eb58f07f",
+    "nom": "Peng Yu-Han",
+    "genre": "F",
+    "style": null,
+    "main": "Droitier",
+    "age": null,
+    "prise": "Classique",
+    "bois_nom": null,
+    "revetement_cd": null,
+    "revetement_cd_type": null,
+    "revetement_rv": null,
     "revetement_rv_type": null
   },
   {
@@ -1051,7 +1051,7 @@
   },
   {
     "id": "8c622930-dcc5-451b-bac8-203e73545373",
-    "nom": "Sabina SURJAN",
+    "nom": "Sabina Surjan",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -1079,7 +1079,7 @@
   },
   {
     "id": "e7791aa4-2706-453d-b8e4-30b599e5d8bc",
-    "nom": "Sachi AOKI",
+    "nom": "Sachi Aoki",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -1102,7 +1102,7 @@
     "bois_nom": "Double Happiness / DHS Hurricane Long 5 (7 plis)",
     "revetement_cd": "Double Happiness / DHS Hurricane III — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": "Double Happiness / DHS Hurricane 8 — Backside",
+    "revetement_rv": "Nittaku Genextion V2C — Backside",
     "revetement_rv_type": null
   },
   {
@@ -1135,7 +1135,7 @@
   },
   {
     "id": "47d380e3-3430-45b7-81e4-d041215f78c2",
-    "nom": "Sarah DE NUTTE",
+    "nom": "Sarah De Nutte",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -1275,7 +1275,7 @@
   },
   {
     "id": "9f0f053b-f7c9-4d09-9cf5-46b5c3a8c397",
-    "nom": "Tin-Tin HO",
+    "nom": "Tin-Tin Ho",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -1303,7 +1303,7 @@
   },
   {
     "id": "8f663d64-fb9c-4008-820c-d969b153969b",
-    "nom": "Veronika MATIUNINA",
+    "nom": "Veronika Matiunina",
     "genre": "F",
     "style": null,
     "main": "Droitier",
@@ -1393,10 +1393,10 @@
     "main": "Droitier",
     "age": null,
     "prise": "Classique",
-    "bois_nom": null,
-    "revetement_cd": null,
+    "bois_nom": "Butterfly Fan Zhendong Super ZLC (7 plis)",
+    "revetement_cd": "Double Happiness / DHS Hurricane III — Backside",
     "revetement_cd_type": null,
-    "revetement_rv": null,
+    "revetement_rv": "Butterfly Dignics 05 — Backside",
     "revetement_rv_type": null
   },
   {
@@ -1569,7 +1569,7 @@
   },
   {
     "id": "54dbf789-b1b3-4f75-a3a5-3c7b7e6128dd",
-    "nom": "Abdel-Kader SALIFOU",
+    "nom": "Abdel-Kader Salifou",
     "genre": "H",
     "style": null,
     "main": "Droitier",
@@ -1709,7 +1709,7 @@
   },
   {
     "id": "d76f5b17-8eff-4f9c-8c23-0f4fbab54b56",
-    "nom": "Ankur BHATTACHARJEE",
+    "nom": "Ankur Bhattacharjee",
     "genre": "H",
     "style": null,
     "main": "Droitier",
@@ -1751,7 +1751,7 @@
   },
   {
     "id": "7f2dec83-7b96-4ab6-bebf-747707e746b1",
-    "nom": "Cedric NUYTINCK",
+    "nom": "Cedric Nuytinck",
     "genre": "H",
     "style": "Attaquant",
     "main": "Droitier",
@@ -2003,7 +2003,7 @@
   },
   {
     "id": "78cd8339-bc22-4684-9698-5ba91ac3a72b",
-    "nom": "Florian BOURRASSAUD",
+    "nom": "Florian Bourrassaud",
     "genre": "H",
     "style": null,
     "main": "Droitier",
@@ -2045,7 +2045,7 @@
   },
   {
     "id": "bb59f6ec-67b2-4101-8c5e-536f82bea50c",
-    "nom": "Guilherme TEODORO",
+    "nom": "Guilherme Teodoro",
     "genre": "H",
     "style": null,
     "main": "Droitier",
@@ -2185,7 +2185,7 @@
   },
   {
     "id": "d2c9b07e-a7cb-4d7f-8143-4abf2570b172",
-    "nom": "John OYEBODE",
+    "nom": "John Oyebode",
     "genre": "H",
     "style": "Attaquant",
     "main": "Droitier",
@@ -2387,7 +2387,7 @@
     "main": "Gaucher",
     "age": null,
     "prise": "Classique",
-    "bois_nom": "Butterfly Alc Blade",
+    "bois_nom": "Butterfly Lim Jonghoon Advance",
     "revetement_cd": "Butterfly Tenergy 05 HARD — Backside",
     "revetement_cd_type": null,
     "revetement_rv": "Butterfly Dignics 09C — Backside",
@@ -2829,7 +2829,7 @@
   },
   {
     "id": "b6752c2e-87f3-4b89-81c8-903b5b11a299",
-    "nom": "Tiago APOLONIA",
+    "nom": "Tiago Apolonia",
     "genre": "H",
     "style": null,
     "main": "Droitier",
@@ -3081,7 +3081,7 @@
   },
   {
     "id": "4b3ddd28-35f9-4bb1-99e6-05645bf15c95",
-    "nom": "Yuto KIZUKURI",
+    "nom": "Yuto Kizukuri",
     "genre": "H",
     "style": null,
     "main": "Droitier",
