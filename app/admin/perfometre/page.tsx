@@ -113,6 +113,10 @@ export default function AdminPerfoMetrePage() {
         <a href="/admin/produits" style={{ fontSize: "13px", color: "var(--text-muted)", textDecoration: "none" }}>← Admin</a>
       </div>
 
+      <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "1.5rem", lineHeight: "1.6", padding: "12px 16px", background: "#F9F5FF", borderRadius: "10px", borderLeft: "3px solid #D97757" }}>
+        Le Perf-o-mètre a été créé pour les concours Instagram de la meilleure progression de la phase 2. Les participants renseignent leurs points officiels FFTT en début et en fin de phase 2 — un score pondéré par tranche de points récompense les progressions les plus méritées.
+      </p>
+
       {msg && <p style={{ padding: "10px 14px", background: "#F0FDF4", borderRadius: "8px", color: "#166534", fontSize: "13px", marginBottom: "1rem" }}>{msg}</p>}
 
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
