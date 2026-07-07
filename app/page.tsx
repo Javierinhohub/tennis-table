@@ -73,6 +73,37 @@ export default async function Home() {
       <AdBanner slot={AD_SLOT_HOME_BOTTOM} format="rectangle"
         style={{ maxWidth: "900px", margin: "0 auto", padding: "0 2rem 1rem" }} />
 
+      {/* ── Perf-o-mètre ─────────────────────────────────────────── */}
+      <section style={{ maxWidth: "900px", margin: "0 auto", padding: "0 2rem 1.5rem" }}>
+        <a href="/perfometre" style={{ textDecoration: "none", display: "block" }}>
+          <div style={{
+            background: "linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 50%, #1a1a2e 100%)",
+            borderRadius: "14px", padding: "1.4rem 1.8rem",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem",
+            border: "1px solid #3d2266",
+          }}>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>
+                🏓 Nouveauté TT-Kip
+              </p>
+              <p style={{ fontSize: "17px", fontWeight: 800, color: "#fff", marginBottom: "4px", letterSpacing: "-0.2px" }}>
+                Le Perf-o-mètre
+              </p>
+              <p style={{ fontSize: "12px", color: "#c4b5fd", lineHeight: 1.5 }}>
+                Mesure ta vraie progression en phase 2 — chaque point est pondéré selon le niveau auquel il a été pris.
+              </p>
+            </div>
+            <div style={{
+              background: "linear-gradient(135deg, #D97757, #c4623d)",
+              color: "#fff", fontSize: "12px", fontWeight: 700,
+              padding: "10px 18px", borderRadius: "8px", whiteSpace: "nowrap", flexShrink: 0,
+            }}>
+              Calculer →
+            </div>
+          </div>
+        </a>
+      </section>
+
       <section style={{ maxWidth: "900px", margin: "0 auto", padding: "0 2rem 3rem" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
 
