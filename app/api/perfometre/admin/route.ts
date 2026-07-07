@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
-import { cookies } from "next/headers"
 
-async function isAdmin(): Promise<boolean> {
-  const cookieStore = await cookies()
-  const sessionToken = cookieStore.get("tt_session")?.value
-  if (!sessionToken) return false
-  const { data } = await supabaseAdmin
-    .from("utilisateurs")
-    .select("role")
-    .eq("session_token", sessionToken)
-    .single()
-  return data?.role === "admin"
+async function getAdminUser(req: NextRequest) {
+  const token = req.headers.get("authorization")?.replace("Bearer ", "")
+  if (!token) return null
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !user) return null
+  const { data: profil } = await supabaseAdmin
+    .from("utilisateurs").select("role").eq("id", user.id).single()
+  return profil?.role === "admin" ? user : null
 }
 
 // GET — liste toutes les soumissions
-export async function GET() {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+export async function GET(req: NextRequest) {
+  const user = await getAdminUser(req)
+  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 
   const { data, error } = await supabaseAdmin
     .from("perfometre_submissions")
@@ -29,14 +27,14 @@ export async function GET() {
 
 // PATCH — modifier une entrée
 export async function PATCH(req: NextRequest) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  const user = await getAdminUser(req)
+  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 
   const body = await req.json().catch(() => null)
   if (!body?.id) return NextResponse.json({ error: "ID manquant" }, { status: 400 })
 
   const { id, ...fields } = body
 
-  // Recalculer le score si les points ont changé
   if (fields.points_debut !== undefined && fields.points_fin !== undefined) {
     fields.score = calcScore(Number(fields.points_debut), Number(fields.points_fin))
   }
@@ -52,7 +50,8 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — supprimer une entrée
 export async function DELETE(req: NextRequest) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  const user = await getAdminUser(req)
+  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")

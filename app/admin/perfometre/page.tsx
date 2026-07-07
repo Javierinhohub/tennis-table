@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 interface Entry {
   id: string
@@ -35,12 +36,21 @@ export default function AdminPerfoMetrePage() {
 
   useEffect(() => { loadEntries() }, [])
 
+  async function getToken(): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? null
+  }
+
   async function loadEntries() {
     setLoading(true); setError("")
     try {
-      const res = await fetch("/api/perfometre/admin")
-      if (res.status === 403) { router.replace("/auth/login"); return }
+      const token = await getToken()
+      if (!token) { router.replace("/auth/login"); return }
+      const res = await fetch("/api/perfometre/admin", {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
       const json = await res.json()
+      if (res.status === 403) { router.replace("/auth/login"); return }
       if (!res.ok) { setError("Erreur : " + (json.error || res.status)); setLoading(false); return }
       setEntries(json.entries || [])
     } catch (err: any) {
@@ -59,9 +69,10 @@ export default function AdminPerfoMetrePage() {
 
   async function saveEdit(id: string) {
     setSaving(true); setMsg("")
+    const token = await getToken()
     const res = await fetch("/api/perfometre/admin", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({ id, ...editData }),
     })
     setSaving(false)
@@ -70,9 +81,10 @@ export default function AdminPerfoMetrePage() {
   }
 
   async function togglePublie(id: string, current: boolean) {
+    const token = await getToken()
     await fetch("/api/perfometre/admin", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({ id, publie: !current }),
     })
     loadEntries()
@@ -80,7 +92,11 @@ export default function AdminPerfoMetrePage() {
 
   async function deleteEntry(id: string) {
     if (!confirm("Supprimer cette entrée définitivement ?")) return
-    await fetch(`/api/perfometre/admin?id=${id}`, { method: "DELETE" })
+    const token = await getToken()
+    await fetch(`/api/perfometre/admin?id=${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` },
+    })
     loadEntries()
   }
 
