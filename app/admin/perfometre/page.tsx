@@ -37,11 +37,15 @@ export default function AdminPerfoMetrePage() {
 
   async function loadEntries() {
     setLoading(true); setError("")
-    const res = await fetch("/api/perfometre/admin")
-    if (res.status === 403) { router.replace("/auth/connexion"); return }
-    if (!res.ok) { setError("Erreur de chargement"); setLoading(false); return }
-    const json = await res.json()
-    setEntries(json.entries || [])
+    try {
+      const res = await fetch("/api/perfometre/admin")
+      if (res.status === 403) { router.replace("/auth/login"); return }
+      const json = await res.json()
+      if (!res.ok) { setError("Erreur : " + (json.error || res.status)); setLoading(false); return }
+      setEntries(json.entries || [])
+    } catch (err: any) {
+      setError("Erreur de chargement : " + (err?.message || "inconnue"))
+    }
     setLoading(false)
   }
 
